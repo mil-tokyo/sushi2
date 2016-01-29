@@ -1,0 +1,7 @@
+*~
+.DS_Store
+._.DS_Store
+node_modules
+src/sushi.js
+src/matrix.js
+spec/sushi.spec.js

@@ -1,0 +1,25 @@
+{
+  "name": "milsushi2",
+  "version": "0.0.0",
+  "description": "The Fastest Matrix Library for JavaScript http://mil-tokyo.github.io/miljs.html",
+  "main": "index.js",
+  "scripts": {
+    "test": "jasmine-node spec"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mil-tokyo/sushi2"
+  },
+  "keywords": [
+    "Matrix"
+  ],
+  "author": "Masatoshi Hidaka, Ken Miura, Tatsuya Harada",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/mil-tokyo/sushi2/issues"
+  },
+  "homepage": "https://github.com/mil-tokyo/sushi2",
+  "dependencies": {
+    "definitely-typed-jasmine": "^1.0.0"
+  }
+}
