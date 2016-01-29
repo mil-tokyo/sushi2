@@ -3,170 +3,357 @@ import $M = require('../src/sushi');
 
 declare var require;
 if (false) {
-var f: typeof $M = require('../src/augment');
+  var f: typeof $M = require('../src/augment');
 }
 
-describe('Sushi class', function(){
-    it('exist Sushi class',function(){
-        expect($M).toBeDefined();
-    });
+describe('Sushi class', function() {
+  it('exist Sushi class', function() {
+    expect($M).toBeDefined();
+  });
+
+  it('zeros', function() {
+    var mat = $M.zeros();
+    expect(mat._size).toEqual([1, 1]);//1x1 matrix of 0
+    expect(mat._klass).toEqual('single');//default type is single (Float32Array)
+    expect(mat._data).toEqual(jasmine.any(Float32Array));
+    expect(mat._data[0]).toEqual(0);
+
+    mat = $M.zeros(3);//3x3 matrix
+    expect(mat._size).toEqual([3, 3]);
+
+    mat = $M.zeros(2, 3);//2x3 matrix
+    expect(mat._size).toEqual([2, 3]);
+    expect(mat._data.length).toEqual(2 * 3);
+    expect(mat._numel).toEqual(6);
+    expect(mat._strides).toEqual([1, 2]);
+    for (var i = 0; i < mat._data.length; i++) {
+      expect(mat._data[i]).toEqual(0);
+    }
+
+    mat = $M.zeros(3, 4, 5);//3x4x5 matrix
+    expect(mat._size).toEqual([3, 4, 5]);
+    expect(mat._data.length).toEqual(3 * 4 * 5);
+    expect(mat._numel).toEqual(3 * 4 * 5);
+    expect(mat._strides).toEqual([1, 3, 12]);
+    for (var i = 0; i < mat._data.length; i++) {
+      expect(mat._data[i]).toEqual(0);
+    }
+
+    mat = $M.zeros(3, 4, 5, 6);
+    expect(mat._size).toEqual([3, 4, 5, 6]);
     
-    it('zeros',function() {
-        var mat = $M.zeros();
-        expect(mat._size).toEqual([1,1]);//1x1 matrix of 0
-        expect(mat._klass).toEqual('single');//default type is single (Float32Array)
-        expect(mat._data).toEqual(jasmine.any(Float32Array));
-        expect(mat._data[0]).toEqual(0);
-        
-        mat = $M.zeros(3);//3x3 matrix
-        expect(mat._size).toEqual([3,3]);
-        
-        mat = $M.zeros(2,3);//2x3 matrix
-        expect(mat._size).toEqual([2,3]);
-        expect(mat._data.length).toEqual(2*3);
-        expect(mat._numel).toEqual(6);
-        expect(mat._strides).toEqual([1,2]);
-        for (var i = 0; i < mat._data.length; i++) {
-            expect(mat._data[i]).toEqual(0);
-        }
-        
-        mat = $M.zeros(3,4,5);//3x4x5 matrix
-        expect(mat._size).toEqual([3,4,5]);
-        expect(mat._data.length).toEqual(3*4*5);
-        expect(mat._numel).toEqual(3*4*5);
-        expect(mat._strides).toEqual([1,3,12]);
-        for (var i = 0; i < mat._data.length; i++) {
-            expect(mat._data[i]).toEqual(0);
-        }
-        
-        mat = $M.zeros(3,4,5,6);
-        expect(mat._size).toEqual([3,4,5,6]);
-        
-        //zero-dimension case
-        mat = $M.zeros(0);
-        expect(mat._size).toEqual([0,0]);
-        expect(mat._numel).toEqual(0);
-        
-        mat = $M.zeros(0,0);
-        expect(mat._size).toEqual([0,0]);
-        expect(mat._numel).toEqual(0);
-        mat = $M.zeros(0,2);
-        expect(mat._size).toEqual([0,2]);
-        expect(mat._numel).toEqual(0);
-        mat = $M.zeros(2,0);
-        expect(mat._size).toEqual([2,0]);
-        expect(mat._numel).toEqual(0);
-        mat = $M.zeros(2,2,0);
-        expect(mat._size).toEqual([2,2,0]);
-        expect(mat._numel).toEqual(0);
-        mat = $M.zeros(2,2,0,3);
-        expect(mat._size).toEqual([2,2,0,3]);
-        expect(mat._numel).toEqual(0);
-        
-        //tailing 1
-        mat = $M.zeros(1);
-        expect(mat._size).toEqual([1,1]);
-        expect(mat._numel).toEqual(1);
-        
-        mat = $M.zeros(1,1);
-        expect(mat._size).toEqual([1,1]);
-        expect(mat._numel).toEqual(1);
-        
-        mat = $M.zeros(1,1,1);
-        expect(mat._size).toEqual([1,1]);//at least 2 dims
-        expect(mat._numel).toEqual(1);
-        
-        mat = $M.zeros(2,3,2,1);
-        expect(mat._size).toEqual([2,3,2]);
-        expect(mat._numel).toEqual(2*3*2);
-        mat = $M.zeros(2,3,2,1,1);
-        expect(mat._size).toEqual([2,3,2]);
-        expect(mat._numel).toEqual(2*3*2);
-        mat = $M.zeros(2,3,2,1,2);
-        expect(mat._size).toEqual([2,3,2,1,2]);
-        expect(mat._numel).toEqual(2*3*2*2);
-        mat = $M.zeros(2,3,2,1,0);
-        expect(mat._size).toEqual([2,3,2,1,0]);
-        expect(mat._numel).toEqual(0);
-        
-        //TODO: from size matrix
-        
-        //type specification
-        mat = $M.zeros(2,3,'single');
-        expect(mat._size).toEqual([2,3]);
-        expect(mat._klass).toEqual('single');
-        expect(mat._data).toEqual(jasmine.any(Float32Array));
-        expect(mat._data[0]).toEqual(0);
-        mat = $M.zeros(2,3,'uint8');
-        expect(mat._size).toEqual([2,3]);
-        expect(mat._klass).toEqual('uint8');
-        expect(mat._data).toEqual(jasmine.any(Uint8Array));
-        expect(mat._data[0]).toEqual(0);
-        mat = $M.zeros(2,3,'int32');
-        expect(mat._size).toEqual([2,3]);
-        expect(mat._klass).toEqual('int32');
-        expect(mat._data).toEqual(jasmine.any(Int32Array));
-        expect(mat._data[0]).toEqual(0);
-        mat = $M.zeros(2,3,'logical');
-        expect(mat._size).toEqual([2,3]);
-        expect(mat._klass).toEqual('logical');
-        expect(mat._data).toEqual(jasmine.any(Uint8Array));
-        expect(mat._data[0]).toEqual(0);
-        
-        mat = $M.zeros(2,3,'int32');
-        mat._data[0] = 10;//change data
-        mat = $M.zeros(3,4,'like',mat);
-        expect(mat._size).toEqual([3,4]);//only type is copied, not size
-        expect(mat._klass).toEqual('int32');
-        expect(mat._data).toEqual(jasmine.any(Int32Array));
-        expect(mat._data[0]).toEqual(0);//only type is copied, not data
-        
-        //invalid argument
-        expect(() => {$M.zeros(-1);}).toThrow();//negative
-        expect(() => {$M.zeros(1.1);}).toThrow();//not integer
-        expect(() => {$M.zeros(2,-1);}).toThrow();
-        expect(() => {$M.zeros(2,3,-1);}).toThrow();
-        expect(() => {$M.zeros(2,3,1.1);}).toThrow();
-        expect(() => {$M.zeros(2,0,1.1);}).toThrow();
-        expect(() => {$M.zeros(2,3,'foo');}).toThrow();//unknown klass
-        expect(() => {$M.zeros(2,3,'like',null);}).toThrow();
-    });
+    //zero-dimension case
+    mat = $M.zeros(0);
+    expect(mat._size).toEqual([0, 0]);
+    expect(mat._numel).toEqual(0);
+
+    mat = $M.zeros(0, 0);
+    expect(mat._size).toEqual([0, 0]);
+    expect(mat._numel).toEqual(0);
+    mat = $M.zeros(0, 2);
+    expect(mat._size).toEqual([0, 2]);
+    expect(mat._numel).toEqual(0);
+    mat = $M.zeros(2, 0);
+    expect(mat._size).toEqual([2, 0]);
+    expect(mat._numel).toEqual(0);
+    mat = $M.zeros(2, 2, 0);
+    expect(mat._size).toEqual([2, 2, 0]);
+    expect(mat._numel).toEqual(0);
+    mat = $M.zeros(2, 2, 0, 3);
+    expect(mat._size).toEqual([2, 2, 0, 3]);
+    expect(mat._numel).toEqual(0);
     
-    it('ones',function(){
-        //same as zeros except that content is filled with 1
-        var mat = $M.ones();
-        expect(mat._size).toEqual([1,1]);//1x1 matrix of 0
-        expect(mat._klass).toEqual('single');//default type is single (Float32Array)
-        expect(mat._data).toEqual(jasmine.any(Float32Array));
-        expect(mat._data[0]).toEqual(1);
-        
-        mat = $M.ones(3);//3x3 matrix
-        expect(mat._size).toEqual([3,3]);
-        
-        mat = $M.ones(2,3);//2x3 matrix
-        expect(mat._size).toEqual([2,3]);
-        expect(mat._data.length).toEqual(2*3);
-        expect(mat._numel).toEqual(6);
-        expect(mat._strides).toEqual([1,2]);
-        for (var i = 0; i < mat._data.length; i++) {
-            expect(mat._data[i]).toEqual(1);
-        }
-        
-        mat = $M.ones(3,4,5);//3x4x5 matrix
-        expect(mat._size).toEqual([3,4,5]);
-        
-        mat = $M.ones(2,3,'uint8');
-        expect(mat._size).toEqual([2,3]);
-        expect(mat._klass).toEqual('uint8');
-        expect(mat._data).toEqual(jasmine.any(Uint8Array));
-        expect(mat._data[0]).toEqual(1);
-        
-        mat = $M.ones(2,3,'int32');
-        mat._data[0] = 10;//change data
-        mat = $M.ones(3,4,'like',mat);
-        expect(mat._size).toEqual([3,4]);//only type is copied, not size
-        expect(mat._klass).toEqual('int32');
-        expect(mat._data).toEqual(jasmine.any(Int32Array));
-        expect(mat._data[0]).toEqual(1);//only type is copied, not data
-    });
+    //tailing 1
+    mat = $M.zeros(1);
+    expect(mat._size).toEqual([1, 1]);
+    expect(mat._numel).toEqual(1);
+
+    mat = $M.zeros(1, 1);
+    expect(mat._size).toEqual([1, 1]);
+    expect(mat._numel).toEqual(1);
+
+    mat = $M.zeros(1, 1, 1);
+    expect(mat._size).toEqual([1, 1]);//at least 2 dims
+    expect(mat._numel).toEqual(1);
+
+    mat = $M.zeros(2, 3, 2, 1);
+    expect(mat._size).toEqual([2, 3, 2]);
+    expect(mat._numel).toEqual(2 * 3 * 2);
+    mat = $M.zeros(2, 3, 2, 1, 1);
+    expect(mat._size).toEqual([2, 3, 2]);
+    expect(mat._numel).toEqual(2 * 3 * 2);
+    mat = $M.zeros(2, 3, 2, 1, 2);
+    expect(mat._size).toEqual([2, 3, 2, 1, 2]);
+    expect(mat._numel).toEqual(2 * 3 * 2 * 2);
+    mat = $M.zeros(2, 3, 2, 1, 0);
+    expect(mat._size).toEqual([2, 3, 2, 1, 0]);
+    expect(mat._numel).toEqual(0);
+    
+    //TODO: from size matrix
+    
+    //type specification
+    mat = $M.zeros(2, 3, 'single');
+    expect(mat._size).toEqual([2, 3]);
+    expect(mat._klass).toEqual('single');
+    expect(mat._data).toEqual(jasmine.any(Float32Array));
+    expect(mat._data[0]).toEqual(0);
+    mat = $M.zeros(2, 3, 'uint8');
+    expect(mat._size).toEqual([2, 3]);
+    expect(mat._klass).toEqual('uint8');
+    expect(mat._data).toEqual(jasmine.any(Uint8Array));
+    expect(mat._data[0]).toEqual(0);
+    mat = $M.zeros(2, 3, 'int32');
+    expect(mat._size).toEqual([2, 3]);
+    expect(mat._klass).toEqual('int32');
+    expect(mat._data).toEqual(jasmine.any(Int32Array));
+    expect(mat._data[0]).toEqual(0);
+    mat = $M.zeros(2, 3, 'logical');
+    expect(mat._size).toEqual([2, 3]);
+    expect(mat._klass).toEqual('logical');
+    expect(mat._data).toEqual(jasmine.any(Uint8Array));
+    expect(mat._data[0]).toEqual(0);
+
+    mat = $M.zeros(2, 3, 'int32');
+    mat._data[0] = 10;//change data
+    mat = $M.zeros(3, 4, 'like', mat);
+    expect(mat._size).toEqual([3, 4]);//only type is copied, not size
+    expect(mat._klass).toEqual('int32');
+    expect(mat._data).toEqual(jasmine.any(Int32Array));
+    expect(mat._data[0]).toEqual(0);//only type is copied, not data
+    
+    //invalid argument
+    expect(() => $M.zeros(-1)).toThrow();//negative
+    expect(() => $M.zeros(1.1)).toThrow();//not integer
+    expect(() => $M.zeros(2, -1)).toThrow();
+    expect(() => $M.zeros(2, 3, -1)).toThrow();
+    expect(() => $M.zeros(2, 3, 1.1)).toThrow();
+    expect(() => $M.zeros(2, 0, 1.1)).toThrow();
+    expect(() => $M.zeros(2, 3, 'foo')).toThrow();//unknown klass
+    expect(() => $M.zeros(2, 3, 'like', null)).toThrow();
+  });
+
+  it('ones', function() {
+    //same as zeros except that content is filled with 1
+    var mat = $M.ones();
+    expect(mat._size).toEqual([1, 1]);//1x1 matrix of 0
+    expect(mat._klass).toEqual('single');//default type is single (Float32Array)
+    expect(mat._data).toEqual(jasmine.any(Float32Array));
+    expect(mat._data[0]).toEqual(1);
+
+    mat = $M.ones(3);//3x3 matrix
+    expect(mat._size).toEqual([3, 3]);
+
+    mat = $M.ones(2, 3);//2x3 matrix
+    expect(mat._size).toEqual([2, 3]);
+    expect(mat._data.length).toEqual(2 * 3);
+    expect(mat._numel).toEqual(6);
+    expect(mat._strides).toEqual([1, 2]);
+    for (var i = 0; i < mat._data.length; i++) {
+      expect(mat._data[i]).toEqual(1);
+    }
+
+    mat = $M.ones(3, 4, 5);//3x4x5 matrix
+    expect(mat._size).toEqual([3, 4, 5]);
+
+    mat = $M.ones(2, 3, 'uint8');
+    expect(mat._size).toEqual([2, 3]);
+    expect(mat._klass).toEqual('uint8');
+    expect(mat._data).toEqual(jasmine.any(Uint8Array));
+    expect(mat._data[0]).toEqual(1);
+
+    mat = $M.ones(2, 3, 'int32');
+    mat._data[0] = 10;//change data
+    mat = $M.ones(3, 4, 'like', mat);
+    expect(mat._size).toEqual([3, 4]);//only type is copied, not size
+    expect(mat._klass).toEqual('int32');
+    expect(mat._data).toEqual(jasmine.any(Int32Array));
+    expect(mat._data[0]).toEqual(1);//only type is copied, not data
+  });
+
+  it('get_set_scalar', function() {
+    //matrix indexing
+    //reference: http://jp.mathworks.com/help/matlab/math/matrix-indexing.html
+    //reference:  http://jp.mathworks.com/help/matlab/math/multidimensional-arrays.html
+    var mat = $M.zeros(2, 3);
+    expect(mat.get(1, 1)).toEqual(0);
+    //[10 30 50;20 40 60]
+    mat.set(1, 1, 10);
+    mat.set(2, 1, 20);
+    mat.set(1, 2, 30);
+    mat.set($M.end, 2, 40);//final index of a dimension
+    mat.set(1, $M.end, 50);
+    mat.set(2, 3, 60);
+    expect(mat.get(1, 1)).toEqual(10);
+    expect(mat.get(2, 1)).toEqual(20);
+    expect(mat.get(1, 2)).toEqual(30);
+    expect(mat.get(2, 2)).toEqual(40);
+    expect(mat.get(1, 3)).toEqual(50);
+    expect(mat.get(2, 3)).toEqual(60);
+    expect(mat.get($M.end, 2)).toEqual(40);
+    expect(mat.get(1, $M.end)).toEqual(50);
+    expect(mat.get(1, $M.end - 1)).toEqual(30);
+    expect(mat.get(1)).toEqual(10);//linear indexing
+    expect(mat.get(2)).toEqual(20);
+    expect(mat.get(3)).toEqual(30);
+    expect(mat.get(4)).toEqual(40);
+    expect(mat.get(5)).toEqual(50);
+    expect(mat.get(6)).toEqual(60);
+    mat.set(3, 31);
+    expect(mat.get(3)).toEqual(31);
+    expect(mat.get(1, 2)).toEqual(31);
+    mat.set($M.end, 61);
+    expect(mat.get($M.end, $M.end)).toEqual(61);
+    expect(mat.get(2, 3)).toEqual(61);
+    expect(mat.get($M.end)).toEqual(61);
+    mat.set($M.end - 2, 41);
+    expect(mat.get(4)).toEqual(41);
+    expect(mat.get($M.end - 2)).toEqual(41);
+    expect($M.end).toEqual(-1);//end is same as -1
+    
+    mat = $M.zeros(3, 4, 5);
+    mat.set(1, 2, 3, 10);
+    expect(mat.get(1, 2, 3)).toEqual(10);
+    expect(mat.get(0 + 1 * 3 + 2 * 3 * 4 + 1)).toEqual(10);
+    expect(mat.get(1, 2, 3, 1, 1)).toEqual(10);//extra 1 is ok
+    expect(mat.get(1, 2, 3, 1, $M.end)).toEqual(10);//extra end is ok
+    mat.set(2, 3, 20);//1 is expected for omitted dimension
+    expect(mat.get(2, 3)).toEqual(20);
+    expect(mat.get(2, 3, 1)).toEqual(20);
+    expect(mat.get(1 + 2 * 3 + 1)).toEqual(20);
+    expect(mat.get($M.end - 1, $M.end - 1)).toEqual(20);
+    
+    //invalid index
+    mat = $M.zeros(0, 0);
+    expect(() => mat.get(1)).toThrow();//any index is error
+    expect(() => mat.get(1, 1)).toThrow();
+    expect(() => mat.get($M.end)).toThrow();
+    expect(() => mat.set(1, 1)).toThrow();//any index is error
+    expect(() => mat.set(1, 1, 1)).toThrow();
+    expect(() => mat.set($M.end, 1)).toThrow();
+    mat = $M.zeros(2, 3);
+    expect(() => mat.get(0)).toThrow();
+    expect(() => mat.get(7)).toThrow();
+    expect(() => mat.get(3, 1)).toThrow();
+    expect(() => mat.get(1, 4)).toThrow();
+    expect(() => mat.get(1, 1, 2)).toThrow();
+    expect(() => mat.get($M.end - 6)).toThrow();
+    expect(() => mat.get($M.end - 7)).toThrow();
+    mat = $M.zeros(3, 4, 5);
+    expect(() => mat.get(1, 1, 6)).toThrow();
+    
+    //TODO: automatic expansion of multidimensional matrix
+  });
+
+  it('size and related', function() {
+    //size, length, ndims, numel, iscolumn, isempty, ismatrix, isrow, isscalar, isvector
+    var mat = $M.zeros(2, 3);
+    expect($M.size(mat, 1)).toEqual(2);
+    expect($M.size(mat, 2)).toEqual(3);
+    expect($M.size(mat, 3)).toEqual(1);//extra dimension is 1
+    expect($M.size(mat)._size).toEqual([1, 2]);//row vector
+    expect($M.size(mat).mat2jsa(false)).toEqual([[2, 3]]);
+    expect($M.length(mat)).toEqual(3);//largest dimension
+    expect($M.ndims(mat)).toEqual(2);
+    expect($M.numel(mat)).toEqual(6);
+
+    mat = $M.zeros(4, 3, 2);
+    expect($M.size(mat, 1)).toEqual(4);
+    expect($M.size(mat, 2)).toEqual(3);
+    expect($M.size(mat, 3)).toEqual(2);
+    expect($M.size(mat, 4)).toEqual(1);//extra dimension is 1
+    expect($M.size(mat)._size).toEqual([1, 3]);//row vector
+    expect($M.size(mat).mat2jsa(false)).toEqual([[4, 3, 2]]);
+    expect($M.length(mat)).toEqual(4);//largest dimension
+    expect($M.ndims(mat)).toEqual(3);
+    expect($M.numel(mat)).toEqual(24);
+
+    var ischeck = function(shape: number[], iscolumn: boolean, isrow: boolean, isvector: boolean, ismatrix: boolean, isscalar: boolean, isempty: boolean) {
+      var m = $M.zeros(...shape);
+      expect($M.iscolumn(m)).toEqual(iscolumn);
+      expect($M.isrow(m)).toEqual(isrow);
+      expect($M.isvector(m)).toEqual(isvector);
+      expect($M.ismatrix(m)).toEqual(ismatrix);
+      expect($M.isscalar(m)).toEqual(isscalar);
+      expect($M.isempty(m)).toEqual(isempty);
+    }
+
+    ischeck([2, 1], true, false, true, true, false, false);
+    ischeck([1, 2], false, true, true, true, false, false);
+    ischeck([2, 3], false, false, false, true, false, false);
+    ischeck([2, 0], false, false, false, true, false, true);
+    ischeck([0, 2], false, false, false, true, false, true);
+    ischeck([0, 0], false, false, false, true, false, true);
+    ischeck([1, 0], false, true, true, true, false, true);
+    ischeck([0, 1], true, false, true, true, false, true);
+    ischeck([1, 1], true, true, true, true, true, false);
+    ischeck([1, 2, 3], false, false, false, false, false, false);
+    ischeck([2, 1, 3], false, false, false, false, false, false);
+    ischeck([1, 2, 0], false, false, false, false, false, true);
+    ischeck([2, 1, 0], false, false, false, false, false, true);
+
+  });
+
+  it('jsa2mat', function() {
+    var ary = [];//0x0
+    var mat = $M.jsa2mat(ary);
+    expect(mat._size).toEqual([0, 0]);
+
+    ary = [[1, 2, 3], [4, 5, 6]];
+    mat = $M.jsa2mat(ary);
+    expect(mat._size).toEqual([2, 3]);
+    expect(mat.get(1, 1)).toEqual(1);
+    expect(mat.get(1, 2)).toEqual(2);
+    expect(mat.get(1, 3)).toEqual(3);
+    expect(mat.get(2, 1)).toEqual(4);
+    expect(mat.get(2, 2)).toEqual(5);
+    expect(mat.get(2, 3)).toEqual(6);
+
+    ary = [10, 20, 30];
+    mat = $M.jsa2mat(ary, true);//column vector
+    expect(mat._size).toEqual([3, 1]);
+    expect(mat.get(1, 1)).toEqual(10);
+    expect(mat.get(2, 1)).toEqual(20);
+    expect(mat.get(3, 1)).toEqual(30);
+    mat = $M.jsa2mat(ary, false);//row vector
+    expect(mat._size).toEqual([1, 3]);
+    expect(mat.get(1, 1)).toEqual(10);
+    expect(mat.get(1, 2)).toEqual(20);
+    expect(mat.get(1, 3)).toEqual(30);
+    
+    // TODO: support of n-d array
+  });
+
+  it('mat2jsa', function() {
+    var mat = $M.zeros(2, 3);
+    //[10 30 50;20 40 60]
+    mat.set(1, 1, 10);
+    mat.set(2, 1, 20);
+    mat.set(1, 2, 30);
+    mat.set(2, 2, 40);//final index of a dimension
+    mat.set(1, 3, 50);
+    mat.set(2, 3, 60);
+    expect($M.mat2jsa(mat)).toEqual([[10, 30, 50], [20, 40, 60]]);
+
+    mat = $M.zeros(3, 1);
+    mat.set(1, 10);
+    mat.set(2, 20);
+    mat.set(3, 30);
+    expect($M.mat2jsa(mat, false)).toEqual([[10], [20], [30]]);
+    expect($M.mat2jsa(mat, true)).toEqual([10, 20, 30]);
+    mat = $M.zeros(1, 3);
+    mat.set(1, 10);
+    mat.set(2, 20);
+    mat.set(3, 30);
+    expect($M.mat2jsa(mat, false)).toEqual([[10, 20, 30]]);
+    expect($M.mat2jsa(mat, true)).toEqual([10, 20, 30]);
+
+    mat = $M.zeros(0, 0);
+    expect($M.mat2jsa(mat)).toEqual([]);
+    mat = $M.zeros(2, 0);
+    expect($M.mat2jsa(mat)).toEqual([[], []]);
+    mat = $M.zeros(0, 2);
+    expect($M.mat2jsa(mat)).toEqual([]);//limitation of representation ability
+    
+    //TODO: support of n-d array
+  });
 });
