@@ -1,6 +1,7 @@
 export import Matrix = require('./matrix');
 
 export var end = -1;
+declare type MatrixOrNumber = Matrix | number;
 
 export function zeros(...args: any[]): Matrix {
   var mat = null;
@@ -108,4 +109,95 @@ export function ismatrix(A: Matrix): boolean {
 export function isscalar(A: Matrix): boolean {
   // currently, number is not supported
   return A._numel == 1;
+}
+
+export function klass(object: Matrix): string {
+  return object._klass;
+}
+
+//equality http://jp.mathworks.com/help/matlab/relational-operators.html
+function jsaequal(a: any[], b: any[]): boolean {
+  if (a.length != b.length) {
+    return false;
+  }
+
+  for (var i = 0; i < a.length; i++) {
+    if (a[i] != b[i]) {
+      return false;
+    }
+  }
+  return true;
+}
+
+function _compare(A: MatrixOrNumber, B: MatrixOrNumber, comp: (a: any, b: any) => boolean): Matrix {
+  var shape: number[];
+  var both_mat = false;
+  var mat: Matrix;
+  if (A instanceof Matrix) {
+    shape = sizejsa(<Matrix>A);
+    if ((B instanceof Matrix)) {
+      if (!jsaequal(shape, sizejsa(B))) {
+        throw new Error('Dimension mismatch');
+      }
+      
+      //both matrix
+      mat = zeros(...shape, 'logical');
+      var mata = <Matrix>A;
+      var matb = <Matrix>B;
+      var len = numel(mata);
+      for (var i = 1; i <= len; i++) {
+        mat.set(i, Number(comp(mata.get(i), matb.get(i))));
+      }
+    } else {
+      //a is mat, b is number
+      mat = zeros(...shape, 'logical');
+      var mata = <Matrix>A;
+      var scalarb = <number>B;
+      var len = numel(mata);
+      for (var i = 1; i <= len; i++) {
+        mat.set(i, Number(comp(mata.get(i), scalarb)));
+      }
+    }
+  } else if (B instanceof Matrix) {
+    shape = sizejsa(<Matrix>B);
+    // b is mat, a is number
+    mat = zeros(...shape, 'logical');
+    var scalara = <number>A;
+    var matb = B;
+    var len = numel(matb);
+    for (var i = 1; i <= len; i++) {
+      mat.set(i, Number(comp(scalara, matb.get(i))));
+    }
+  } else {
+    //both number
+    mat = zeros(1, 'logical');
+    mat.set(1, Number(comp(A, B)));
+    return mat;
+  }
+
+  return mat;
+}
+
+export function eq(A: MatrixOrNumber, B: MatrixOrNumber): Matrix {
+  return _compare(A, B, (a, b) => { return a == b });
+}
+
+export function ge(A: MatrixOrNumber, B: MatrixOrNumber): Matrix {
+  return _compare(A, B, (a, b) => { return a >= b });
+}
+
+export function gt(A: MatrixOrNumber, B: MatrixOrNumber): Matrix {
+  return _compare(A, B, (a, b) => { return a > b });
+}
+
+export function le(A: MatrixOrNumber, B: MatrixOrNumber): Matrix {
+  return _compare(A, B, (a, b) => { return a <= b });
+}
+
+export function lt(A: MatrixOrNumber, B: MatrixOrNumber): Matrix {
+  return _compare(A, B, (a, b) => { return a < b });
+}
+
+export function ne(A: MatrixOrNumber, B: MatrixOrNumber): Matrix {
+  return _compare(A, B, (a, b) => { return a != b });
 }

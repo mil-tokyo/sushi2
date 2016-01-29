@@ -225,13 +225,13 @@ describe('Sushi class', function() {
     //logical value
     //in typedarray, inputting false becomes 0, true becomes 1
     //false==0, false!==0, true==1, true!==1
-    mat = $M.zeros(2,3,'logical');
-    mat.set(1,1,true);
-    expect(mat.get(1,1)).toEqual(1);
-    mat.set(1,1,false);
-    expect(mat.get(1,1)).toEqual(0);
-    mat.set(1,1,2);
-    expect(mat.get(1,1)).toEqual(1);//converted to 0/1
+    mat = $M.zeros(2, 3, 'logical');
+    mat.set(1, 1, true);
+    expect(mat.get(1, 1)).toEqual(1);
+    mat.set(1, 1, false);
+    expect(mat.get(1, 1)).toEqual(0);
+    mat.set(1, 1, 2);
+    expect(mat.get(1, 1)).toEqual(1);//converted to 0/1
     
     //invalid index
     mat = $M.zeros(0, 0);
@@ -367,4 +367,51 @@ describe('Sushi class', function() {
     
     //TODO: support of n-d array
   });
+
+  it('comparison', function() {
+    //eq, ge, gt, le, lt, ne, isequal, isequaln
+    var check = function(op, a, b, expected, expected_size) {
+      if (Array.isArray(a)) {
+        a = $M.jsa2mat(a);
+      }
+      if (Array.isArray(b)) {
+        b = $M.jsa2mat(b);
+      }
+      var res = op(a, b);
+      expect($M.klass(res)).toEqual('logical');
+      if (expected_size) {
+        expect($M.sizejsa(res)).toEqual(expected_size);
+      }
+      expect(res.mat2jsa()).toEqual(expected);
+    }
+
+    var check_allop = function(a, b, expected_eq, expected_ge,
+      expected_gt, expected_le, expected_lt, expected_ne, expected_size) {
+      check($M.eq, a, b, expected_eq, expected_size);
+      check($M.ge, a, b, expected_ge, expected_size);
+      check($M.gt, a, b, expected_gt, expected_size);
+      check($M.le, a, b, expected_le, expected_size);
+      check($M.lt, a, b, expected_lt, expected_size);
+      check($M.ne, a, b, expected_ne, expected_size);
+    }
+    check($M.eq, [2, 3], [2, 4], [[1, 0]], [1, 2]);
+    check_allop([2, 3, 4], [4, 3, 2], [[0, 1, 0]], [[0, 1, 1]], [[0, 0, 1]], [[1, 1, 0]], [[1, 0, 0]], [[1, 0, 1]], [1, 3]);
+    check_allop([2, 3, 4], 2.5, [[0, 0, 0]], [[0, 1, 1]], [[0, 1, 1]], [[1, 0, 0]], [[1, 0, 0]], [[1, 1, 1]], [1, 3]);
+    check_allop(3.5, [2, 3, 4], [[0, 0, 0]], [[1, 1, 0]], [[1, 1, 0]], [[0, 0, 1]], [[0, 0, 1]], [[1, 1, 1]], [1, 3]);
+    check_allop(1.0, 2.0, [[0]], [[0]], [[0]], [[1]], [[1]], [[1]], [1, 1]);
+    check_allop(20, 20, [[1]], [[1]], [[0]], [[1]], [[0]], [[0]], [1, 1]);
+    check_allop(50, -10, [[0]], [[1]], [[1]], [[0]], [[0]], [[1]], [1, 1]);
+    check_allop([NaN, Infinity, -Infinity, 1.0], [NaN, Infinity, -Infinity, 1.0 + 1.0e-6],
+      [[0, 1, 1, 0]], [[0, 1, 1, 0]], [[0, 0, 0, 0]], [[0, 1, 1, 1]], [[0, 0, 0, 1]], [[1, 0, 0, 1]], [1, 4]);
+
+    var a = $M.jsa2mat([0, 1, 2]);
+    var b = $M.jsa2mat([0, 1, 1], false, 'logical');
+    var res = $M.eq(a, b);
+    expect(res.mat2jsa(true)).toEqual([1, 1, 0]);//compared as number
+    
+    //invalid shape
+    expect(() => $M.eq($M.zeros(1, 2), $M.zeros(1, 3))).toThrow();
+    
+    //TODO: random case
+  })
 });
