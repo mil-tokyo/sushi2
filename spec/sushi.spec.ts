@@ -222,6 +222,17 @@ describe('Sushi class', function() {
     expect(mat.get(1 + 2 * 3 + 1)).toEqual(20);
     expect(mat.get($M.end - 1, $M.end - 1)).toEqual(20);
     
+    //logical value
+    //in typedarray, inputting false becomes 0, true becomes 1
+    //false==0, false!==0, true==1, true!==1
+    mat = $M.zeros(2,3,'logical');
+    mat.set(1,1,true);
+    expect(mat.get(1,1)).toEqual(1);
+    mat.set(1,1,false);
+    expect(mat.get(1,1)).toEqual(0);
+    mat.set(1,1,2);
+    expect(mat.get(1,1)).toEqual(1);//converted to 0/1
+    
     //invalid index
     mat = $M.zeros(0, 0);
     expect(() => mat.get(1)).toThrow();//any index is error

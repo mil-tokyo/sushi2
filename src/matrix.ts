@@ -242,6 +242,9 @@ class Matrix {
     var val = inds.pop();
     this._isvalidindexerr(inds);
     var arrayidx = this._getarrayindex(inds);
+    if (this._klass == 'logical') {
+      val = Number(Boolean(val));
+    }
     rawdata[arrayidx] = val;
   }
 
