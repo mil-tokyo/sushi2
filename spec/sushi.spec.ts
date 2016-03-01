@@ -254,6 +254,31 @@ describe('Sushi class', function() {
     
     //TODO: automatic expansion of multidimensional matrix
   });
+  
+  it('get_set_matrix', function() {
+    var mat = $M.jsa2mat([[1,2,3],[4,5,6],[7,8,9]]);
+    var extracted: $M.Matrix;
+    
+    //linear indexing
+    extracted = <$M.Matrix>mat.get($M.colon(2,5));
+    expect($M.mat2jsa(extracted)).toEqual([[4,7,2,5]]);
+    extracted = <$M.Matrix>mat.get($M.colon(2,3,8));
+    expect($M.mat2jsa(extracted)).toEqual([[4,5,6]]);
+    extracted = <$M.Matrix>mat.get($M.jsa2mat([]));
+    expect($M.mat2jsa(extracted)).toEqual([]);
+    extracted = <$M.Matrix>mat.get($M.jsa2mat([1,3,9]));
+    expect($M.mat2jsa(extracted)).toEqual([[1,7,9]]);
+    extracted = <$M.Matrix>mat.get($M.jsa2mat([1,3,9], true));//column vector
+    expect($M.mat2jsa(extracted)).toEqual([[1],[7],[9]]);
+    extracted = <$M.Matrix>mat.get($M.colon());//all
+    expect($M.mat2jsa(extracted)).toEqual([[1,4,7,2,5,8,3,6,9]]);
+    
+    //2-d indexing
+    extracted = <$M.Matrix>mat.get($M.colon(2,3), $M.colon(1,2));
+    expect($M.mat2jsa(extracted)).toEqual([[4,5],[7,8]]);
+    
+    //TODO: n-d matrix
+  });
 
   it('size and related', function() {
     //size, length, ndims, numel, iscolumn, isempty, ismatrix, isrow, isscalar, isvector
@@ -409,9 +434,9 @@ describe('Sushi class', function() {
     var res = $M.eq(a, b);
     expect(res.mat2jsa(true)).toEqual([1, 1, 0]);//compared as number
     
+    //TODO: isequal, isequaln
+    
     //invalid shape
     expect(() => $M.eq($M.zeros(1, 2), $M.zeros(1, 3))).toThrow();
-    
-    //TODO: random case
-  })
+  });
 });

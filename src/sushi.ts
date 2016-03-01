@@ -1,4 +1,6 @@
 export import Matrix = require('./matrix');
+export import Colon = require('./colon');
+export import colon = require('./colonwrap');
 
 export var end = -1;
 declare type MatrixOrNumber = Matrix | number;
@@ -129,10 +131,54 @@ function jsaequal(a: any[], b: any[]): boolean {
   return true;
 }
 
+// If input is 1x1 matrix, returns number
+function _singlemat2number(A: MatrixOrNumber): MatrixOrNumber {
+  if ((A instanceof Matrix) && isscalar(A)) {
+    return A.get_scalar(1);
+  }
+  
+  return A;
+}
+
+//finds common output class for matrices
+function _commonklassstr(...klasses: string[]): string {
+  // single > int32 > uint8 > logical
+  var klass_order = ['single','int32','uint8','logical'];
+  if (klasses.length == 0) {
+    return klass_order[0];
+  }
+  var best_klass = 3;
+  for (var i = 0; i < klasses.length; i++) {
+    var element = klasses[i];
+    var score = klass_order.indexOf(element);
+    if (score < 0) {
+      throw new Error('Unknown klass');
+    }
+    best_klass = Math.min(score, best_klass);
+  }
+  
+  return klass_order[best_klass];
+}
+
+function _commonklass(...mats: MatrixOrNumber[]): string {
+  //number not affects class decision
+  var klasses: string[] = [];
+  for (var i = 0; i < mats.length; i++) {
+    var element = mats[i];
+    if (element instanceof Matrix) {
+      klasses.push(element._klass);
+    }
+  }
+  
+  return _commonklassstr(...klasses);
+}
+
 function _compare(A: MatrixOrNumber, B: MatrixOrNumber, comp: (a: any, b: any) => boolean): Matrix {
   var shape: number[];
   var both_mat = false;
   var mat: Matrix;
+  A = _singlemat2number(A);
+  B = _singlemat2number(B);
   if (A instanceof Matrix) {
     shape = sizejsa(<Matrix>A);
     if ((B instanceof Matrix)) {
@@ -200,4 +246,28 @@ export function lt(A: MatrixOrNumber, B: MatrixOrNumber): Matrix {
 
 export function ne(A: MatrixOrNumber, B: MatrixOrNumber): Matrix {
   return _compare(A, B, (a, b) => { return a != b });
+}
+
+//indexing
+//TODO:test
+export function sub2ind(matrixSize: Matrix | number[], ...dimSub: number[]): number {
+  //note: 'end' cannot be used in matlab sub2ind; only positive index is valid
+  var msizejsa: number[];
+  if (matrixSize instanceof Matrix) {
+    if (!isrow(matrixSize) || matrixSize._numel < 2) {
+      throw new Error('matrixSize must be row vector');
+    }
+    msizejsa = matrixSize.mat2jsa(true);
+  } else {
+    msizejsa = <number[]>matrixSize;
+  }
+
+  var stride = 1;
+  var idx = 1;
+  for (var i = 0; i < msizejsa.length; i++) {
+    idx += ((dimSub[i] || 1) - 1) * stride;
+    stride *= msizejsa[i];
+  }
+
+  return idx;
 }

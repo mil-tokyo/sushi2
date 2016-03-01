@@ -1,9 +1,13 @@
+import Colon = require('./colon');
+
+declare type AllowedTypedArray = Float32Array | Int32Array | Uint8Array;
+
 class Matrix {
   _size: number[];
   _ndims: number;
   _numel: number;
   _klass: string;
-  _data: Float32Array | Int32Array | Uint8Array;//allocated in constructor
+  _data: AllowedTypedArray;//allocated in constructor
   _strides: number[];// in typedarray index (not byte)
 
   constructor(size: number[], klass: string = 'single', noalloc: boolean = false) {
@@ -52,7 +56,7 @@ class Matrix {
     return klass == 'single' || klass == 'int32' || klass == 'uint8' || klass == 'logical';
   }
 
-  _alloccpu() {
+  _alloccpu(): AllowedTypedArray {
     // allocate cpu buffer if not exist
     if (!this._data) {
       switch (this._klass) {
@@ -68,7 +72,6 @@ class Matrix {
           break;
         default:
           throw new Error('Unknown data class');
-          break;
       }
     }
 
@@ -152,12 +155,12 @@ class Matrix {
     if (ary.length == 0) {
       //0x0 matrix
       mat = new Matrix([0, 0], klass);
-    } else if (ary[0].length === void 0){
+    } else if (ary[0].length === void 0) {
       //1-d array
       var vecshape = one_d_column ? [ary.length, 1] : [1, ary.length];
       mat = new Matrix(vecshape, klass);
       for (var i = 0; i < ary.length; i++) {
-        mat.set_scalar(i+1, ary[i]);
+        mat.set_scalar(i + 1, ary[i]);
       }
     } else {
       var dim_size: number[] = [];
@@ -185,9 +188,10 @@ class Matrix {
 
     return mat;
   }
-  
+
   mat2jsa(one_d_flatten: boolean = false): any[] {
     //TODO: support n-d array
+    //empty matrix will be [] not [[]]
     if (this._ndims > 2) {
       throw new Error('Currently matrix must be 2-D');
     }
@@ -197,41 +201,138 @@ class Matrix {
       if (this._numel == this._size[0]) {
         //column vector
         for (var row = 0; row < this._size[0]; row++) {
-          ary.push(this.get_scalar(row+1, 1));
+          ary.push(this.get_scalar(row + 1, 1));
         }
         flattened = true;
       } else if (this._numel == this._size[1]) {
         //row vector
         for (var col = 0; col < this._size[1]; col++) {
-          ary.push(this.get_scalar(1, col+1));
+          ary.push(this.get_scalar(1, col + 1));
         }
         flattened = true;
       }
     }
-    
+
     if (!flattened) {
-    for (var row = 0; row < this._size[0]; row++) {
-      var rowary = [];
-      for (var col = 0; col < this._size[1]; col++) {
-        rowary.push(this.get_scalar(row+1,col+1));
+      for (var row = 0; row < this._size[0]; row++) {
+        var rowary = [];
+        for (var col = 0; col < this._size[1]; col++) {
+          rowary.push(this.get_scalar(row + 1, col + 1));
+        }
+        ary.push(rowary);
       }
-      ary.push(rowary);
-    }
     }
     return ary;
   }
-  
-  get(...args: any[]): any {
-    return this.get_scalar(...args);
+
+  get(...args: any[]): number | Matrix {
+    if (args.length == 0) {
+      throw new Error('At least one argument have to be specified');
+    }
+    var all_number = args.every((v) => typeof (v) === 'number');
+    if (all_number) {
+      return this.get_scalar(...args);
+    } else {
+      return this.get_matrix(...args);
+    }
   }
-  
+
   get_scalar(...inds: number[]): number {
     var rawdata = this._alloccpu();
     this._isvalidindexerr(inds);
     var arrayidx = this._getarrayindex(inds);
     return rawdata[arrayidx];
   }
-  
+
+  get_matrix(...inds: (number | Colon | Matrix)[]): Matrix {
+    if (inds.length == 1) {
+      return this.get_matrix_single(<Colon | Matrix>inds[0]);
+    } else {
+      //multidim indexing
+      //convert index of each dimension into array
+      var eachdimidx: (number[] | AllowedTypedArray)[] = [];
+      var eachdimstride: number[] = [];
+      var output_size = [];
+      var output_length = 1;
+      var inputdimctr: number[] = [];
+      for (var dim = 0; dim < inds.length; dim++) {
+        var dimind = inds[dim];
+        var dimidx;
+        if (dimind instanceof Colon) {
+          dimidx = dimind.tojsa(this._size[dim]);
+        } else if (dimind instanceof Matrix) {
+          dimidx = dimind._data;
+        } else {
+          //number
+          dimidx = [<number>dimind];
+        }
+        
+        //range check
+        var dim_size = this._size[dim] || 1;//exceed dimension must be [1,1,...]
+        for (var i = 0; i < dimidx.length; i++) {
+          if ((dimidx[i] > dim_size) || (dimidx[i] < 1)) {
+            throw new Error('Index exceeds matrix dimension');
+          }
+        }
+
+        eachdimidx.push(dimidx);
+        eachdimstride.push(this._strides[dim] || 0);
+        output_size.push(dimidx.length);
+        output_length *= dimidx.length;
+        inputdimctr.push(0);
+      }
+
+      var output = new Matrix(output_size, this._klass);
+      var output_data = output._data;
+      var input_data = this._data;
+      for (var i = 0; i < output_length; i++) {
+        //calc input index
+        var input_raw_idx = 0;
+        for (var dim = 0; dim < eachdimidx.length; dim++) {
+          input_raw_idx += (eachdimidx[dim][inputdimctr[dim]] - 1) * eachdimstride[dim];
+        }
+
+        output_data[i] = input_data[input_raw_idx];
+        
+        //increment input index
+        for (var dim = 0; dim < inputdimctr.length; dim++) {
+          var element = ++inputdimctr[dim];
+          if (element >= eachdimidx[dim].length) {
+            //overflow to next dimension
+            inputdimctr[dim] = 0;
+          } else {
+            break;
+          }
+        }
+      }
+
+      return output;
+    }
+  }
+
+  get_matrix_single(singleind: Colon | Matrix): Matrix {
+    var single_idx_array: number[] | AllowedTypedArray;
+    var output_size: number[];
+    if (singleind instanceof Colon) {
+      single_idx_array = singleind.tojsa(this._numel);
+      output_size = [1, single_idx_array.length];//row vector
+    } else if (singleind instanceof Matrix) {
+      // returns matrix of same shape
+      // value in matrix is used as linear index
+      single_idx_array = singleind._data;
+      output_size = singleind._size;
+    }
+
+    var output = new Matrix(output_size, this._klass);
+    var output_data = output._data;
+    var input_data = this._data;
+    for (var i = 0, length = single_idx_array.length; i < length; i++) {
+      output_data[i] = input_data[single_idx_array[i] - 1];
+    }
+
+    return output;
+  }
+
   set(...args: any[]): void {
     this.set_scalar(...args);
   }
