@@ -2,6 +2,9 @@
 .DS_Store
 ._.DS_Store
 node_modules
+*.js.map
 src/sushi.js
 src/matrix.js
+src/colon.js
+src/colonwrap.js
 spec/sushi.spec.js
