@@ -2,9 +2,9 @@
 import $M = require('../src/sushi');
 
 declare var require;
-//if (false) {
-//  var f: typeof $M = require('../src/augment');
-//}
+if (true) {
+  var f: typeof $M = require('../src/cl/sushi_cl');
+}
 
 describe('Sushi class', function() {
   it('exist Sushi class', function() {
@@ -472,5 +472,13 @@ describe('Sushi class', function() {
     var mata = $M.jsa2mat([1,2,3]);
     var matb = $M.jsa2mat([2,8,15]);
     expect($M.mat2jsa($M.add(mata, matb))).toEqual([[3,10,18]]);
+  });
+  
+  it('gpuArray', function () {
+    var cpu = $M.jsa2mat([1,3,5]);
+    var gpu = $M.gpuArray(cpu);
+    var again_cpu = $M.gather(gpu);
+    expect($M.mat2jsa(again_cpu)).toEqual([[1,3,5]]);
+    expect(gpu.get(2)).toEqual(3);
   });
 });

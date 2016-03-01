@@ -1,9 +1,24 @@
 export import Matrix = require('./matrix');
 export import Colon = require('./colon');
 export import colon = require('./colonwrap');
+export import MatrixCL = require('./cl/matrix_cl');
 
 export var end = -1;
 declare type MatrixOrNumber = Matrix | number;
+
+export function autodestruct(f: () => any[]): any[] {
+  Matrix.autodestruct_push();
+  var mats_to_save = f();
+  for (var i = 0; i < mats_to_save.length; i++) {
+    var mat = mats_to_save[i];
+    var delete_idx = Matrix._autodestruct_stack_top.indexOf(mat);
+    if (delete_idx >= 0) {
+      Matrix._autodestruct_stack_top.splice(delete_idx, 1);
+    }
+  }
+  Matrix.autodestruct_pop();
+  return mats_to_save;
+}
 
 export function zeros(...args: any[]): Matrix {
   var mat = null;
@@ -115,6 +130,16 @@ export function isscalar(A: Matrix): boolean {
 
 export function klass(object: Matrix): string {
   return object._klass;
+}
+
+export function gpuArray(A: Matrix): Matrix {
+  //overriden by sushi_cl
+  return A.copy();
+}
+
+export function gather(A: Matrix): Matrix {
+  //overriden by sushi_cl
+  return A.copy();
 }
 
 //equality http://jp.mathworks.com/help/matlab/relational-operators.html

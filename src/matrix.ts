@@ -7,8 +7,11 @@ class Matrix {
   _ndims: number;
   _numel: number;
   _klass: string;
+  _data_ctor: any;
   _data: AllowedTypedArray;//allocated in constructor
   _strides: number[];// in typedarray index (not byte)
+  static _autodestruct_stack: Matrix[][] = [];
+  static _autodestruct_stack_top: Matrix[] = null;
 
   constructor(size: number[], klass: string = 'single', noalloc: boolean = false) {
     var _size: number[] = Array.prototype.slice.call(size);//copy
@@ -43,9 +46,39 @@ class Matrix {
       throw new Error('unknown klass');
     }
     this._klass = klass;
+    this._data_ctor = Matrix.data_ctors[klass];
     if (!noalloc) {
       this._alloccpu();
     }
+    
+    if (Matrix._autodestruct_stack_top) {
+      Matrix._autodestruct_stack_top.push(this);
+    }
+  }
+  
+  static data_ctors = {'single': Float32Array, 'int32': Int32Array, 'uint8': Uint8Array, 'logical': Uint8Array};
+  
+  static autodestruct_push(): void {
+    var array = [];
+    Matrix._autodestruct_stack_top = array;
+    Matrix._autodestruct_stack.push(array);
+  }
+  
+  static autodestruct_pop(): void {
+    if (Matrix._autodestruct_stack_top) {
+      //destruct all in current list
+      for (var i = 0; i < Matrix._autodestruct_stack_top.length; i++) {
+        Matrix._autodestruct_stack_top[i].destruct();
+      }
+      
+      Matrix._autodestruct_stack.pop();
+      Matrix._autodestruct_stack_top = Matrix._autodestruct_stack[Matrix._autodestruct_stack.length-1];
+    }
+  }
+  
+  destruct() {
+    //release memory
+    this._data = null;
   }
 
   static _isinteger(x) {
@@ -64,29 +97,16 @@ class Matrix {
     return Number(Boolean(val));
   }
 
-  _alloccpu(): AllowedTypedArray {
+  private _alloccpu(): AllowedTypedArray {
     // allocate cpu buffer if not exist
     if (!this._data) {
-      switch (this._klass) {
-        case 'single':
-          this._data = new Float32Array(this._numel);
-          break;
-        case 'int32':
-          this._data = new Int32Array(this._numel);
-          break;
-        case 'uint8':
-        case 'logical':
-          this._data = new Uint8Array(this._numel);
-          break;
-        default:
-          throw new Error('Unknown data class');
-      }
+      this._data = new this._data_ctor(this._numel);
     }
 
     return this._data;
   }
 
-  _getdata(): AllowedTypedArray {
+  private _getdata(): AllowedTypedArray {
     //override in gpu
     //get copy of data in TypedArray
     return this._data;
