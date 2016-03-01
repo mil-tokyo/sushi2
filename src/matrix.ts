@@ -56,6 +56,14 @@ class Matrix {
     return klass == 'single' || klass == 'int32' || klass == 'uint8' || klass == 'logical';
   }
 
+  static _logical_cast_required(klass_dst: string, klass_src?: string): boolean {
+    return (klass_dst == 'logical' && klass_src != 'logical');
+  }
+
+  static _logical_cast(val: any): number {
+    return Number(Boolean(val));
+  }
+
   _alloccpu(): AllowedTypedArray {
     // allocate cpu buffer if not exist
     if (!this._data) {
@@ -255,15 +263,19 @@ class Matrix {
       }
     }
   }
-  
+
   copy(klass?: string): Matrix {
     var clone = new Matrix(this._size, klass || this._klass);
     var clone_data = clone._getdata();
     var rawdata = this._alloccpu();
-    for (var i = 0; i < this._numel; i++) {
-      clone_data[i] = rawdata[i];
+    if (Matrix._logical_cast_required(clone._klass, this._klass)) {
+      for (var i = 0, length = clone_data.length; i < length; i++) {
+        clone_data[i] = Matrix._logical_cast(rawdata[i]);
+      }
+    } else {
+      clone_data.set(rawdata);
     }
-    
+
     return clone;
   }
 
@@ -432,8 +444,9 @@ class Matrix {
     } else {
       scalar_val = <number>val;
     }
-    if (this._klass == 'logical') {
-      scalar_val = Number(Boolean(scalar_val));
+
+    if (Matrix._logical_cast_required(this._klass)) {
+      scalar_val = Matrix._logical_cast(scalar_val);
     }
     rawdata[arrayidx] = scalar_val;
   }
@@ -450,19 +463,29 @@ class Matrix {
     }
 
     var rawdata = this._alloccpu();
-    
+
     if (val instanceof Matrix) {
       if (single_idx_array.length != val._numel) {
         throw new Error('Dimension mismatch');
       }
       var val_data = val._getdata();
       // read over flattened val
-      for (var i = 0, length = single_idx_array.length; i < length; i++) {
-        rawdata[single_idx_array[i] - 1] = val_data[i];
+      if (Matrix._logical_cast_required(this._klass, val._klass)) {
+        rawdata[single_idx_array[i] - 1] = Matrix._logical_cast(val_data[i]);
+      } else {
+        for (var i = 0, length = single_idx_array.length; i < length; i++) {
+          rawdata[single_idx_array[i] - 1] = val_data[i];
+        }
       }
     } else {
+      var scalar_val;
+      if (Matrix._logical_cast_required(this._klass)) {
+        scalar_val = Matrix._logical_cast(<number>val);
+      } else {
+        scalar_val = <number>val;
+      }
       for (var i = 0, length = single_idx_array.length; i < length; i++) {
-        rawdata[single_idx_array[i] - 1] = <number>val;
+        rawdata[single_idx_array[i] - 1] = scalar_val;
       }
     }
   }
@@ -522,28 +545,61 @@ class Matrix {
       }
 
       var val_data = val._getdata();
-      for (var i = 0; i < output_length; i++) {
-        //calc input index
-        var input_raw_idx = 0;
-        for (var dim = 0; dim < eachdimidx.length; dim++) {
-          input_raw_idx += (eachdimidx[dim][inputdimctr[dim]] - 1) * eachdimstride[dim];
-        }
+      if (Matrix._logical_cast_required(this._klass, val._klass)) {
+        for (var i = 0; i < output_length; i++) {
+          //calc input index
+          var input_raw_idx = 0;
+          for (var dim = 0; dim < eachdimidx.length; dim++) {
+            input_raw_idx += (eachdimidx[dim][inputdimctr[dim]] - 1) * eachdimstride[dim];
+          }
 
-        rawdata[input_raw_idx] = val_data[i];
+          rawdata[input_raw_idx] = Matrix._logical_cast(val_data[i]);
         
-        //increment input index
-        for (var dim = 0; dim < inputdimctr.length; dim++) {
-          var element = ++inputdimctr[dim];
-          if (element >= eachdimidx[dim].length) {
-            //overflow to next dimension
-            inputdimctr[dim] = 0;
-          } else {
-            break;
+          //increment input index
+          for (var dim = 0; dim < inputdimctr.length; dim++) {
+            var element = ++inputdimctr[dim];
+            if (element >= eachdimidx[dim].length) {
+              //overflow to next dimension
+              inputdimctr[dim] = 0;
+            } else {
+              break;
+            }
           }
         }
+
+      } else {
+        for (var i = 0; i < output_length; i++) {
+          //calc input index
+          var input_raw_idx = 0;
+          for (var dim = 0; dim < eachdimidx.length; dim++) {
+            input_raw_idx += (eachdimidx[dim][inputdimctr[dim]] - 1) * eachdimstride[dim];
+          }
+
+          rawdata[input_raw_idx] = val_data[i];
+        
+          //increment input index
+          for (var dim = 0; dim < inputdimctr.length; dim++) {
+            var element = ++inputdimctr[dim];
+            if (element >= eachdimidx[dim].length) {
+              //overflow to next dimension
+              inputdimctr[dim] = 0;
+            } else {
+              break;
+            }
+          }
+        }
+
       }
 
     } else {
+      //val is scalar
+      var scalar_val;
+      if (Matrix._logical_cast_required(this._klass)) {
+        scalar_val = Matrix._logical_cast(<number>val);
+      } else {
+        scalar_val = <number>val;
+      }
+
       for (var i = 0; i < output_length; i++) {
         //calc input index
         var input_raw_idx = 0;
@@ -551,7 +607,7 @@ class Matrix {
           input_raw_idx += (eachdimidx[dim][inputdimctr[dim]] - 1) * eachdimstride[dim];
         }
 
-        rawdata[input_raw_idx] = <number>val;
+        rawdata[input_raw_idx] = scalar_val;
         
         //increment input index
         for (var dim = 0; dim < inputdimctr.length; dim++) {
@@ -589,16 +645,31 @@ class Matrix {
     if (val instanceof Matrix) {
       var val_data = val._getdata();
       var ptr = 0;
-      for (var i = 0, length = map_data.length; i < length; i++) {
-        if (map_data[i]) {
-          rawdata[i] = val_data[ptr++];
+      if (Matrix._logical_cast_required(this._klass, val._klass)) {
+        for (var i = 0, length = map_data.length; i < length; i++) {
+          if (map_data[i]) {
+            rawdata[i] = Matrix._logical_cast(val_data[ptr++]);
+          }
+        }
+
+      } else {
+        for (var i = 0, length = map_data.length; i < length; i++) {
+          if (map_data[i]) {
+            rawdata[i] = val_data[ptr++];
+          }
         }
       }
     } else {
       var ptr = 0;
+      var scalar_val;
+      if (Matrix._logical_cast_required(this._klass)) {
+        scalar_val = Matrix._logical_cast(val);
+      } else {
+        scalar_val = <number>val;
+      }
       for (var i = 0, length = map_data.length; i < length; i++) {
         if (map_data[i]) {
-          rawdata[i] = <number>val;
+          rawdata[i] = scalar_val;
         }
       }
     }
