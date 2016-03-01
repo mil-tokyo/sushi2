@@ -26,14 +26,14 @@ class Colon {
       }
     }
   }
-  
+
   static fromstring(s: string): Colon {
     var elements = s.replace('end', '-1').split(':');
     var nums: number[] = [];
     for (var i = 0; i < elements.length; i++) {
       nums.push(eval(elements[i] || 'null'));
     }
-    
+
     if (elements.length == 2) {
       return new Colon(nums[0], nums[1]);
     } else if (elements.length == 3) {
@@ -42,7 +42,7 @@ class Colon {
       throw new Error('Invalid format');
     }
   }
-  
+
   tojsa(size?: number): number[] {
     var start = this.start;
     var stop = this.stop;
@@ -58,19 +58,19 @@ class Colon {
     if (stop < 0) {
       stop += size;
     }
-    
+
     var jsa: number[] = [];
     if (step > 0) {
-    for (var i = start; i <= stop; i += step) {
-      jsa.push(i);
-    }
+      for (var i = start; i <= stop; i += step) {
+        jsa.push(i);
+      }
     } else {
-    for (var i = start; i >= stop; i += step) {
-      jsa.push(i);
+      for (var i = start; i >= stop; i += step) {
+        jsa.push(i);
+      }
+
     }
-      
-    }
-    
+
     return jsa;
   }
 }
