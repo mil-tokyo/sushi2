@@ -173,7 +173,7 @@ function _commonklass(...mats: MatrixOrNumber[]): string {
   return _commonklassstr(...klasses);
 }
 
-function _compare(A: MatrixOrNumber, B: MatrixOrNumber, comp: (a: any, b: any) => boolean): Matrix {
+function _compare(A: MatrixOrNumber, B: MatrixOrNumber, comp: (a: number, b: number) => boolean): Matrix {
   var shape: number[];
   var both_mat = false;
   var mat: Matrix;
@@ -217,7 +217,7 @@ function _compare(A: MatrixOrNumber, B: MatrixOrNumber, comp: (a: any, b: any) =
   } else {
     //both number
     mat = zeros(1, 'logical');
-    mat.set(1, Number(comp(A, B)));
+    mat.set(1, Number(comp(<number>A, <number>B)));
     return mat;
   }
 
@@ -246,6 +246,65 @@ export function lt(A: MatrixOrNumber, B: MatrixOrNumber): Matrix {
 
 export function ne(A: MatrixOrNumber, B: MatrixOrNumber): Matrix {
   return _compare(A, B, (a, b) => { return a != b });
+}
+
+function _binary_op(A: MatrixOrNumber, B: MatrixOrNumber, comp: (a: number, b: number) => number): Matrix {
+  var shape: number[];
+  var both_mat = false;
+  var mat: Matrix;
+  A = _singlemat2number(A);
+  B = _singlemat2number(B);
+  var outklass = _commonklass(A, B);
+  if (outklass == 'logical') {
+    outklass = 'single';
+  }
+  if (A instanceof Matrix) {
+    shape = sizejsa(<Matrix>A);
+    if ((B instanceof Matrix)) {
+      if (!jsaequal(shape, sizejsa(B))) {
+        throw new Error('Dimension mismatch');
+      }
+      
+      //both matrix
+      mat = zeros(...shape, outklass);
+      var mata = <Matrix>A;
+      var matb = <Matrix>B;
+      var len = numel(mata);
+      for (var i = 1; i <= len; i++) {
+        mat.set(i, comp(mata.get(i), matb.get(i)));
+      }
+    } else {
+      //a is mat, b is number
+      mat = zeros(...shape, outklass);
+      var mata = <Matrix>A;
+      var scalarb = <number>B;
+      var len = numel(mata);
+      for (var i = 1; i <= len; i++) {
+        mat.set(i, comp(mata.get(i), scalarb));
+      }
+    }
+  } else if (B instanceof Matrix) {
+    shape = sizejsa(<Matrix>B);
+    // b is mat, a is number
+    mat = zeros(...shape, outklass);
+    var scalara = <number>A;
+    var matb = B;
+    var len = numel(matb);
+    for (var i = 1; i <= len; i++) {
+      mat.set(i, comp(scalara, matb.get(i)));
+    }
+  } else {
+    //both number
+    mat = zeros(1, outklass);
+    mat.set(1, comp(<number>A, <number>B));
+    return mat;
+  }
+
+  return mat;
+}
+
+export function add(A: MatrixOrNumber, B: MatrixOrNumber): Matrix {
+  return _binary_op(A, B, (a, b) => { return a + b });
 }
 
 //indexing

@@ -467,4 +467,10 @@ describe('Sushi class', function() {
     //invalid shape
     expect(() => $M.eq($M.zeros(1, 2), $M.zeros(1, 3))).toThrow();
   });
+  
+  it('binary_operation', function () {
+    var mata = $M.jsa2mat([1,2,3]);
+    var matb = $M.jsa2mat([2,8,15]);
+    expect($M.mat2jsa($M.add(mata, matb))).toEqual([[3,10,18]]);
+  });
 });
