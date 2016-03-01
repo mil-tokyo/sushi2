@@ -134,7 +134,7 @@ function jsaequal(a: any[], b: any[]): boolean {
 // If input is 1x1 matrix, returns number
 function _singlemat2number(A: MatrixOrNumber): MatrixOrNumber {
   if ((A instanceof Matrix) && isscalar(A)) {
-    return A.get_scalar(1);
+    return A.get_scalar([1]);
   }
   
   return A;

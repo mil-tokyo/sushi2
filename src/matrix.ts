@@ -78,6 +78,12 @@ class Matrix {
     return this._data;
   }
 
+  _getdata(): AllowedTypedArray {
+    //override in gpu
+    //get copy of data in TypedArray
+    return this._data;
+  }
+
   _isvalidindex(inds: number[]): boolean {
     if (this._numel == 0) {
       // if matrix have zero dimension, all index is invalid
@@ -150,8 +156,9 @@ class Matrix {
   }
 
   static jsa2mat(ary: any, one_d_column?: boolean, klass?: string): Matrix {
+    // TODO: type inference (contains non-integer => single, contains boolean => logical)
     // get dimension
-    var mat;
+    var mat: Matrix;
     if (ary.length == 0) {
       //0x0 matrix
       mat = new Matrix([0, 0], klass);
@@ -160,7 +167,7 @@ class Matrix {
       var vecshape = one_d_column ? [ary.length, 1] : [1, ary.length];
       mat = new Matrix(vecshape, klass);
       for (var i = 0; i < ary.length; i++) {
-        mat.set_scalar(i + 1, ary[i]);
+        mat.set_scalar(ary[i], [i + 1]);
       }
     } else {
       var dim_size: number[] = [];
@@ -181,7 +188,7 @@ class Matrix {
         var rowdata = ary[row];
         for (var col = 0; col < dim_size[1]; col++) {
           var val = rowdata[col];
-          mat.set_scalar(row + 1, col + 1, val);
+          mat.set_scalar(val, [row + 1, col + 1]);
         }
       }
     }
@@ -201,13 +208,13 @@ class Matrix {
       if (this._numel == this._size[0]) {
         //column vector
         for (var row = 0; row < this._size[0]; row++) {
-          ary.push(this.get_scalar(row + 1, 1));
+          ary.push(this.get_scalar([row + 1, 1]));
         }
         flattened = true;
       } else if (this._numel == this._size[1]) {
         //row vector
         for (var col = 0; col < this._size[1]; col++) {
-          ary.push(this.get_scalar(1, col + 1));
+          ary.push(this.get_scalar([1, col + 1]));
         }
         flattened = true;
       }
@@ -217,7 +224,7 @@ class Matrix {
       for (var row = 0; row < this._size[0]; row++) {
         var rowary = [];
         for (var col = 0; col < this._size[1]; col++) {
-          rowary.push(this.get_scalar(row + 1, col + 1));
+          rowary.push(this.get_scalar([row + 1, col + 1]));
         }
         ary.push(rowary);
       }
@@ -225,89 +232,108 @@ class Matrix {
     return ary;
   }
 
-  get(...args: any[]): number | Matrix {
+  get(): number;
+  get(...args: number[]): number;
+  get(...args: any[]): Matrix;
+  get(...args: any[]): any {
     if (args.length == 0) {
-      throw new Error('At least one argument have to be specified');
+      // get scalar
+      return this._alloccpu()[0];
     }
     var all_number = args.every((v) => typeof (v) === 'number');
     if (all_number) {
-      return this.get_scalar(...args);
+      return this.get_scalar(args);
     } else {
-      return this.get_matrix(...args);
+      if (args.length > 1) {
+        return this.get_matrix_nd(args);
+      } else {
+        if (args[0] instanceof Matrix && (<Matrix>args[0])._klass === 'logical') {
+          return this.get_matrix_logical(args[0]);
+        } else {
+          return this.get_matrix_single(args[0]);
+        }
+      }
     }
   }
+  
+  copy(klass?: string): Matrix {
+    var clone = new Matrix(this._size, klass || this._klass);
+    var clone_data = clone._getdata();
+    var rawdata = this._alloccpu();
+    for (var i = 0; i < this._numel; i++) {
+      clone_data[i] = rawdata[i];
+    }
+    
+    return clone;
+  }
 
-  get_scalar(...inds: number[]): number {
+  get_scalar(inds: number[]): number {
     var rawdata = this._alloccpu();
     this._isvalidindexerr(inds);
     var arrayidx = this._getarrayindex(inds);
     return rawdata[arrayidx];
   }
 
-  get_matrix(...inds: (number | Colon | Matrix)[]): Matrix {
-    if (inds.length == 1) {
-      return this.get_matrix_single(<Colon | Matrix>inds[0]);
-    } else {
-      //multidim indexing
-      //convert index of each dimension into array
-      var eachdimidx: (number[] | AllowedTypedArray)[] = [];
-      var eachdimstride: number[] = [];
-      var output_size = [];
-      var output_length = 1;
-      var inputdimctr: number[] = [];
-      for (var dim = 0; dim < inds.length; dim++) {
-        var dimind = inds[dim];
-        var dimidx;
-        if (dimind instanceof Colon) {
-          dimidx = dimind.tojsa(this._size[dim]);
-        } else if (dimind instanceof Matrix) {
-          dimidx = dimind._data;
-        } else {
-          //number
-          dimidx = [<number>dimind];
-        }
-        
-        //range check
-        var dim_size = this._size[dim] || 1;//exceed dimension must be [1,1,...]
-        for (var i = 0; i < dimidx.length; i++) {
-          if ((dimidx[i] > dim_size) || (dimidx[i] < 1)) {
-            throw new Error('Index exceeds matrix dimension');
-          }
-        }
-
-        eachdimidx.push(dimidx);
-        eachdimstride.push(this._strides[dim] || 0);
-        output_size.push(dimidx.length);
-        output_length *= dimidx.length;
-        inputdimctr.push(0);
+  get_matrix_nd(inds: (number | Colon | Matrix)[]): Matrix {
+    //multidim indexing
+    //convert index of each dimension into array
+    var eachdimidx: (number[] | AllowedTypedArray)[] = [];
+    var eachdimstride: number[] = [];
+    var output_size: number[] = [];
+    var output_length = 1;
+    var inputdimctr: number[] = [];
+    for (var dim = 0; dim < inds.length; dim++) {
+      var dimind = inds[dim];
+      var dimidx;
+      if (dimind instanceof Colon) {
+        dimidx = dimind.tojsa(this._size[dim]);
+      } else if (dimind instanceof Matrix) {
+        dimidx = dimind._getdata();
+      } else {
+        //number
+        dimidx = [<number>dimind];
       }
-
-      var output = new Matrix(output_size, this._klass);
-      var output_data = output._data;
-      var input_data = this._data;
-      for (var i = 0; i < output_length; i++) {
-        //calc input index
-        var input_raw_idx = 0;
-        for (var dim = 0; dim < eachdimidx.length; dim++) {
-          input_raw_idx += (eachdimidx[dim][inputdimctr[dim]] - 1) * eachdimstride[dim];
-        }
-
-        output_data[i] = input_data[input_raw_idx];
         
-        //increment input index
-        for (var dim = 0; dim < inputdimctr.length; dim++) {
-          var element = ++inputdimctr[dim];
-          if (element >= eachdimidx[dim].length) {
-            //overflow to next dimension
-            inputdimctr[dim] = 0;
-          } else {
-            break;
-          }
+      //range check
+      var dim_size = this._size[dim] || 1;//exceed dimension must be [1,1,...]
+      for (var i = 0; i < dimidx.length; i++) {
+        if ((dimidx[i] > dim_size) || (dimidx[i] < 1)) {
+          throw new Error('Index exceeds matrix dimension');
         }
       }
 
-      return output;
+      eachdimidx.push(dimidx);
+      eachdimstride.push(this._strides[dim] || 0);
+      output_size.push(dimidx.length);
+      output_length *= dimidx.length;
+      inputdimctr.push(0);
     }
+
+    var output = new Matrix(output_size, this._klass);
+    var output_data = output._data;
+    var input_data = this._data;
+    for (var i = 0; i < output_length; i++) {
+      //calc input index
+      var input_raw_idx = 0;
+      for (var dim = 0; dim < eachdimidx.length; dim++) {
+        input_raw_idx += (eachdimidx[dim][inputdimctr[dim]] - 1) * eachdimstride[dim];
+      }
+
+      output_data[i] = input_data[input_raw_idx];
+        
+      //increment input index
+      for (var dim = 0; dim < inputdimctr.length; dim++) {
+        var element = ++inputdimctr[dim];
+        if (element >= eachdimidx[dim].length) {
+          //overflow to next dimension
+          inputdimctr[dim] = 0;
+        } else {
+          break;
+        }
+      }
+    }
+
+    return output;
   }
 
   get_matrix_single(singleind: Colon | Matrix): Matrix {
@@ -333,20 +359,250 @@ class Matrix {
     return output;
   }
 
-  set(...args: any[]): void {
-    this.set_scalar(...args);
+  get_matrix_logical(map: Matrix): Matrix {
+    // equivalent to this.get(find(map))
+    var output_length = 0;
+    var map_data = map._getdata();
+    var max_i = -1;
+    for (var i = 0, length = map_data.length; i < length; i++) {
+      if (map_data[i]) {
+        output_length++;
+        max_i = i;
+      }
+    }
+
+    if (this._numel < max_i) {
+      throw new Error('Index out of bounds');
+    }
+
+    var output = new Matrix([output_length, 1], this._klass);
+    var output_data = output._data;
+    var input_data = this._data;
+    var ptr = 0;
+    for (var i = 0, length = map_data.length; i < length; i++) {
+      if (map_data[i]) {
+        output_data[ptr++] = input_data[i];
+      }
+    }
+
+    return output;
   }
 
-  set_scalar(...inds_val: number[]): void {
+  set(ind: number | Matrix | Colon, val: number | Matrix | any[]): void;
+  set(row: number | Matrix | Colon, col: number | Matrix | Colon, val: number | Matrix | any[]): void;
+  set(...args: any[]): void;
+  set(...args: any[]): void {
+    //last argument is value, but subsequent function requires first argument to be value
+    var val = args.pop();
+    if (!(val instanceof Matrix) && val.length !== void 0) {
+      // js array (or array-like)
+      val = Matrix.jsa2mat(val, false, this._klass);
+    }
+    // scalar matrix converted to number
+    if (val instanceof Matrix && val._numel == 1) {
+      val = (<Matrix>val)._getdata()[0];
+    }
+
+    var all_number = args.every((v) => typeof (v) === 'number');
+    if (all_number) {
+      this.set_scalar(val, args);
+    } else {
+      if (args.length > 1) {
+        this.set_matrix_nd(val, args);
+      } else {
+        if (args[0] instanceof Matrix && (<Matrix>args[0])._klass === 'logical') {
+          this.set_matrix_logical(val, args[0]);
+        } else {
+          this.set_matrix_single(val, args[0]);
+        }
+      }
+    }
+  }
+
+  set_scalar(val: number | Matrix, inds: number[]): void {
     var rawdata = this._alloccpu();
-    var inds = inds_val.concat();
-    var val = inds.pop();
     this._isvalidindexerr(inds);
     var arrayidx = this._getarrayindex(inds);
-    if (this._klass == 'logical') {
-      val = Number(Boolean(val));
+    var scalar_val: number;
+    if (val instanceof Matrix) {
+      if (val._numel != 1) {
+        throw new Error('Value is not scalar');
+      }
+      scalar_val = val._getdata()[0];
+    } else {
+      scalar_val = <number>val;
     }
-    rawdata[arrayidx] = val;
+    if (this._klass == 'logical') {
+      scalar_val = Number(Boolean(scalar_val));
+    }
+    rawdata[arrayidx] = scalar_val;
+  }
+
+  set_matrix_single(val: number | Matrix, singleind: Colon | Matrix): void {
+    var single_idx_array: number[] | AllowedTypedArray;
+    var output_size: number[];
+    if (singleind instanceof Colon) {
+      single_idx_array = singleind.tojsa(this._numel);
+    } else if (singleind instanceof Matrix) {
+      // value in matrix is used as linear index
+      // used as flattened value array, regardless of shape
+      single_idx_array = singleind._data;
+    }
+
+    var rawdata = this._alloccpu();
+    
+    if (val instanceof Matrix) {
+      if (single_idx_array.length != val._numel) {
+        throw new Error('Dimension mismatch');
+      }
+      var val_data = val._getdata();
+      // read over flattened val
+      for (var i = 0, length = single_idx_array.length; i < length; i++) {
+        rawdata[single_idx_array[i] - 1] = val_data[i];
+      }
+    } else {
+      for (var i = 0, length = single_idx_array.length; i < length; i++) {
+        rawdata[single_idx_array[i] - 1] = <number>val;
+      }
+    }
+  }
+
+  set_matrix_nd(val: number | Matrix, inds: (number | Colon | Matrix)[]): void {
+    //multidim indexing
+    //convert index of each dimension into array
+    var eachdimidx: (number[] | AllowedTypedArray)[] = [];
+    var eachdimstride: number[] = [];
+    var output_size: number[] = [];
+    var output_length = 1;
+    var inputdimctr: number[] = [];
+    for (var dim = 0; dim < inds.length; dim++) {
+      var dimind = inds[dim];
+      var dimidx;
+      if (dimind instanceof Colon) {
+        dimidx = dimind.tojsa(this._size[dim]);
+      } else if (dimind instanceof Matrix) {
+        dimidx = dimind._getdata();
+      } else {
+        //number
+        dimidx = [<number>dimind];
+      }
+        
+      //range check
+      var dim_size = this._size[dim] || 1;//exceed dimension must be [1,1,...]
+      for (var i = 0; i < dimidx.length; i++) {
+        if ((dimidx[i] > dim_size) || (dimidx[i] < 1)) {
+          throw new Error('Index exceeds matrix dimension');
+        }
+      }
+
+      eachdimidx.push(dimidx);
+      eachdimstride.push(this._strides[dim] || 0);
+      output_size.push(dimidx.length);
+      output_length *= dimidx.length;
+      inputdimctr.push(0);
+    }
+
+
+    var rawdata = this._alloccpu();
+    if (val instanceof Matrix) {
+      //val shape check
+      var is_vector = output_size.filter((v) => v != 1).length <= 1;
+      if (is_vector) {
+        // if shape is vector, only numel have to match
+        if (val._numel != output_length) {
+          throw new Error('Dimensions mismatch');
+        }
+      } else {
+        // shape must match (exclude tailing 1)
+        for (var dim = 0; dim < Math.max(val._size.length, output_size.length); dim++) {
+          if ((val._size[dim] || 1) != (output_size[dim] || 1)) {
+            throw new Error('Dimensions mismatch');
+          }
+        }
+      }
+
+      var val_data = val._getdata();
+      for (var i = 0; i < output_length; i++) {
+        //calc input index
+        var input_raw_idx = 0;
+        for (var dim = 0; dim < eachdimidx.length; dim++) {
+          input_raw_idx += (eachdimidx[dim][inputdimctr[dim]] - 1) * eachdimstride[dim];
+        }
+
+        rawdata[input_raw_idx] = val_data[i];
+        
+        //increment input index
+        for (var dim = 0; dim < inputdimctr.length; dim++) {
+          var element = ++inputdimctr[dim];
+          if (element >= eachdimidx[dim].length) {
+            //overflow to next dimension
+            inputdimctr[dim] = 0;
+          } else {
+            break;
+          }
+        }
+      }
+
+    } else {
+      for (var i = 0; i < output_length; i++) {
+        //calc input index
+        var input_raw_idx = 0;
+        for (var dim = 0; dim < eachdimidx.length; dim++) {
+          input_raw_idx += (eachdimidx[dim][inputdimctr[dim]] - 1) * eachdimstride[dim];
+        }
+
+        rawdata[input_raw_idx] = <number>val;
+        
+        //increment input index
+        for (var dim = 0; dim < inputdimctr.length; dim++) {
+          var element = ++inputdimctr[dim];
+          if (element >= eachdimidx[dim].length) {
+            //overflow to next dimension
+            inputdimctr[dim] = 0;
+          } else {
+            break;
+          }
+        }
+      }
+
+    }
+
+  }
+
+  set_matrix_logical(val: number | Matrix, map: Matrix): void {
+    // equivalent to this.set(val, find(map))
+    var output_length = 0;
+    var map_data = map._getdata();
+    var max_i = -1;
+    for (var i = 0, length = map_data.length; i < length; i++) {
+      if (map_data[i]) {
+        output_length++;
+        max_i = i;
+      }
+    }
+
+    if (this._numel < max_i) {
+      throw new Error('Index out of bounds');
+    }
+
+    var rawdata = this._alloccpu();
+    if (val instanceof Matrix) {
+      var val_data = val._getdata();
+      var ptr = 0;
+      for (var i = 0, length = map_data.length; i < length; i++) {
+        if (map_data[i]) {
+          rawdata[i] = val_data[ptr++];
+        }
+      }
+    } else {
+      var ptr = 0;
+      for (var i = 0, length = map_data.length; i < length; i++) {
+        if (map_data[i]) {
+          rawdata[i] = <number>val;
+        }
+      }
+    }
+
   }
 
   toString(): string {

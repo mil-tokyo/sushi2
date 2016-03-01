@@ -2,9 +2,9 @@
 import $M = require('../src/sushi');
 
 declare var require;
-if (false) {
-  var f: typeof $M = require('../src/augment');
-}
+//if (false) {
+//  var f: typeof $M = require('../src/augment');
+//}
 
 describe('Sushi class', function() {
   it('exist Sushi class', function() {
@@ -257,25 +257,53 @@ describe('Sushi class', function() {
   
   it('get_set_matrix', function() {
     var mat = $M.jsa2mat([[1,2,3],[4,5,6],[7,8,9]]);
+    var mat2: $M.Matrix;
     var extracted: $M.Matrix;
     
     //linear indexing
-    extracted = <$M.Matrix>mat.get($M.colon(2,5));
+    extracted = mat.get($M.colon(2,5));
     expect($M.mat2jsa(extracted)).toEqual([[4,7,2,5]]);
-    extracted = <$M.Matrix>mat.get($M.colon(2,3,8));
+    extracted = mat.get($M.colon(2,3,8));
     expect($M.mat2jsa(extracted)).toEqual([[4,5,6]]);
-    extracted = <$M.Matrix>mat.get($M.jsa2mat([]));
+    extracted = mat.get($M.jsa2mat([]));
     expect($M.mat2jsa(extracted)).toEqual([]);
-    extracted = <$M.Matrix>mat.get($M.jsa2mat([1,3,9]));
+    extracted = mat.get($M.jsa2mat([1,3,9]));
     expect($M.mat2jsa(extracted)).toEqual([[1,7,9]]);
-    extracted = <$M.Matrix>mat.get($M.jsa2mat([1,3,9], true));//column vector
+    extracted = mat.get($M.jsa2mat([1,3,9], true));//column vector
     expect($M.mat2jsa(extracted)).toEqual([[1],[7],[9]]);
-    extracted = <$M.Matrix>mat.get($M.colon());//all
+    extracted = mat.get($M.jsa2mat([[1,3,9],[2,4,1]]));//matrix of linear index
+    expect($M.mat2jsa(extracted)).toEqual([[1,7,9],[4,2,1]]);
+    extracted = mat.get($M.colon());//all
     expect($M.mat2jsa(extracted)).toEqual([[1,4,7,2,5,8,3,6,9]]);
+    mat2 = mat.copy();
+    mat2.set($M.jsa2mat([1,3,5]), 10);
+    expect($M.mat2jsa(mat2)).toEqual([[10,2,3],[4,10,6],[10,8,9]]);
+    mat2 = mat.copy();
+    mat2.set($M.jsa2mat([1,3,5]), $M.jsa2mat([10]));
+    expect($M.mat2jsa(mat2)).toEqual([[10,2,3],[4,10,6],[10,8,9]]);
+    mat2 = mat.copy();
+    mat2.set($M.jsa2mat([1,3,5]), $M.jsa2mat([10,20,30]));
+    expect($M.mat2jsa(mat2)).toEqual([[10,2,3],[4,30,6],[20,8,9]]);
+    
     
     //2-d indexing
-    extracted = <$M.Matrix>mat.get($M.colon(2,3), $M.colon(1,2));
+    extracted = mat.get($M.colon(2,3), $M.colon(1,2));
     expect($M.mat2jsa(extracted)).toEqual([[4,5],[7,8]]);
+    extracted = mat.get($M.colon(), 2);
+    expect($M.mat2jsa(extracted)).toEqual([[2],[5],[8]]);
+    extracted = mat.get($M.colon(), $M.colon());
+    expect($M.mat2jsa(extracted)).toEqual([[1,2,3],[4,5,6],[7,8,9]]);
+    var logical_index = $M.gt(mat, 7);
+    extracted = mat.get(logical_index);
+    expect($M.mat2jsa(extracted)).toEqual([[8],[9]]);
+    mat2 = mat.copy();
+    mat2.set(logical_index, 10);
+    expect($M.mat2jsa(mat2)).toEqual([[1,2,3],[4,5,6],[7,10,10]]);
+    mat2 = mat.copy();
+    mat2.set($M.colon(1,2), $M.colon(2,3), 10);
+    expect($M.mat2jsa(mat2)).toEqual([[1,10,10],[4,10,10],[7,8,9]]);
+    
+    
     
     //TODO: n-d matrix
   });
