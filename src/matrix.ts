@@ -54,32 +54,32 @@ class Matrix {
     if (!noalloc) {
       this._alloccpu();
     }
-    
+
     if (Matrix._autodestruct_stack_top) {
       Matrix._autodestruct_stack_top.push(this);
     }
   }
-  
-  static data_ctors = {'single': Float32Array, 'int32': Int32Array, 'uint8': Uint8Array, 'logical': Uint8Array};
-  
+
+  static data_ctors = { 'single': Float32Array, 'int32': Int32Array, 'uint8': Uint8Array, 'logical': Uint8Array };
+
   static autodestruct_push(): void {
     var array = [];
     Matrix._autodestruct_stack_top = array;
     Matrix._autodestruct_stack.push(array);
   }
-  
+
   static autodestruct_pop(): void {
     if (Matrix._autodestruct_stack_top) {
       //destruct all in current list
       for (var i = 0; i < Matrix._autodestruct_stack_top.length; i++) {
         Matrix._autodestruct_stack_top[i].destruct();
       }
-      
+
       Matrix._autodestruct_stack.pop();
-      Matrix._autodestruct_stack_top = Matrix._autodestruct_stack[Matrix._autodestruct_stack.length-1];
+      Matrix._autodestruct_stack_top = Matrix._autodestruct_stack[Matrix._autodestruct_stack.length - 1];
     }
   }
-  
+
   destruct() {
     //release memory
     this._data = null;
