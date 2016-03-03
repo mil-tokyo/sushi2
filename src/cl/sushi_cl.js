@@ -8,7 +8,7 @@ module.exports = $M;
   if ($M.CL) {
     return;
   }
-  $M.CL = require('./driver.js');
+  $M.CL = require('./driver');
   
   var Matrix = require('../matrix');
   var MatrixCL = require('./matrix_cl');
@@ -18,11 +18,11 @@ module.exports = $M;
     var mat = new MatrixCL(A._size, A._klass);
     mat.write(A._data);
     return mat;
-  }
+  };
   
   $M.gather = function (A) {
     var mat = new Matrix(A._size, A._klass);
     A.read(mat._data);
     return mat;
-  }
+  };
 })();

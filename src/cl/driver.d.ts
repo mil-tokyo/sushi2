@@ -8,6 +8,7 @@ declare module driver {
   export function releaseBuffer(buffer: clBuffer): void;
   export function executeKernel(kernel: clKernel, params: any[], parallelization: (number | number[]), localWS?: (number | number[])): void;
   export var buffers: number;
+  export var WebCL: any;
 }
 
 export = driver;

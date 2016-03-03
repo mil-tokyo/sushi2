@@ -21,7 +21,7 @@
 	"showOutput": "silent",
 
 	// args is the HelloWorld program to compile.
-	"args": ["src/sushi.ts","spec/sushi.spec.ts","--module","commonjs"],
+	"args": ["src/sushi.ts","spec/sushi.spec.ts","src/cl/matrix_cl.ts","--module","commonjs"],
 
 	// use the standard tsc problem matcher to find compile problems
 	// in the output.

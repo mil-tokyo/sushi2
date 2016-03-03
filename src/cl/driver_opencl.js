@@ -57,8 +57,8 @@
     // device selector (experimental)
     var device_index = 0;
     // Explicit setting by environment variable
-    if ('WEBCL_DEVICE_INDEX' in process.env) {
-      device_index = Number(process.env['WEBCL_DEVICE_INDEX']);
+    if ('OPENCL_DEVICE_INDEX' in process.env) {
+      device_index = Number(process.env['OPENCL_DEVICE_INDEX']);
       if (device_index >= $CL.devices.length) {
         throw new Error('Invalid device index ' + device_index);
       }
@@ -155,23 +155,8 @@
     $CL.executeKernel = function (kernel, params, parallelization, localWS) {
       for (var i = 0; i < params.length; i++) {
         if (params[i].type === void 0) {
-          // matrix
-          if (!params[i].datum.buffer) {
-            params[i].datum.buffer =
-            WebCL.createBuffer($CL.context, WebCL.MEM_READ_WRITE,
-              params[i].datum.byte_length);
-            $CL.buffers++;
-            if (params[i].access !== WebCL.MEM_WRITE_ONLY) {
-              if (params[i].datum.data) {
-                WebCL.enqueueWriteBuffer($M.CL.queue, params[i].datum.buffer,
-                  true,
-                  0,
-                  params[i].datum.byte_length,
-                  params[i].datum.data);
-              }
-            }
-          }
-          $CL.kernelSetArg(kernel, i, params[i].datum.buffer);
+          // Matrix class
+          $CL.kernelSetArg(kernel, i, params[i].datum._clbuffer);
         } else {
           // native type
           $CL.kernelSetArg(kernel, i, params[i].datum, params[i].type);

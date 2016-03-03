@@ -33,6 +33,10 @@ class Matrix {
       strides.push(tmpnumel);
       tmpnumel *= dimsize;
     }
+    if (tmpnumel >= 2147483648) {
+      // indexing with int32 value is impossible
+      throw new Error('Matrix of equal to or more than 2G elements is not supported');
+    }
     this._numel = tmpnumel;
     //remove tail dimensions with size 1 (retain minimum 2 dimensions)
     last_none_one_dim = Math.max(last_none_one_dim, 1) + 1;
@@ -106,7 +110,7 @@ class Matrix {
     return this._data;
   }
 
-  private _getdata(): AllowedTypedArray {
+  _getdata(): AllowedTypedArray {
     //override in gpu
     //get copy of data in TypedArray
     return this._data;
@@ -403,7 +407,7 @@ class Matrix {
       }
     }
 
-    if (this._numel < max_i) {
+    if (this._numel <= max_i) {
       throw new Error('Index out of bounds');
     }
 
@@ -432,7 +436,7 @@ class Matrix {
     }
     // scalar matrix converted to number
     if (val instanceof Matrix && val._numel == 1) {
-      val = (<Matrix>val)._getdata()[0];
+      val = (<Matrix>val).get_scalar([1]);
     }
 
     var all_number = args.every((v) => typeof (v) === 'number');

@@ -1,22 +1,26 @@
 export import Matrix = require('./matrix');
 export import Colon = require('./colon');
 export import colon = require('./colonwrap');
-export import MatrixCL = require('./cl/matrix_cl');
+//export import MatrixCL = require('./cl/matrix_cl');
 
 export var end = -1;
 declare type MatrixOrNumber = Matrix | number;
 
 export function autodestruct(f: () => any[]): any[] {
   Matrix.autodestruct_push();
-  var mats_to_save = f();
-  for (var i = 0; i < mats_to_save.length; i++) {
-    var mat = mats_to_save[i];
-    var delete_idx = Matrix._autodestruct_stack_top.indexOf(mat);
-    if (delete_idx >= 0) {
-      Matrix._autodestruct_stack_top.splice(delete_idx, 1);
+  var mats_to_save = [];
+  try {
+    mats_to_save = f();
+  } finally {
+    for (var i = 0; i < mats_to_save.length; i++) {
+      var mat = mats_to_save[i];
+      var delete_idx = Matrix._autodestruct_stack_top.indexOf(mat);
+      if (delete_idx >= 0) {
+        Matrix._autodestruct_stack_top.splice(delete_idx, 1);
+      }
     }
+    Matrix.autodestruct_pop();
   }
-  Matrix.autodestruct_pop();
   return mats_to_save;
 }
 
