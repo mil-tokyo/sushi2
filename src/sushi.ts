@@ -1,19 +1,27 @@
 export import Matrix = require('./matrix');
 export import Colon = require('./colon');
 export import colon = require('./colonwrap');
+import util = require('./util');
 //export import MatrixCL = require('./cl/matrix_cl');
 
 export var end = -1;
 declare type MatrixOrNumber = Matrix | number;
 
-export function autodestruct(f: () => any[]): any[] {
+export function autodestruct(f: () => any): any {
   Matrix.autodestruct_push();
-  var mats_to_save = [];
+  var mats_to_save;
   try {
     mats_to_save = f();
   } finally {
-    for (var i = 0; i < mats_to_save.length; i++) {
-      var mat = mats_to_save[i];
+    var mats_list;
+    if (mats_to_save instanceof Matrix) {
+      // single matrix return
+      mats_list = [mats_to_save];
+    } else {
+      mats_list = mats_to_save;
+    }
+    for (var i = 0; i < mats_list.length; i++) {
+      var mat = mats_list[i];
       var delete_idx = Matrix._autodestruct_stack_top.indexOf(mat);
       if (delete_idx >= 0) {
         Matrix._autodestruct_stack_top.splice(delete_idx, 1);
@@ -169,39 +177,6 @@ function _singlemat2number(A: MatrixOrNumber): MatrixOrNumber {
   return A;
 }
 
-//finds common output class for matrices
-function _commonklassstr(...klasses: string[]): string {
-  // single > int32 > uint8 > logical
-  var klass_order = ['single','int32','uint8','logical'];
-  if (klasses.length == 0) {
-    return klass_order[0];
-  }
-  var best_klass = 3;
-  for (var i = 0; i < klasses.length; i++) {
-    var element = klasses[i];
-    var score = klass_order.indexOf(element);
-    if (score < 0) {
-      throw new Error('Unknown klass');
-    }
-    best_klass = Math.min(score, best_klass);
-  }
-  
-  return klass_order[best_klass];
-}
-
-function _commonklass(...mats: MatrixOrNumber[]): string {
-  //number not affects class decision
-  var klasses: string[] = [];
-  for (var i = 0; i < mats.length; i++) {
-    var element = mats[i];
-    if (element instanceof Matrix) {
-      klasses.push(element._klass);
-    }
-  }
-  
-  return _commonklassstr(...klasses);
-}
-
 function _compare(A: MatrixOrNumber, B: MatrixOrNumber, comp: (a: number, b: number) => boolean): Matrix {
   var shape: number[];
   var both_mat = false;
@@ -283,7 +258,7 @@ function _binary_op(A: MatrixOrNumber, B: MatrixOrNumber, comp: (a: number, b: n
   var mat: Matrix;
   A = _singlemat2number(A);
   B = _singlemat2number(B);
-  var outklass = _commonklass(A, B);
+  var outklass = util.commonklass(A, B);
   if (outklass == 'logical') {
     outklass = 'single';
   }

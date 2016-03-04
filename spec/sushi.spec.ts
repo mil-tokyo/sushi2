@@ -544,4 +544,10 @@ describe('Sushi class', function() {
     mat2.set($M.colon(1, 2), $M.colon(2, 3), $M.jsa2mat([[10, 20], [30, 40]]));
     expect($M.mat2jsa(mat2)).toEqual([[1, 10, 20], [4, 30, 40], [7, 8, 9]]);
   });
+  
+  it('binary_operation_gpu', function() {
+    var mata = $M.gpuArray($M.jsa2mat([1, 2, 3]));
+    var matb = $M.jsa2mat([2, 8, 15]);
+    expect($M.mat2jsa($M.add(mata, matb))).toEqual([[3, 10, 18]]);
+  });
 });

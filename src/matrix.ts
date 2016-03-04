@@ -71,6 +71,7 @@ class Matrix {
   static autodestruct_pop(): void {
     if (Matrix._autodestruct_stack_top) {
       //destruct all in current list
+      console.log('Autodestruct: ' + Matrix._autodestruct_stack_top.length + ' mats');
       for (var i = 0; i < Matrix._autodestruct_stack_top.length; i++) {
         Matrix._autodestruct_stack_top[i].destruct();
       }
