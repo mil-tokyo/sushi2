@@ -110,6 +110,10 @@ class Matrix {
 
     return this._data;
   }
+  
+  to_cpu(): Matrix {
+    return this;
+  }
 
   _getdata(): AllowedTypedArray {
     //override in gpu

@@ -177,80 +177,89 @@ function _singlemat2number(A: MatrixOrNumber): MatrixOrNumber {
   return A;
 }
 
-function _compare(A: MatrixOrNumber, B: MatrixOrNumber, comp: (a: number, b: number) => boolean): Matrix {
-  var shape: number[];
-  var both_mat = false;
-  var mat: Matrix;
-  A = _singlemat2number(A);
-  B = _singlemat2number(B);
-  if (A instanceof Matrix) {
-    shape = sizejsa(<Matrix>A);
-    if ((B instanceof Matrix)) {
-      if (!jsaequal(shape, sizejsa(B))) {
-        throw new Error('Dimension mismatch');
-      }
-      
-      //both matrix
-      mat = zeros(...shape, 'logical');
-      var mata = <Matrix>A;
-      var matb = <Matrix>B;
-      var len = numel(mata);
-      for (var i = 1; i <= len; i++) {
-        mat.set(i, Number(comp(mata.get(i), matb.get(i))));
-      }
-    } else {
-      //a is mat, b is number
-      mat = zeros(...shape, 'logical');
-      var mata = <Matrix>A;
-      var scalarb = <number>B;
-      var len = numel(mata);
-      for (var i = 1; i <= len; i++) {
-        mat.set(i, Number(comp(mata.get(i), scalarb)));
-      }
-    }
-  } else if (B instanceof Matrix) {
-    shape = sizejsa(<Matrix>B);
-    // b is mat, a is number
-    mat = zeros(...shape, 'logical');
-    var scalara = <number>A;
-    var matb = B;
-    var len = numel(matb);
-    for (var i = 1; i <= len; i++) {
-      mat.set(i, Number(comp(scalara, matb.get(i))));
+function make_compare_func(operation: string, a_mat: boolean, b_mat: boolean): (A: MatrixOrNumber, B: MatrixOrNumber) => Matrix {
+  var l_shape;
+  var l_size_check = '';
+  var l_def_adata = '';
+  var l_def_bdata = '';
+  var l_get_a;
+  var l_get_b;
+  if (a_mat) {
+    l_shape = 'A._size';
+    l_def_adata = 'var a_data = A._data;';
+    l_get_a = 'a_data[i]';
+    if (b_mat) {
+      l_size_check = 'if (!e_util.jsaequal(A._size, B._size)) {throw new Error("Dimension mismatch");}';
     }
   } else {
-    //both number
-    mat = zeros(1, 'logical');
-    mat.set(1, Number(comp(<number>A, <number>B)));
-    return mat;
+    l_get_a = 'A';
+    if (b_mat) {
+      l_shape = 'B._size';
+    } else {
+      l_shape = '[1,1]';
+    }
   }
-
-  return mat;
+  
+  if (b_mat) {
+    l_def_bdata = 'var b_data = B._data;';
+    l_get_b = 'b_data[i]';
+  } else {
+    l_get_b = 'B';
+  }
+  
+  var l_opr_formatted = operation.replace('%a', l_get_a).replace('%b', l_get_b);
+  
+  var f: any;
+  var e_Matrix = Matrix;
+  var e_util = util;
+  
+  eval([
+    'f = function(A, B) {',
+    'var shape = ' + l_shape + ';',
+    l_size_check,
+    l_def_adata,
+    l_def_bdata,
+    'var dst = new e_Matrix(shape, "logical");',
+    'var dst_data = dst._data;',
+    'for (var i = 0, length = dst._numel; i < length; i++) {',
+    '  dst_data[i] = ' + l_opr_formatted + ';',
+    '}',
+    'return dst;',
+    '}'
+  ].join('\n'));
+  return f;
 }
 
-export function eq(A: MatrixOrNumber, B: MatrixOrNumber): Matrix {
-  return _compare(A, B, (a, b) => { return a == b });
+function make_compare_func_all(operation: string): (A: MatrixOrNumber, B: MatrixOrNumber) => Matrix {
+  var func_s_s = make_compare_func(operation, false, false);
+  var func_s_m = make_compare_func(operation, false, true);
+  var func_m_s = make_compare_func(operation, true, false);
+  var func_m_m = make_compare_func(operation, true, true);
+  return function (A: MatrixOrNumber, B: MatrixOrNumber) {
+    A = util.force_cpu_scalar(A);
+    B = util.force_cpu_scalar(B);
+    if (A instanceof Matrix) {
+      if (B instanceof Matrix) {
+        return func_m_m(A, B);
+      } else {
+        return func_m_s(A, B);
+      }
+    } else {
+      if (B instanceof Matrix) {
+        return func_s_m(A, B);
+      } else {
+        return func_s_s(A, B);
+      }
+    }
+  }
 }
 
-export function ge(A: MatrixOrNumber, B: MatrixOrNumber): Matrix {
-  return _compare(A, B, (a, b) => { return a >= b });
-}
-
-export function gt(A: MatrixOrNumber, B: MatrixOrNumber): Matrix {
-  return _compare(A, B, (a, b) => { return a > b });
-}
-
-export function le(A: MatrixOrNumber, B: MatrixOrNumber): Matrix {
-  return _compare(A, B, (a, b) => { return a <= b });
-}
-
-export function lt(A: MatrixOrNumber, B: MatrixOrNumber): Matrix {
-  return _compare(A, B, (a, b) => { return a < b });
-}
-
-export function ne(A: MatrixOrNumber, B: MatrixOrNumber): Matrix {
-  return _compare(A, B, (a, b) => { return a != b });
-}
+export var eq = make_compare_func_all('Number(%a == %b)');
+export var ge = make_compare_func_all('Number(%a >= %b)');
+export var gt = make_compare_func_all('Number(%a > %b)');
+export var le = make_compare_func_all('Number(%a <= %b)');
+export var lt = make_compare_func_all('Number(%a < %b)');
+export var ne = make_compare_func_all('Number(%a != %b)');
 
 function _binary_op(A: MatrixOrNumber, B: MatrixOrNumber, comp: (a: number, b: number) => number): Matrix {
   var shape: number[];

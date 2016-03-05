@@ -43,3 +43,36 @@ export function issamesize(sizea: number[], sizeb: number[]): boolean {
   
   return true;
 }
+
+export function force_cpu(A: MatrixOrNumber): MatrixOrNumber {
+  if (A instanceof Matrix) {
+    return A.to_cpu();
+  } else {
+    return A;
+  }
+}
+
+export function force_cpu_scalar(A: MatrixOrNumber): MatrixOrNumber {
+  if (A instanceof Matrix) {
+    if (A._numel == 1) {
+      return A.get();
+    } else {
+      return A.to_cpu();
+    }
+  } else {
+    return A;
+  }
+}
+
+export function jsaequal(a: any[], b: any[]): boolean {
+  if (a.length != b.length) {
+    return false;
+  }
+
+  for (var i = 0; i < a.length; i++) {
+    if (a[i] != b[i]) {
+      return false;
+    }
+  }
+  return true;
+}

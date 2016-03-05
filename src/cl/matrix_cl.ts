@@ -20,6 +20,12 @@ class MatrixCL extends Matrix {
     }
     this._clbuffer = $CL.createBuffer(buffer_size);
   }
+  
+  to_cpu(): Matrix {
+    var cpumat = new Matrix(this._size, this._klass);
+    this.read(cpumat._data);
+    return cpumat;
+  }
 
   private throw_if_destructed() {
     if (!this._clbuffer) {
