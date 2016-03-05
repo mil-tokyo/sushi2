@@ -73,10 +73,10 @@ module.exports = $M;
     return mat;
   };
 
-  var add_native = $M.add;
-  $M.add = function (A, B) {
+  var plus_native = $M.plus;
+  $M.plus = function (A, B) {
     var ret = $M.autodestruct(function () {
-      return unify_call(add_native, add_cl, A, B);
+      return unify_call(plus_native, plus_cl, A, B);
     });
     return ret;
   };
@@ -122,7 +122,6 @@ module.exports = $M;
     }
 
     var kernel_name = 'binary_arith_cl_' + name + '_' + (left_isscalar || A._klass) + '_' + (right_isscalar || B._klass);
-    console.log(kernel_name);
     var kernel = MatrixCL.kernel_cache[kernel_name];
     if (!kernel) {
       kernel = $CL.createKernel([
@@ -170,7 +169,7 @@ module.exports = $M;
     return dst; 
   }
 
-  var add_cl = function (A, B) {
-    return binary_arith_cl(A, B, 'add', '((left) + (right))');
+  var plus_cl = function (A, B) {
+    return binary_arith_cl(A, B, 'plus', '((left) + (right))');
   };
 })();

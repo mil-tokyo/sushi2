@@ -307,7 +307,7 @@ function _binary_op(A: MatrixOrNumber, B: MatrixOrNumber, comp: (a: number, b: n
   return mat;
 }
 
-export function add(A: MatrixOrNumber, B: MatrixOrNumber): Matrix {
+export function plus(A: MatrixOrNumber, B: MatrixOrNumber): Matrix {
   return _binary_op(A, B, (a, b) => { return a + b });
 }
 
