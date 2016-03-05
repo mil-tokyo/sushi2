@@ -485,6 +485,11 @@ describe('Sushi class', function() {
     var mata = $M.jsa2mat([1, 2, 3]);
     var matb = $M.jsa2mat([2, 8, 15]);
     expect($M.mat2jsa($M.plus(mata, matb))).toEqual([[3, 10, 18]]);
+    expect($M.mat2jsa($M.minus(mata, matb))).toEqual([[-1, -6, -12]]);
+    expect($M.mat2jsa($M.times(mata, matb))).toEqual([[2, 16, 45]]);
+    expect($M.mat2jsa($M.rdivide(matb, mata))).toEqual([[2, 4, 5]]);
+    expect($M.mat2jsa($M.ldivide(mata, matb))).toEqual([[2, 4, 5]]);
+    expect($M.mat2jsa($M.power(matb, mata))).toEqual([[2, 64, 15*15*15]]);
   });
 
   it('gpuArray', function() {
@@ -556,6 +561,11 @@ describe('Sushi class', function() {
     var mata = $M.gpuArray($M.jsa2mat([1, 2, 3]));
     var matb = $M.jsa2mat([2, 8, 15]);
     expect($M.mat2jsa($M.plus(mata, matb))).toEqual([[3, 10, 18]]);
+    expect($M.mat2jsa($M.minus(mata, matb))).toEqual([[-1, -6, -12]]);
+    expect($M.mat2jsa($M.times(mata, matb))).toEqual([[2, 16, 45]]);
+    expect($M.mat2jsa($M.rdivide(matb, mata))).toEqual([[2, 4, 5]]);
+    expect($M.mat2jsa($M.ldivide(mata, matb))).toEqual([[2, 4, 5]]);
+    expect($M.mat2jsa($M.power(matb, mata))).toEqual([[2, 64, 15*15*15]]);
     expect($M.mat2jsa($M.plus(mata, 1))).toEqual([[2,3,4]]);
     expect($M.mat2jsa($M.plus(2, mata))).toEqual([[3,4,5]]);
     var matscalar = $M.gpuArray($M.jsa2mat([5]));

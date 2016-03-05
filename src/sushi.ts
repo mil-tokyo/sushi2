@@ -177,7 +177,38 @@ function _singlemat2number(A: MatrixOrNumber): MatrixOrNumber {
   return A;
 }
 
-function make_compare_func(operation: string, a_mat: boolean, b_mat: boolean): (A: MatrixOrNumber, B: MatrixOrNumber) => Matrix {
+function make_compare_func_all(operation: string): (A: MatrixOrNumber, B: MatrixOrNumber) => Matrix {
+  var func_s_s = make_binary_arith_func(operation, false, false, 'logical');
+  var func_s_m = make_binary_arith_func(operation, false, true, 'logical');
+  var func_m_s = make_binary_arith_func(operation, true, false, 'logical');
+  var func_m_m = make_binary_arith_func(operation, true, true, 'logical');
+  return function (A: MatrixOrNumber, B: MatrixOrNumber) {
+    A = util.force_cpu_scalar(A);
+    B = util.force_cpu_scalar(B);
+    if (A instanceof Matrix) {
+      if (B instanceof Matrix) {
+        return func_m_m(A, B);
+      } else {
+        return func_m_s(A, B);
+      }
+    } else {
+      if (B instanceof Matrix) {
+        return func_s_m(A, B);
+      } else {
+        return func_s_s(A, B);
+      }
+    }
+  }
+}
+
+export var eq = make_compare_func_all('Number(%a == %b)');
+export var ge = make_compare_func_all('Number(%a >= %b)');
+export var gt = make_compare_func_all('Number(%a > %b)');
+export var le = make_compare_func_all('Number(%a <= %b)');
+export var lt = make_compare_func_all('Number(%a < %b)');
+export var ne = make_compare_func_all('Number(%a != %b)');
+
+function make_binary_arith_func(operation: string, a_mat: boolean, b_mat: boolean, dst_klass: string): (A: MatrixOrNumber, B: MatrixOrNumber) => Matrix {
   var l_shape;
   var l_size_check = '';
   var l_def_adata = '';
@@ -219,7 +250,7 @@ function make_compare_func(operation: string, a_mat: boolean, b_mat: boolean): (
     l_size_check,
     l_def_adata,
     l_def_bdata,
-    'var dst = new e_Matrix(shape, "logical");',
+    'var dst = new e_Matrix(shape, "'+dst_klass+'");',
     'var dst_data = dst._data;',
     'for (var i = 0, length = dst._numel; i < length; i++) {',
     '  dst_data[i] = ' + l_opr_formatted + ';',
@@ -230,115 +261,36 @@ function make_compare_func(operation: string, a_mat: boolean, b_mat: boolean): (
   return f;
 }
 
-function make_compare_func_all(operation: string): (A: MatrixOrNumber, B: MatrixOrNumber) => Matrix {
-  var func_s_s = make_compare_func(operation, false, false);
-  var func_s_m = make_compare_func(operation, false, true);
-  var func_m_s = make_compare_func(operation, true, false);
-  var func_m_m = make_compare_func(operation, true, true);
+function make_binary_arith_func_all(operation: string): (A: MatrixOrNumber, B: MatrixOrNumber) => Matrix {
+  var funcs = {};
   return function (A: MatrixOrNumber, B: MatrixOrNumber) {
     A = util.force_cpu_scalar(A);
     B = util.force_cpu_scalar(B);
-    if (A instanceof Matrix) {
-      if (B instanceof Matrix) {
-        return func_m_m(A, B);
-      } else {
-        return func_m_s(A, B);
-      }
-    } else {
-      if (B instanceof Matrix) {
-        return func_s_m(A, B);
-      } else {
-        return func_s_s(A, B);
-      }
+    var dst_klass = util.commonklass(A, B);
+    if (dst_klass == 'logical') {
+      dst_klass = 'single';
     }
+    var a_mat = A instanceof Matrix;
+    var b_mat = B instanceof Matrix;
+    var func_name = '' + a_mat + '_' + b_mat + '_' + dst_klass;
+    var f = funcs[func_name];
+    if (!f) {
+      // compile (eval) function on first call
+      f = make_binary_arith_func(operation, a_mat, b_mat, dst_klass);
+      funcs[func_name] = f;
+    }
+    
+    return f(A, B);
   }
 }
 
-export var eq = make_compare_func_all('Number(%a == %b)');
-export var ge = make_compare_func_all('Number(%a >= %b)');
-export var gt = make_compare_func_all('Number(%a > %b)');
-export var le = make_compare_func_all('Number(%a <= %b)');
-export var lt = make_compare_func_all('Number(%a < %b)');
-export var ne = make_compare_func_all('Number(%a != %b)');
+export var plus = make_binary_arith_func_all('%a + %b');
+export var minus = make_binary_arith_func_all('%a - %b');
+export var times = make_binary_arith_func_all('%a * %b');
+export var rdivide = make_binary_arith_func_all('%a / %b');
+export var ldivide = make_binary_arith_func_all('%b / %a');
+export var power = make_binary_arith_func_all('Math.pow(%a,%b)');
 
-function _binary_op(A: MatrixOrNumber, B: MatrixOrNumber, comp: (a: number, b: number) => number): Matrix {
-  var shape: number[];
-  var both_mat = false;
-  var mat: Matrix;
-  A = _singlemat2number(A);
-  B = _singlemat2number(B);
-  var outklass = util.commonklass(A, B);
-  if (outklass == 'logical') {
-    outklass = 'single';
-  }
-  if (A instanceof Matrix) {
-    shape = sizejsa(<Matrix>A);
-    if ((B instanceof Matrix)) {
-      if (!jsaequal(shape, sizejsa(B))) {
-        throw new Error('Dimension mismatch');
-      }
-      
-      //both matrix
-      mat = zeros(...shape, outklass);
-      var mata = <Matrix>A;
-      var matb = <Matrix>B;
-      var len = numel(mata);
-      for (var i = 1; i <= len; i++) {
-        mat.set(i, comp(mata.get(i), matb.get(i)));
-      }
-    } else {
-      //a is mat, b is number
-      mat = zeros(...shape, outklass);
-      var mata = <Matrix>A;
-      var scalarb = <number>B;
-      var len = numel(mata);
-      for (var i = 1; i <= len; i++) {
-        mat.set(i, comp(mata.get(i), scalarb));
-      }
-    }
-  } else if (B instanceof Matrix) {
-    shape = sizejsa(<Matrix>B);
-    // b is mat, a is number
-    mat = zeros(...shape, outklass);
-    var scalara = <number>A;
-    var matb = B;
-    var len = numel(matb);
-    for (var i = 1; i <= len; i++) {
-      mat.set(i, comp(scalara, matb.get(i)));
-    }
-  } else {
-    //both number
-    mat = zeros(1, outklass);
-    mat.set(1, comp(<number>A, <number>B));
-    return mat;
-  }
-
-  return mat;
-}
-
-export function plus(A: MatrixOrNumber, B: MatrixOrNumber): Matrix {
-  return _binary_op(A, B, (a, b) => { return a + b; });
-}
-
-export function minus(A: MatrixOrNumber, B: MatrixOrNumber): Matrix {
-  return _binary_op(A, B, (a, b) => { return a - b; });
-}
-
-export function times(A: MatrixOrNumber, B: MatrixOrNumber): Matrix {
-  return _binary_op(A, B, (a, b) => { return a * b; });
-}
-
-export function rdivide(A: MatrixOrNumber, B: MatrixOrNumber): Matrix {
-  return _binary_op(A, B, (a, b) => { return a / b; });
-}
-
-export function ldivide(A: MatrixOrNumber, B: MatrixOrNumber): Matrix {
-  return _binary_op(A, B, (a, b) => { return b / a; });
-}
-
-export function power(A: MatrixOrNumber, B: MatrixOrNumber): Matrix {
-  return _binary_op(A, B, (a, b) => { return Math.pow(a, b); });
-}
 //indexing
 //TODO:test
 export function sub2ind(matrixSize: Matrix | number[], ...dimSub: number[]): number {
