@@ -8,4 +8,5 @@ src/matrix.js
 src/colon.js
 src/colonwrap.js
 src/util.js
+src/cl/matrix_cl.js
 spec/sushi.spec.js

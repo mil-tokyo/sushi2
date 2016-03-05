@@ -22,26 +22,38 @@
   function initWebCL(WebCL) {
     // decide platform to use
     var platform_list = WebCL.getPlatformIDs();
-    var platform_priority = ['CUDA', 'AMD', 'Apple', 'OpenCL'];
-    var priority = platform_priority.length + 1;
-    var includeIndexOf = function (array, search) {
-      for (var i = 0; i < array.length; i++) {
-        if (search.indexOf(array[i]) !== -1) {
-          return i;
+    var platform_index = 0;
+    if ('OPENCL_PLATFORM_INDEX' in process.env) {
+      platform_index = Number(process.env['OPENCL_PLATFORM_INDEX']);
+      if (platform_index >= platform_list.length) {
+        throw new Error('Invalid platform index ' + platform_index);
+      }
+    } else {
+      //select by name
+      var platform_priority = ['CUDA', 'AMD', 'Apple', 'OpenCL'];
+      var priority = platform_priority.length + 1;
+      var includeIndexOf = function (array, search) {
+        for (var i = 0; i < array.length; i++) {
+          if (search.indexOf(array[i]) !== -1) {
+            return i;
+          }
+        }
+        return array.length;
+      };
+      for (var i = 0; i < platform_list.length; i++) {
+        var platform_tmp = platform_list[i];
+        var platform_info_tmp = WebCL.getPlatformInfo(platform_tmp, WebCL.PLATFORM_NAME);
+        var priority_tmp = includeIndexOf(platform_priority, platform_info_tmp);
+        if (priority_tmp < priority) {
+          priority = priority_tmp;
+          platform_index = i;
+          $CL.platform = platform_tmp;
+          $CL.platform_info = platform_info_tmp;
         }
       }
-      return array.length;
-    };
-    for (var i = 0; i < platform_list.length; i++) {
-      var platform_tmp = platform_list[i];
-      var platform_info_tmp = WebCL.getPlatformInfo(platform_tmp, WebCL.PLATFORM_NAME);
-      var priority_tmp = includeIndexOf(platform_priority, platform_info_tmp);
-      if (priority_tmp < priority) {
-        priority = priority_tmp;
-        $CL.platform = platform_tmp;
-        $CL.platform_info = platform_info_tmp;
-      }
     }
+    $CL.platform = platform_list[platform_index];
+    $CL.platform_info = WebCL.getPlatformInfo($CL.platform, WebCL.PLATFORM_NAME);
 
     try {
       var device_type = WebCL.DEVICE_TYPE_GPU;

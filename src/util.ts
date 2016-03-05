@@ -33,3 +33,13 @@ export function commonklass(...mats: MatrixOrNumber[]): string {
   
   return commonklassstr(...klasses);
 }
+
+export function issamesize(sizea: number[], sizeb: number[]): boolean {
+  for (var i = 0; i < sizea.length; i++) {
+    if (sizea[i] != sizeb[i]) {
+      return false;
+    }
+  }
+  
+  return true;
+}

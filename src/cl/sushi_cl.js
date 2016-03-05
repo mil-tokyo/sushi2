@@ -80,36 +80,97 @@ module.exports = $M;
     });
     return ret;
   };
-
-  var add_cl = function (A, B) {
-    var kernel_name = 'add_cl_' + A._klass + '_' + B._klass;
-    console.log(kernel_name);
+  
+  var binary_arith_cl = function (A, B, name, operator) {
     var dst_klass = util.commonklass(A, B);
+    var left_type, right_type;
+    var left_scalar = null, right_scalar = null;
+    var left_isscalar = true, right_isscalar = true;
+    var kernel_param_a, kernel_param_b;
+    if (A instanceof Matrix) {
+      if (A._numel == 1) {
+        left_type = ctypes[dst_klass];
+        left_scalar = A.get();
+      } else {
+        left_type = '__global ' + ctypes[A._klass] + ' *';
+        kernel_param_a = { access: WebCL.MEM_READ_ONLY, datum: A };
+        left_isscalar = false;
+      }
+    } else {
+      left_type = ctypes[dst_klass];
+      left_scalar = A;
+    }
+    if (left_isscalar) {
+      kernel_param_a = { datum: MatrixCL.cast_scalar_val(left_scalar, dst_klass), type: webcltypes[dst_klass] };
+    }
+
+    if (B instanceof Matrix) {
+      if (B._numel == 1) {
+        right_type = ctypes[dst_klass];
+        right_scalar = B.get();
+      } else {
+        right_type = '__global ' + ctypes[B._klass] + ' *';
+        kernel_param_b = { access: WebCL.MEM_READ_ONLY, datum: B };
+        right_isscalar = false;
+      }
+    } else {
+      right_type = ctypes[dst_klass];
+      right_scalar = B;
+    }
+    if (right_isscalar) {
+      kernel_param_b = { datum: MatrixCL.cast_scalar_val(right_scalar, dst_klass), type: webcltypes[dst_klass] };
+    }
+
+    var kernel_name = 'binary_arith_cl_' + name + '_' + (left_isscalar || A._klass) + '_' + (right_isscalar || B._klass);
+    console.log(kernel_name);
     var kernel = MatrixCL.kernel_cache[kernel_name];
     if (!kernel) {
       kernel = $CL.createKernel([
-        '#define LEFT_TYPE ' + ctypes[A._klass],
-        '#define RIGHT_TYPE ' + ctypes[B._klass],
+        '#define LEFT_TYPE ' + left_type,
+        '#define RIGHT_TYPE ' + right_type,
         '#define DST_TYPE ' + ctypes[dst_klass],
-        '__kernel void kernel_func(__global DST_TYPE *dst, __global LEFT_TYPE *a, __global RIGHT_TYPE *b, uint length) {',
+        '#define LEFT_ACCESS(i) ' + (left_isscalar ? 'a' : 'a[(i)]'),
+        '#define RIGHT_ACCESS(i) ' + (right_isscalar ? 'b' : 'b[(i)]'),
+        '#define OPERATOR(left, right) ' + operator,
+        '__kernel void kernel_func(__global DST_TYPE *dst, LEFT_TYPE a, RIGHT_TYPE b, uint length) {',
         '  uint i = get_global_id(0);',
         '  if (i >= length) { return; }',
-        '  dst[i] = (DST_TYPE)(a[i] + b[i]);',
+        '  dst[i] = (DST_TYPE)OPERATOR(LEFT_ACCESS(i), RIGHT_ACCESS(i));',
         '}'
       ].join('\n'));
       MatrixCL.kernel_cache[kernel_name] = kernel;
     }
 
-    var dst = new MatrixCL(A._size, dst_klass);
+    var dst_size;
+    if (left_isscalar) {
+      if (right_isscalar) {
+        dst_size = [1, 1];
+      } else {
+        dst_size = B._size;
+      }
+    } else {
+      dst_size = A._size;
+      if (!right_isscalar) {
+        // both matrix; size check
+        if (!util.issamesize(A._size, B._size)) {
+          throw new Error('Dimension mismatch');
+        }
+      }
+    }
+
+    var dst = new MatrixCL(dst_size, dst_klass);
     if (dst._numel > 0) {
       $CL.executeKernel(kernel, [
         { access: WebCL.MEM_WRITE_ONLY, datum: dst },
-        { access: WebCL.MEM_READ_ONLY, datum: A },
-        { access: WebCL.MEM_READ_ONLY, datum: B },
-        { datum: dst._numel, type: WebCL.type.UINT }
-      ], dst._numel);
+        kernel_param_a,
+        kernel_param_b,
+        { datum: dst._numel, type: WebCL.type.UINT }],
+        dst._numel);
     }
+    return dst; 
+  }
 
-    return dst;
+  var add_cl = function (A, B) {
+    return binary_arith_cl(A, B, 'add', '((left) + (right))');
   };
 })();

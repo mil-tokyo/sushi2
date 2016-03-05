@@ -9,7 +9,7 @@ declare type MatrixOrNumber = Matrix | number;
 
 export function autodestruct(f: () => any): any {
   Matrix.autodestruct_push();
-  var mats_to_save;
+  var mats_to_save = [];
   try {
     mats_to_save = f();
   } finally {
