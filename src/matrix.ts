@@ -288,6 +288,15 @@ class Matrix {
       }
     }
   }
+  
+  // returns value of (1,1) or 0
+  valueOf(): number {
+    if (this._numel > 0) {
+      return this.get();
+    } else {
+      return 0;
+    }
+  }
 
   copy(klass?: string): Matrix {
     var clone = new Matrix(this._size, klass || this._klass);

@@ -172,6 +172,13 @@ describe('Sushi class', function() {
     expect(mat._data).toEqual(jasmine.any(Int32Array));
     expect(mat._data[0]).toEqual(1);//only type is copied, not data
   });
+  
+  it('valueOf', function() {
+    var mat = $M.jsa2mat([[10, 2, 3], [4, 5, 6], [7, 8, 9]]);
+    expect(<any>mat + 0).toEqual(10);
+    mat = $M.ones(0, 0);
+    expect(<any>mat + 0).toEqual(0);//zero-sized matrix gives 0
+  });
 
   it('get_set_scalar', function() {
     //matrix indexing
