@@ -308,9 +308,28 @@ function _binary_op(A: MatrixOrNumber, B: MatrixOrNumber, comp: (a: number, b: n
 }
 
 export function plus(A: MatrixOrNumber, B: MatrixOrNumber): Matrix {
-  return _binary_op(A, B, (a, b) => { return a + b });
+  return _binary_op(A, B, (a, b) => { return a + b; });
 }
 
+export function minus(A: MatrixOrNumber, B: MatrixOrNumber): Matrix {
+  return _binary_op(A, B, (a, b) => { return a - b; });
+}
+
+export function times(A: MatrixOrNumber, B: MatrixOrNumber): Matrix {
+  return _binary_op(A, B, (a, b) => { return a * b; });
+}
+
+export function rdivide(A: MatrixOrNumber, B: MatrixOrNumber): Matrix {
+  return _binary_op(A, B, (a, b) => { return a / b; });
+}
+
+export function ldivide(A: MatrixOrNumber, B: MatrixOrNumber): Matrix {
+  return _binary_op(A, B, (a, b) => { return b / a; });
+}
+
+export function power(A: MatrixOrNumber, B: MatrixOrNumber): Matrix {
+  return _binary_op(A, B, (a, b) => { return Math.pow(a, b); });
+}
 //indexing
 //TODO:test
 export function sub2ind(matrixSize: Matrix | number[], ...dimSub: number[]): number {
