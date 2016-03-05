@@ -736,6 +736,25 @@ class Matrix {
     }
     console.log(s);
   }
+  
+  reshape_inplace(sz: Matrix);
+  reshape_inplace(sz: number[]);
+  reshape_inplace(...sz: number[]);
+  reshape_inplace(...args: any[]): void {
+    throw new Error('Not implemented');
+    var sz: number[];
+    var first_arg = args[0];
+    if (first_arg instanceof Matrix) {
+      var tarray = first_arg._getdata();
+      sz = Array.prototype.slice.call(null, tarray);
+    } else if (first_arg.length !== void 0) {
+      sz = first_arg;
+    } else {
+      sz = args;
+    }
+    
+    this._size = sz;
+  }
 }
 
 export = Matrix;
