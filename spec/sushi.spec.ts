@@ -581,4 +581,11 @@ describe('Sushi class', function() {
     expect($M.mat2jsa($M.plus(mata, matscalar))).toEqual([[6, 7, 8]]);
     expect($M.mat2jsa($M.plus(mata, mata))).toEqual([[2, 4, 6]]);
   });
+  
+  it('reshape', function() {
+    var mat = $M.jsa2mat([[1,2,3],[4,5,6],[7,8,9],[10,11,12]]);//12 elements
+    mat.reshape_inplace(1,12);
+    
+    expect(() => mat.reshape_inplace(1,1)).toThrow();
+  });
 });

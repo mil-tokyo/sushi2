@@ -71,7 +71,7 @@ class Matrix {
   static autodestruct_pop(): void {
     if (Matrix._autodestruct_stack_top) {
       //destruct all in current list
-      console.log('Autodestruct: ' + Matrix._autodestruct_stack_top.length + ' mats');
+      //console.log('Autodestruct: ' + Matrix._autodestruct_stack_top.length + ' mats');
       for (var i = 0; i < Matrix._autodestruct_stack_top.length; i++) {
         Matrix._autodestruct_stack_top[i].destruct();
       }
@@ -741,19 +741,50 @@ class Matrix {
   reshape_inplace(sz: number[]);
   reshape_inplace(...sz: number[]);
   reshape_inplace(...args: any[]): void {
-    throw new Error('Not implemented');
-    var sz: number[];
+    var _size: number[];
     var first_arg = args[0];
+    //convert to Array
     if (first_arg instanceof Matrix) {
       var tarray = first_arg._getdata();
-      sz = Array.prototype.slice.call(null, tarray);
+      _size = Array.prototype.slice.call(tarray);
     } else if (first_arg.length !== void 0) {
-      sz = first_arg;
+      _size = Array.prototype.slice.call(first_arg);
     } else {
-      sz = args;
+      _size = Array.prototype.slice.call(args);
     }
     
-    this._size = sz;
+    //type check
+    var tmpnumel: number = 1;
+    var strides: number[] = [];
+    var last_none_one_dim = 0;
+    if (_size.length < 2) {
+      throw new Error('matrix must have at least 2 dimensions');
+    }
+    for (var i = 0; i < _size.length; i++) {
+      var dimsize = _size[i];
+      if (typeof (dimsize) !== 'number' || dimsize < 0 || !Matrix._isinteger(dimsize)) {
+        throw new Error('size is invalid');
+      }
+      if (dimsize != 1) {
+        last_none_one_dim = i;
+      }
+      strides.push(tmpnumel);
+      tmpnumel *= dimsize;
+    }
+    
+    if (tmpnumel !== this._numel) {
+      throw new Error('New shape must have same elements');
+    }
+    
+    //remove tail dimensions with size 1 (retain minimum 2 dimensions)
+    last_none_one_dim = Math.max(last_none_one_dim, 1) + 1;
+    _size.splice(last_none_one_dim);
+    strides.splice(last_none_one_dim);
+    
+    this._size = _size;
+    this._numel = tmpnumel;
+    this._ndims = _size.length;
+    this._strides = strides;
   }
 }
 
