@@ -28,5 +28,6 @@ module.exports = $M;
     return mat;
   };
 
-  require('./binary_arithmetic.js');
+  require('./binary_arithmetic');
+  require('./shape_converter_cl');
 })();

@@ -5,8 +5,10 @@ declare var require;
 declare var process;
 var cl_enabled = Boolean(Number(process.env['TEST_CL']));
 console.log('OpenCL ' + cl_enabled);
+var MatrixCL = null;
 if (cl_enabled) {
   var f: typeof $M = require('../src/cl/sushi_cl');
+  MatrixCL = require('../src/cl/matrix_cl');
 }
 
 describe('Sushi class', function() {
@@ -636,8 +638,11 @@ describe('Sushi class', function() {
     var mat = $M.jsa2mat([[1, 2, 3], [4, 5, 6]]);
     var t = $M.transpose(mat);
     expect($M.mat2jsa(t)).toEqual([[1, 4], [2, 5], [3, 6]]);
-    var matg = $M.gpuArray(mat);
-    var tg = $M.transpose(matg);
-    expect($M.mat2jsa(tg)).toEqual([[1, 4], [2, 5], [3, 6]]);
+    if (cl_enabled) {
+      var matg = $M.gpuArray(mat);
+      var tg = $M.transpose(matg);
+      expect(tg instanceof MatrixCL).toBeTruthy();
+      expect($M.mat2jsa(tg)).toEqual([[1, 4], [2, 5], [3, 6]]);
+    }
   });
 });
