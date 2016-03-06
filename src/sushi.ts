@@ -216,6 +216,8 @@ export function squeeze(A: Matrix): Matrix {
 export var transpose = shape_converter.transpose;
 export var t = transpose;//alias
 
+export var repmat = shape_converter.repmat;
+
 //indexing
 //TODO:test
 export function sub2ind(matrixSize: Matrix | number[], ...dimSub: number[]): number {
