@@ -484,10 +484,27 @@ describe('Sushi class', function() {
     var res = $M.eq(a, b);
     expect(res.mat2jsa(true)).toEqual([1, 1, 0]);//compared as number
     
-    //TODO: isequal, isequaln
-    
     //invalid shape
     expect(() => $M.eq($M.zeros(1, 2), $M.zeros(1, 3))).toThrow();
+  });
+
+  it('isequal', function() {
+    var check = function(mats_jsa, expected_equal, expected_equaln) {
+      var mats = mats_jsa.map((m) => $M.jsa2mat(m));
+      expect($M.isequal.apply(null, mats)).toEqual(expected_equal);
+      expect($M.isequaln.apply(null, mats)).toEqual(expected_equaln);
+      mats = mats.map((m) => $M.gpuArray(m));
+      expect($M.isequal.apply(null, mats)).toEqual(expected_equal);
+      expect($M.isequaln.apply(null, mats)).toEqual(expected_equaln);
+    };
+
+    expect($M.isequal(<any>1, <any>1)).toEqual(false);//number is not accepted
+    check([[[1, 2, 3]], [1, 2, 3]], true, true);
+    check([[[0]], [[0]]], true, true);
+    check([[[1, 2, 3]], [[1, 2]]], false, false);
+    check([[[NaN, 2, 3]], [[NaN, 2, 3]]], false, true);
+    check([[[NaN, 2, 3]], [[1, 2, 3]]], false, false);
+    check([[[1.1, 2, 3]], [[1, 2, 3]]], false, false);
   });
 
   it('binary_operation', function() {
@@ -581,11 +598,11 @@ describe('Sushi class', function() {
     expect($M.mat2jsa($M.plus(mata, matscalar))).toEqual([[6, 7, 8]]);
     expect($M.mat2jsa($M.plus(mata, mata))).toEqual([[2, 4, 6]]);
   });
-  
+
   it('reshape', function() {
-    var mat = $M.jsa2mat([[1,2,3],[4,5,6],[7,8,9],[10,11,12]]);//12 elements
-    mat.reshape_inplace(1,12);
-    
-    expect(() => mat.reshape_inplace(1,1)).toThrow();
+    var mat = $M.jsa2mat([[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12]]);//12 elements
+    mat.reshape_inplace(1, 12);
+
+    expect(() => mat.reshape_inplace(1, 1)).toThrow();
   });
 });

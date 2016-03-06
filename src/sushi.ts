@@ -185,6 +185,8 @@ export var gt = func_generator.make_compare_func_all('Number(%a > %b)');
 export var le = func_generator.make_compare_func_all('Number(%a <= %b)');
 export var lt = func_generator.make_compare_func_all('Number(%a < %b)');
 export var ne = func_generator.make_compare_func_all('Number(%a != %b)');
+export var isequal = func_generator.isequal;
+export var isequaln = func_generator.isequaln;
 
 export var plus = func_generator.make_binary_arith_func_all('%a + %b');
 export var minus = func_generator.make_binary_arith_func_all('%a - %b');
