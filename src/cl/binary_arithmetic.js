@@ -229,4 +229,86 @@ var util_cl = require('./util_cl');
   subsitute_compare('le', '((left) <= (right))');
   subsitute_compare('lt', '((left) < (right))');
   subsitute_compare('ne', '((left) != (right))');
+
+  var isequal_cl_both = function (mats, nan_equal) {
+    var A = mats[0];
+    var eqmat = new MatrixCL([1, 1], 'logical');
+    eqmat.set(1, 0);
+    for (var i = 1; i < mats.length; i++) {
+      var B = mats[i];
+      if (!util.issamesize(A._size, B._size)) {
+        return false;
+      }
+
+      var kernel_name = 'isequal_cl_' + A._klass + '_' + B._klass + '_' + nan_equal;
+      var kernel = MatrixCL.kernel_cache[kernel_name];
+      if (!kernel) {
+        var condition = 'aval != bval';
+        if (nan_equal) {
+          if (A._klass === 'single' && B._klass === 'single') {
+            condition += '&& !(isnan(aval) && isnan(bval))';//become false if both is nan
+          }
+        }
+
+        kernel = $CL.createKernel([
+          '#define LEFT_TYPE ' + ctypes[A._klass],
+          '#define RIGHT_TYPE ' + ctypes[B._klass],
+          '__kernel void kernel_func(__global uchar *dst, __global LEFT_TYPE *a, __global RIGHT_TYPE *b, uint length) {',
+          '  uint i = get_global_id(0);',
+          '  if (i >= length) { return; }',
+          '  LEFT_TYPE aval = a[i];',
+          '  RIGHT_TYPE bval = b[i];',
+          '  if (' + condition + ') {*dst = 1;}',
+          '}'
+        ].join('\n'));
+        MatrixCL.kernel_cache[kernel_name] = kernel;
+      }
+
+      if (A._numel > 0) {
+        $CL.executeKernel(kernel, [
+          { access: WebCL.MEM_WRITE_ONLY, datum: eqmat },
+          { access: WebCL.MEM_READ_ONLY, datum: A },
+          { access: WebCL.MEM_READ_ONLY, datum: B },
+          { datum: A._numel, type: WebCL.type.UINT }],
+          A._numel);
+      }
+      if (eqmat.get()) {
+        //non-equal value found
+        return false;
+      }
+    }
+    return true;
+  };
+
+  var isequal_cl = function () {
+    return isequal_cl_both(arguments, false);
+  };
+
+  var isequaln_cl = function () {
+    return isequal_cl_both(arguments, true);
+  }
+
+  var isequal_native = $M.isequal;
+  $M.isequal = function () {
+    var mats = arguments;//variable length input
+    var ret = $M.autodestruct(function () {
+      // Array.concat does not work on array-like (arguments)
+      var unify_call_args = [isequal_native, isequal_cl];
+      Array.prototype.push.apply(unify_call_args, mats);
+      return util_cl.unify_call.apply(null, unify_call_args);
+    });
+    return ret;
+  };
+  
+  var isequaln_native = $M.isequaln;
+  $M.isequaln = function () {
+    var mats = arguments;
+    var ret = $M.autodestruct(function () {
+      var unify_call_args = [isequaln_native, isequaln_cl];
+      Array.prototype.push.apply(unify_call_args, mats);
+      return util_cl.unify_call.apply(null, unify_call_args);
+    });
+    return ret;
+  };
+
 })();
