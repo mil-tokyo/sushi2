@@ -645,4 +645,36 @@ describe('Sushi class', function() {
       expect($M.mat2jsa(tg)).toEqual([[1, 4], [2, 5], [3, 6]]);
     }
   });
+
+  it('squeeze', function() {
+    var mat = $M.zeros(1, 2, 3);
+    mat.squeeze_inplace();
+    expect($M.sizejsa(mat)).toEqual([2, 3]);
+    mat = $M.zeros(1, 2, 3, 4, 1, 5, 6);
+    mat.squeeze_inplace();
+    expect($M.sizejsa(mat)).toEqual([2, 3, 4, 5, 6]);
+    mat = $M.zeros(1, 1, 5);
+    mat.squeeze_inplace();
+    expect($M.sizejsa(mat)).toEqual([5, 1]);
+    mat = $M.zeros(1, 1, 0);
+    mat.squeeze_inplace();
+    expect($M.sizejsa(mat)).toEqual([0, 1]);
+    mat = $M.zeros(1, 5);
+    mat.squeeze_inplace();
+    expect($M.sizejsa(mat)).toEqual([1, 5]);
+    mat = $M.zeros(5, 1);
+    mat.squeeze_inplace();
+    expect($M.sizejsa(mat)).toEqual([5, 1]);
+    mat = $M.zeros(1, 1);
+    mat.squeeze_inplace();
+    expect($M.sizejsa(mat)).toEqual([1, 1]);
+
+    mat = $M.zeros(1, 2, 3, 4, 1, 5, 6);
+    mat.set(1, 1, 2, 3, 1, 4, 2, 10);
+    mat.set(1, 2, 1, 2, 1, 5, 4, 20);
+    var mat2 = $M.squeeze(mat);
+    expect($M.sizejsa(mat2)).toEqual([2, 3, 4, 5, 6]);
+    expect(mat2.get(1, 2, 3, 4, 2)).toEqual(10);
+    expect(mat2.get(2, 1, 2, 5, 4)).toEqual(20);
+  });
 });

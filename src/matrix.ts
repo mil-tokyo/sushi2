@@ -803,6 +803,29 @@ class Matrix {
     this._ndims = _size.length;
     this._strides = strides;
   }
+
+  squeeze_inplace(): void {
+    if (this._ndims == 2) {
+      // keep [1,5] remained
+      return;
+    }
+    var new_size = this._size.filter((v) => v !== 1);
+    //append 1 to tail
+    while (new_size.length < 2) {
+      new_size.push(1);
+    }
+    var tmpnumel = 1;
+    var strides: number[] = [];
+    for (var dim = 0; dim < new_size.length; dim++) {
+      var dimsize = new_size[dim];
+      strides.push(tmpnumel);
+      tmpnumel *= dimsize;
+    }
+
+    this._size = new_size;
+    this._ndims = new_size.length;
+    this._strides = strides;
+  }
 }
 
 export = Matrix;

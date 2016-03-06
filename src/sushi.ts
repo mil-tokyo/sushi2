@@ -207,6 +207,12 @@ export function reshape(A: Matrix, ...sz: any[]): Matrix {
   }
 }
 
+export function squeeze(A: Matrix): Matrix {
+  var dst = A.copy();
+  dst.squeeze_inplace();
+  return dst;
+}
+
 export var transpose = shape_converter.transpose;
 export var t = transpose;//alias
 
