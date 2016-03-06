@@ -3,6 +3,7 @@ export import Colon = require('./colon');
 export import colon = require('./colonwrap');
 import util = require('./util');
 import func_generator = require('./func_generator');
+import shape_converter = require('./shape_converter');
 //export import MatrixCL = require('./cl/matrix_cl');
 
 export var end = -1;
@@ -205,6 +206,9 @@ export function reshape(A: Matrix, ...sz: any[]): Matrix {
     throw error;
   }
 }
+
+export var transpose = shape_converter.transpose;
+export var t = transpose;//alias
 
 //indexing
 //TODO:test

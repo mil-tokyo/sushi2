@@ -9,5 +9,6 @@ src/colon.js
 src/colonwrap.js
 src/util.js
 src/func_generator.js
+src/shape_converter.js
 src/cl/matrix_cl.js
 spec/sushi.spec.js

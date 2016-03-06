@@ -631,4 +631,13 @@ describe('Sushi class', function() {
     mat2 = $M.reshape(mat, [2, 3, -1]);
     expect($M.sizejsa(mat2)).toEqual([2, 3, 2]);
   });
+
+  it('transpose', function() {
+    var mat = $M.jsa2mat([[1, 2, 3], [4, 5, 6]]);
+    var t = $M.transpose(mat);
+    expect($M.mat2jsa(t)).toEqual([[1, 4], [2, 5], [3, 6]]);
+    var matg = $M.gpuArray(mat);
+    var tg = $M.transpose(matg);
+    expect($M.mat2jsa(tg)).toEqual([[1, 4], [2, 5], [3, 6]]);
+  });
 });
