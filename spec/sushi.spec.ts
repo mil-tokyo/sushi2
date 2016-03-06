@@ -600,9 +600,35 @@ describe('Sushi class', function() {
   });
 
   it('reshape', function() {
-    var mat = $M.jsa2mat([[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12]]);//12 elements
-    mat.reshape_inplace(1, 12);
+    var mat = $M.jsa2mat([[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]]);//12 elements
+    mat.reshape_inplace(3, 4);
+    //value is preserved in fortran-order
+    expect($M.isequal(mat, $M.jsa2mat([[1, 4, 7, 10], [2, 5, 8, 11], [3, 6, 9, 12]]))).toBeTruthy();
+    mat.reshape_inplace(3, 2, 2);
+    expect(mat.get(2, 1, 2)).toEqual(8);
+    mat.reshape_inplace(1, 2, 3, 2);
+    expect($M.sizejsa(mat)).toEqual([1, 2, 3, 2]);
+    mat.reshape_inplace([2, 6]);//number array accepted
+    expect($M.sizejsa(mat)).toEqual([2, 6]);
+    mat.reshape_inplace($M.jsa2mat([6, 2]));//vector accepted
+    expect($M.sizejsa(mat)).toEqual([6, 2]);
+    mat.reshape_inplace(-1, 1);
+    expect($M.sizejsa(mat)).toEqual([12, 1]);
+    mat.reshape_inplace(4, 1, -1);
+    expect($M.sizejsa(mat)).toEqual([4, 1, 3]);
+    mat.reshape_inplace(4, 3, -1);
+    expect($M.sizejsa(mat)).toEqual([4, 3]);//final 1 is omitted
+    mat.reshape_inplace(12, -1);
+    expect($M.sizejsa(mat)).toEqual([12, 1]);
 
     expect(() => mat.reshape_inplace(1, 1)).toThrow();
+    expect(() => mat.reshape_inplace(5, -1)).toThrow();
+    expect(() => mat.reshape_inplace(5, 0)).toThrow();
+    expect(() => mat.reshape_inplace(1.2, 10)).toThrow();
+
+    var mat2 = $M.reshape(mat, 3, 4);
+    expect($M.sizejsa(mat2)).toEqual([3, 4]);
+    mat2 = $M.reshape(mat, [2, 3, -1]);
+    expect($M.sizejsa(mat2)).toEqual([2, 3, 2]);
   });
 });

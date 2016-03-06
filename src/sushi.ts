@@ -173,7 +173,7 @@ function _singlemat2number(A: MatrixOrNumber): MatrixOrNumber {
   if ((A instanceof Matrix) && isscalar(A)) {
     return A.get_scalar([1]);
   }
-  
+
   return A;
 }
 
@@ -194,6 +194,17 @@ export var times = func_generator.make_binary_arith_func_all('%a * %b');
 export var rdivide = func_generator.make_binary_arith_func_all('%a / %b');
 export var ldivide = func_generator.make_binary_arith_func_all('%b / %a');
 export var power = func_generator.make_binary_arith_func_all('Math.pow(%a,%b)');
+
+export function reshape(A: Matrix, ...sz: any[]): Matrix {
+  var dst = A.copy();
+  try {
+    dst.reshape_inplace(...sz);
+    return dst;
+  } catch (error) {
+    dst.destruct();
+    throw error;
+  }
+}
 
 //indexing
 //TODO:test

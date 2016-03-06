@@ -110,7 +110,7 @@ class Matrix {
 
     return this._data;
   }
-  
+
   to_cpu(): Matrix {
     return this;
   }
@@ -736,7 +736,7 @@ class Matrix {
     }
     console.log(s);
   }
-  
+
   reshape_inplace(sz: Matrix);
   reshape_inplace(sz: number[]);
   reshape_inplace(...sz: number[]);
@@ -760,6 +760,23 @@ class Matrix {
     if (_size.length < 2) {
       throw new Error('matrix must have at least 2 dimensions');
     }
+    //substitute -1 to remaining value
+    var minus_pos = -1;
+    var remaining_prod = 1;
+    for (var i = 0; i < _size.length; i++) {
+      if (_size[i] < 0) {
+        if (minus_pos >= 0) {
+          throw new Error('Only one free size is accepted');
+        }
+        minus_pos = i;
+      } else {
+        remaining_prod *= _size[i];
+      }
+    }
+    if (minus_pos >= 0) {
+      _size[minus_pos] = this._numel / remaining_prod;
+    }
+
     for (var i = 0; i < _size.length; i++) {
       var dimsize = _size[i];
       if (typeof (dimsize) !== 'number' || dimsize < 0 || !Matrix._isinteger(dimsize)) {
@@ -771,7 +788,7 @@ class Matrix {
       strides.push(tmpnumel);
       tmpnumel *= dimsize;
     }
-    
+
     if (tmpnumel !== this._numel) {
       throw new Error('New shape must have same elements');
     }
@@ -780,7 +797,7 @@ class Matrix {
     last_none_one_dim = Math.max(last_none_one_dim, 1) + 1;
     _size.splice(last_none_one_dim);
     strides.splice(last_none_one_dim);
-    
+
     this._size = _size;
     this._numel = tmpnumel;
     this._ndims = _size.length;
