@@ -677,4 +677,24 @@ describe('Sushi class', function() {
     expect(mat2.get(1, 2, 3, 4, 2)).toEqual(10);
     expect(mat2.get(2, 1, 2, 5, 4)).toEqual(20);
   });
+
+  it('colonvec', function() {
+    var vec = $M.colonvec(1, 5);
+    expect($M.mat2jsa(vec)).toEqual([[1, 2, 3, 4, 5]]);
+    expect($M.klass(vec)).toEqual('single');
+    vec = $M.colonvec(1, 2, 5);
+    expect($M.mat2jsa(vec)).toEqual([[1, 3, 5]]);
+    vec = $M.colonvec(1, -1, 5);
+    expect($M.sizejsa(vec)).toEqual([1, 0]);
+    vec = $M.colonvec(1, -1);
+    expect($M.sizejsa(vec)).toEqual([1, 0]);
+
+    vec = $M.colonvec(-0.25, 0.25, 1.5);
+    expect($M.mat2jsa(vec)).toEqual([[-0.25, 0.0, 0.25, 0.5, 0.75, 1.0, 1.25, 1.5]]);
+    vec = $M.colonvec(5.0, -1.25, 3.0);
+    expect($M.mat2jsa(vec)).toEqual([[5.0, 3.75]]);
+
+    vec = $M.colonvec(1e9, 1, 1e9 + 3, 'int32');//fails if klass is single because value > 8M loses precision
+    expect($M.mat2jsa(vec)).toEqual([[1e9, 1e9 + 1, 1e9 + 2, 1e9 + 3]]);
+  });
 });

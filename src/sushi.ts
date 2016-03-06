@@ -239,3 +239,22 @@ export function sub2ind(matrixSize: Matrix | number[], ...dimSub: number[]): num
 
   return idx;
 }
+
+export function colonvec(start: number, stop_step: number, stop?: number, klass = 'single'): Matrix {
+  // make row vector by i:j:k
+  var step;
+  if (stop == null) {
+    stop = stop_step;
+    step = 1;
+  } else {
+    step = stop_step;
+  }
+
+  var n_item = Math.max(Math.floor((stop - start) / step) + 1, 0);
+  var vec = new Matrix([1, n_item], klass);
+  var vec_data = vec._data;
+  for (var i = 0; i < n_item; i++) {
+    vec_data[i] = start + step * i;
+  }
+  return vec;
+}
