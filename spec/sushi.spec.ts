@@ -697,16 +697,28 @@ describe('Sushi class', function() {
     vec = $M.colonvec(1e9, 1, 1e9 + 3, 'int32');//fails if klass is single because value > 8M loses precision
     expect($M.mat2jsa(vec)).toEqual([[1e9, 1e9 + 1, 1e9 + 2, 1e9 + 3]]);
   });
-  
+
   it('repmat', function() {
-    var mat = $M.colonvec(1,6);
-    mat.reshape_inplace(2,3);
-    
+    var mat = $M.colonvec(1, 6);
+    mat.reshape_inplace(2, 3);
+
     var mat2 = $M.repmat(mat, 2);//equivalent to repmat(mat, 2, 2)
-    expect($M.sizejsa(mat2)).toEqual([4,6]);
-    expect($M.isequal(mat2.get($M.colon(1,2),$M.colon(1,3)), mat)).toBeTruthy();
-    expect($M.isequal(mat2.get($M.colon(3,4),$M.colon(1,3)), mat)).toBeTruthy();
-    expect($M.isequal(mat2.get($M.colon(1,2),$M.colon(4,6)), mat)).toBeTruthy();
-    expect($M.isequal(mat2.get($M.colon(3,4),$M.colon(4,6)), mat)).toBeTruthy();
+    expect($M.sizejsa(mat2)).toEqual([4, 6]);
+    expect($M.isequal(mat2.get($M.colon(1, 2), $M.colon(1, 3)), mat)).toBeTruthy();
+    expect($M.isequal(mat2.get($M.colon(3, 4), $M.colon(1, 3)), mat)).toBeTruthy();
+    expect($M.isequal(mat2.get($M.colon(1, 2), $M.colon(4, 6)), mat)).toBeTruthy();
+    expect($M.isequal(mat2.get($M.colon(3, 4), $M.colon(4, 6)), mat)).toBeTruthy();
+
+    var mat2 = $M.repmat(mat, 2, 3, 4, 1);
+    expect($M.sizejsa(mat2)).toEqual([4, 9, 4]);
+    expect($M.isequal(mat2.get($M.colon(3, 4), $M.colon(4, 6), 3), mat)).toBeTruthy();
+    var mat2 = $M.repmat(mat, 2, 3, 4, 0);
+    expect($M.sizejsa(mat2)).toEqual([4, 9, 4, 0]);
+    var mat2 = $M.repmat(mat, [2, 3, 4, 5]);
+    expect($M.sizejsa(mat2)).toEqual([4, 9, 4, 5]);
+    var mat2 = $M.repmat(mat, $M.jsa2mat([2, 3, 4, 5]));
+    expect($M.sizejsa(mat2)).toEqual([4, 9, 4, 5]);
+    
+
   });
 });

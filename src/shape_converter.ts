@@ -48,13 +48,57 @@ export function repmat(A: Matrix, ...args: any[]): Matrix {
   while (_rs.length < A._ndims) {
     _rs.push(1);
   }
+  
+  // remove tailing 1
+  while ((_rs.length > A._ndims) && (_rs[_rs.length - 1] == 1)) {
+    _rs.pop();
+  }
 
+  var newdims = _rs.length;
   var newsize: number[] = [];
-  for (var dim = 0; dim < A._ndims; dim++) {
-    var dimsize = A._size[dim];
-    newsize[dim] = dimsize * _rs[dim];
+  var input_strides: number[] = [];
+  var output_strides: number[] = [];
+  var tmp_in_stride = 1;
+  var tmp_out_stride = 1;
+  var n_copy = 1;
+  var rs_strides: number[] = [];
+  for (var dim = 0; dim < newdims; dim++) {
+    var indimsize = A._ndims > dim ? A._size[dim] : 1;
+    var outdimsize = indimsize * _rs[dim];
+    rs_strides.push(n_copy);
+    n_copy *= _rs[dim];
+    newsize.push(outdimsize);
+    input_strides.push(tmp_in_stride);
+    output_strides.push(tmp_out_stride);
+    tmp_in_stride *= indimsize;
+    tmp_out_stride *= outdimsize;
+  }
+  input_strides.push(tmp_in_stride);//dummy
+  rs_strides.push(n_copy);//dummy
+
+  var output_steps: number[] = [];
+  for (var i = 0; i < n_copy; i++) {
+    var out_offset = 0;
+    for (var dim = 0; dim < newdims; dim++) {
+      out_offset += Math.floor(i % rs_strides[dim + 1] / rs_strides[dim]) * output_strides[dim] * (A._size[dim] || 1);
+    }
+    output_steps.push(out_offset);
   }
 
   var dst = new Matrix(newsize, A._klass);
+  var a_data = A._data;
+  var dst_data = dst._data;
+  for (var i = 0, i_length = A._numel; i < i_length; i++) {
+    var a_i = a_data[i];
+    var out_offset = 0;
+    for (var dim = 0; dim < newdims; dim++) {
+      out_offset += Math.floor(i % input_strides[dim + 1] / input_strides[dim]) * output_strides[dim];
+    }
+    for (var j = 0; j < n_copy; j++) {
+      var out_idx = out_offset + output_steps[j];
+      dst_data[out_idx] = a_i;
+    }
+
+  }
   return dst;
 }
