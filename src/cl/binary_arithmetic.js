@@ -17,6 +17,9 @@ var util_cl = require('./util_cl');
 
   var binary_arith_cl = function (A, B, name, operator) {
     var dst_klass = util.commonklass(A, B);
+    if (dst_klass == 'logical') {
+      dst_klass = 'single';
+    }
     var left_type, right_type;
     var left_scalar = null, right_scalar = null;
     var left_isscalar = true, right_isscalar = true;
@@ -55,7 +58,7 @@ var util_cl = require('./util_cl');
       kernel_param_b = { datum: MatrixCL.cast_scalar_val(right_scalar, dst_klass), type: webcltypes[dst_klass] };
     }
 
-    var kernel_name = 'binary_arith_cl_' + name + '_' + (left_isscalar || A._klass) + '_' + (right_isscalar || B._klass);
+    var kernel_name = 'binary_arith_cl_' + name + '_' + (left_isscalar || A._klass) + '_' + (right_isscalar || B._klass) + '_' + dst_klass;
     var kernel = MatrixCL.kernel_cache[kernel_name];
     if (!kernel) {
       kernel = $CL.createKernel([
@@ -120,7 +123,7 @@ var util_cl = require('./util_cl');
   subsitute_binary_arith('times', '((left) * (right))');
   subsitute_binary_arith('rdivide', '((left) / (right))');
   subsitute_binary_arith('ldivide', '((right) / (left))');
-  subsitute_binary_arith('power', '(pow((left), (right)))');
+  subsitute_binary_arith('power', '(pow((float)(left), (float)(right)))');
 
 
   var compare_cl = function (A, B, name, operator) {

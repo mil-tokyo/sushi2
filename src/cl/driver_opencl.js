@@ -86,6 +86,9 @@
       if (type !== void 0) {
         switch (type) {
           //TODO
+          case WebCL.type.UCHAR:
+            typestr = 'uchar';
+            break;
           case WebCL.type.UINT:
             typestr = 'uint';
             break;
