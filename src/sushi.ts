@@ -15,18 +15,30 @@ export function autodestruct(f: () => any): any {
   try {
     mats_to_save = f();
   } finally {
-    var mats_list;
-    if (mats_to_save instanceof Matrix) {
-      // single matrix return
-      mats_list = [mats_to_save];
-    } else {
-      mats_list = mats_to_save;
-    }
-    for (var i = 0; i < mats_list.length; i++) {
-      var mat = mats_list[i];
-      var delete_idx = Matrix._autodestruct_stack_top.indexOf(mat);
-      if (delete_idx >= 0) {
-        Matrix._autodestruct_stack_top.splice(delete_idx, 1);
+    if (typeof (mats_to_save) === 'object') {
+      var mats_list;
+      if (mats_to_save instanceof Matrix) {
+        // single matrix return
+        mats_list = [mats_to_save];
+      } else if (mats_to_save.length !== undefined) {
+        //array-like
+        mats_list = mats_to_save;
+      } else {
+        //dictionary
+        mats_list = [];
+        for (var k in mats_to_save) {
+          if (mats_to_save[k] instanceof Matrix) {
+            mats_list.push(mats_to_save[k]);
+          }
+        }
+      }
+
+      for (var i = 0; i < mats_list.length; i++) {
+        var mat = mats_list[i];
+        var delete_idx = Matrix._autodestruct_stack_top.indexOf(mat);
+        if (delete_idx >= 0) {
+          Matrix._autodestruct_stack_top.splice(delete_idx, 1);
+        }
       }
     }
     Matrix.autodestruct_pop();
