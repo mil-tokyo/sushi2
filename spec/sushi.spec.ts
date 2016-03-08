@@ -174,10 +174,10 @@ describe('Sushi class', function() {
     expect(mat._data).toEqual(jasmine.any(Int32Array));
     expect(mat._data[0]).toEqual(1);//only type is copied, not data
   });
-  
-  it('eye', function (){
+
+  it('eye', function() {
     var mat = $M.eye();
-    expect(mat._size).toEqual([1,1]);
+    expect(mat._size).toEqual([1, 1]);
     expect($M.mat2jsa(mat)).toEqual([[1]]);
   });
 
@@ -526,6 +526,19 @@ describe('Sushi class', function() {
     expect($M.mat2jsa($M.power(matb, mata))).toEqual([[2, 64, 15 * 15 * 15]]);
   });
 
+  it('unary_operation', function() {
+    expect($M.mat2jsa($M.floor($M.jsa2mat([0.0, 0.1, 0.5, 0.9, 1.0, -0.1, -0.9, -1.0])))).toEqual([[0, 0, 0, 0, 1, -1, -1, -1]]);
+    expect($M.mat2jsa($M.fix($M.jsa2mat([0.0, 0.1, 0.5, 0.9, 1.0, -0.1, -0.9, -1.0])))).toEqual([[0, 0, 0, 0, 1, 0, 0, -1]]);
+    expect($M.mat2jsa($M.ceil($M.jsa2mat([0.0, 0.1, 0.5, 0.9, 1.0, -0.1, -0.9, -1.0])))).toEqual([[0, 1, 1, 1, 1, 0, 0, -1]]);
+    expect($M.mat2jsa($M.uminus($M.jsa2mat([0.0, 2.5, -2.5, Infinity, -Infinity])))).toEqual([[0.0, -2.5, 2.5, -Infinity, Infinity]]);
+    expect($M.mat2jsa($M.uplus($M.jsa2mat([0.0, 2.5, -2.5, Infinity, -Infinity])))).toEqual([[0.0, 2.5, -2.5, Infinity, -Infinity]]);
+    expect($M.mat2jsa($M.floor(1.1))).toEqual([[1]]);
+    expect($M.mat2jsa($M.ceil(1.1))).toEqual([[2]]);
+    expect($M.mat2jsa($M.fix(1.1))).toEqual([[1]]);
+    expect($M.mat2jsa($M.uminus(2))).toEqual([[-2]]);
+    expect($M.mat2jsa($M.uplus(2))).toEqual([[2]]);
+  });
+
   it('gpuArray', function() {
     var cpu = $M.jsa2mat([1, 3, 5]);
     var gpu = $M.gpuArray(cpu);
@@ -656,7 +669,7 @@ describe('Sushi class', function() {
       var matscalar = $M.gpuArray($M.jsa2mat([5]));
       expect($M.mat2jsa($M.plus(mata, matscalar))).toEqual([[6, 7, 8]]);
       expect($M.mat2jsa($M.plus(mata, mata))).toEqual([[2, 4, 6]]);
-      
+
       return [];
     });
   });

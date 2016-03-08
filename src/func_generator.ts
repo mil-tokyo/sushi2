@@ -82,9 +82,9 @@ export function make_binary_arith_func(operation: string, a_mat: boolean, b_mat:
 export function make_binary_arith_func_all(operation: string): (A: MatrixOrNumber, B: MatrixOrNumber) => Matrix {
   var funcs = {};
   return function(A: MatrixOrNumber, B: MatrixOrNumber) {
+    var dst_klass = util.commonklass(A, B);
     A = util.force_cpu_scalar(A);
     B = util.force_cpu_scalar(B);
-    var dst_klass = util.commonklass(A, B);
     if (dst_klass == 'logical') {
       dst_klass = 'single';
     }
@@ -99,6 +99,66 @@ export function make_binary_arith_func_all(operation: string): (A: MatrixOrNumbe
     }
 
     return f(A, B);
+  }
+}
+
+export function make_unary_arith_func(operation: string, a_mat: boolean, dst_klass: string): (A: MatrixOrNumber) => Matrix {
+  var l_shape: string;
+  var l_def_adata = '';
+  var l_get_a;
+  if (a_mat) {
+    l_shape = 'A._size';
+    l_def_adata = 'var a_data = A._data;';
+    l_get_a = 'a_data[i]';
+  } else {
+    l_shape = '[1,1]';
+    l_get_a = 'A';
+  }
+
+  var l_opr_formatted = operation.replace(/%a/g, l_get_a);
+
+  var f: any;
+  var e_Matrix = Matrix;
+  var e_util = util;
+
+  eval([
+    'f = function(A) {',
+    'var shape = ' + l_shape + ';',
+    l_def_adata,
+    'var dst = new e_Matrix(shape, "' + dst_klass + '");',
+    'var dst_data = dst._data;',
+    'for (var i = 0, length = dst._numel; i < length; i++) {',
+    '  dst_data[i] = ' + l_opr_formatted + ';',
+    '}',
+    'return dst;',
+    '}'
+  ].join('\n'));
+  return f;
+}
+
+export function make_unary_arith_func_all(operation: string): (A: MatrixOrNumber) => Matrix {
+  var funcs = {};
+  return function(A: MatrixOrNumber) {
+    var dst_klass;
+    if (A instanceof Matrix) {
+      dst_klass = A._klass;
+      if (dst_klass == 'logical') {
+        dst_klass = 'single';
+      }
+    } else {
+      dst_klass = 'single';
+    }
+    A = util.force_cpu_scalar(A);
+    var a_mat = A instanceof Matrix;
+    var func_name = '' + a_mat + '_' + dst_klass;
+    var f = funcs[func_name];
+    if (!f) {
+      // compile (eval) function on first call
+      f = make_unary_arith_func(operation, a_mat, dst_klass);
+      funcs[func_name] = f;
+    }
+
+    return f(A);
   }
 }
 

@@ -180,6 +180,11 @@ export var times = func_generator.make_binary_arith_func_all('%a * %b');
 export var rdivide = func_generator.make_binary_arith_func_all('%a / %b');
 export var ldivide = func_generator.make_binary_arith_func_all('%b / %a');
 export var power = func_generator.make_binary_arith_func_all('Math.pow(%a,%b)');
+export var floor = func_generator.make_unary_arith_func_all('Math.floor(%a)');
+export var fix = func_generator.make_unary_arith_func_all('(%a > 0 ? Math.floor(%a) : Math.ceil(%a))');
+export var ceil = func_generator.make_unary_arith_func_all('Math.ceil(%a)');
+export var uplus = func_generator.make_unary_arith_func_all('+%a');
+export var uminus = func_generator.make_unary_arith_func_all('-%a');
 
 export function reshape(A: Matrix, ...sz: any[]): Matrix {
   var dst = A.copy();
