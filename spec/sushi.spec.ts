@@ -174,6 +174,12 @@ describe('Sushi class', function() {
     expect(mat._data).toEqual(jasmine.any(Int32Array));
     expect(mat._data[0]).toEqual(1);//only type is copied, not data
   });
+  
+  it('eye', function (){
+    var mat = $M.eye();
+    expect(mat._size).toEqual([1,1]);
+    expect($M.mat2jsa(mat)).toEqual([[1]]);
+  });
 
   it('valueOf', function() {
     var mat = $M.jsa2mat([[10, 2, 3], [4, 5, 6], [7, 8, 9]]);

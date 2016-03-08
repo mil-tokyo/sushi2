@@ -95,6 +95,15 @@ export function ones(...args: any[]): Matrix {
   return mat;
 }
 
+export function eye(...args: any[]): Matrix {
+  var mat = zeros(...args);
+  var min_dim = Math.min(mat._size[0], mat._size[1]);
+  for (var i = 1; i <= min_dim; i++) {
+    mat.set(i, i, 1);
+  }
+  return mat;
+}
+
 export function size(X: Matrix): Matrix;
 export function size(X: Matrix, dim: number): number;
 export function size(X: Matrix, dim?: number): any {
