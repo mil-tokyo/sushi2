@@ -29,5 +29,6 @@ module.exports = $M;
   };
 
   require('./binary_arithmetic');
+  require('./unary_arithmetic');
   require('./shape_converter_cl');
 })();
