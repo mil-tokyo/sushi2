@@ -1,6 +1,15 @@
 import Matrix = require('./matrix');
 declare type MatrixOrNumber = Matrix | number;
 
+
+export function as_mat(A: Matrix | any): Matrix {
+  if (A instanceof Matrix) {
+    return A;
+  } else {
+    return Matrix.jsa2mat(<any>A);
+  }
+}
+
 //finds common output class for matrices
 export function commonklassstr(...klasses: string[]): string {
   // single > int32 > uint8 > logical

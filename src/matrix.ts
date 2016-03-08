@@ -196,6 +196,11 @@ class Matrix {
     // TODO: type inference (contains non-integer => single, contains boolean => logical)
     // get dimension
     var mat: Matrix;
+    if (typeof (ary) === 'number') {
+      //1x1 matrix
+      mat = new Matrix([1, 1], klass);
+      mat.set_scalar(<number>ary, [1]);
+    }
     if (ary.length == 0) {
       //0x0 matrix
       mat = new Matrix([0, 0], klass);

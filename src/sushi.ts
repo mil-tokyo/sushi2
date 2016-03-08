@@ -8,6 +8,7 @@ import shape_converter = require('./shape_converter');
 
 export var end = -1;
 declare type MatrixOrNumber = Matrix | number;
+declare type MatrixLike = Matrix | number | number[] | number[][];
 
 export function autodestruct(f: () => any): any {
   Matrix.autodestruct_push();
@@ -131,9 +132,9 @@ export function klass(object: Matrix): string {
   return object._klass;
 }
 
-export function gpuArray(A: Matrix): Matrix {
+export function gpuArray(A: MatrixLike): Matrix {
   //overriden by sushi_cl
-  return A.copy();
+  return util.as_mat(A).copy();
 }
 
 export function gather(A: Matrix): Matrix {

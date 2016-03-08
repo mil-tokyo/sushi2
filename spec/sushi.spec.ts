@@ -540,18 +540,20 @@ describe('Sushi class', function() {
   });
 
   it('unary_operation_gpu', function() {
-    expect($M.mat2jsa($M.floor($M.gpuArray($M.jsa2mat([0.0, 0.1, 0.5, 0.9, 1.0, -0.1, -0.9, -1.0]))))).toEqual([[0, 0, 0, 0, 1, -1, -1, -1]]);
-    expect($M.mat2jsa($M.fix($M.gpuArray($M.jsa2mat([0.0, 0.1, 0.5, 0.9, 1.0, -0.1, -0.9, -1.0]))))).toEqual([[0, 0, 0, 0, 1, 0, 0, -1]]);
-    expect($M.mat2jsa($M.ceil($M.gpuArray($M.jsa2mat([0.0, 0.1, 0.5, 0.9, 1.0, -0.1, -0.9, -1.0]))))).toEqual([[0, 1, 1, 1, 1, 0, 0, -1]]);
-    expect($M.mat2jsa($M.uminus($M.gpuArray($M.jsa2mat([0.0, 2.5, -2.5, Infinity, -Infinity]))))).toEqual([[0.0, -2.5, 2.5, -Infinity, Infinity]]);
-    expect($M.mat2jsa($M.uplus($M.gpuArray($M.jsa2mat([0.0, 2.5, -2.5, Infinity, -Infinity]))))).toEqual([[0.0, 2.5, -2.5, Infinity, -Infinity]]);
+    expect($M.mat2jsa($M.floor($M.gpuArray([0.0, 0.1, 0.5, 0.9, 1.0, -0.1, -0.9, -1.0])))).toEqual([[0, 0, 0, 0, 1, -1, -1, -1]]);
+    expect($M.mat2jsa($M.fix($M.gpuArray([0.0, 0.1, 0.5, 0.9, 1.0, -0.1, -0.9, -1.0])))).toEqual([[0, 0, 0, 0, 1, 0, 0, -1]]);
+    expect($M.mat2jsa($M.ceil($M.gpuArray([0.0, 0.1, 0.5, 0.9, 1.0, -0.1, -0.9, -1.0])))).toEqual([[0, 1, 1, 1, 1, 0, 0, -1]]);
+    expect($M.mat2jsa($M.uminus($M.gpuArray([0.0, 2.5, -2.5, Infinity, -Infinity])))).toEqual([[0.0, -2.5, 2.5, -Infinity, Infinity]]);
+    expect($M.mat2jsa($M.uplus($M.gpuArray([0.0, 2.5, -2.5, Infinity, -Infinity])))).toEqual([[0.0, 2.5, -2.5, Infinity, -Infinity]]);
   });
 
   it('gpuArray', function() {
     var cpu = $M.jsa2mat([1, 3, 5]);
     var gpu = $M.gpuArray(cpu);
+    var direct_gpu = $M.gpuArray([1,3,5]);
     var again_cpu = $M.gather(gpu);
     expect($M.mat2jsa(again_cpu)).toEqual([[1, 3, 5]]);
+    expect($M.mat2jsa($M.gather(direct_gpu))).toEqual([[1, 3, 5]]);
     expect(gpu.get(2)).toEqual(3);
     var gpu2 = gpu.copy();
     gpu.set(1, 10);

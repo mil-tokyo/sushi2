@@ -17,6 +17,7 @@ module.exports = $M;
   var WebCL = $M.CL.WebCL;
 
   $M.gpuArray = function (A) {
+    A = util.as_mat(A);
     var mat = new MatrixCL(A._size, A._klass);
     mat.write(A._data);
     return mat;
