@@ -2,11 +2,30 @@ import Matrix = require('./matrix');
 declare type MatrixOrNumber = Matrix | number;
 
 
+/**
+ * Convert array-like to Matrix, number to 1x1 Matrix
+ */
 export function as_mat(A: Matrix | any): Matrix {
   if (A instanceof Matrix) {
     return A;
   } else {
+    //array to matrix
+    //number to 1x1 matrix
     return Matrix.jsa2mat(<any>A);
+  }
+}
+
+/**
+ * Convert array-like to Matrix, preserving other type
+ */
+export function as_mat_or_scalar(A: Matrix | any): Matrix | number {
+  if (A instanceof Matrix) {
+    return A;
+  } else if (typeof(A) === 'object' && A.length != null) {
+    //array-like to Matrix
+    return Matrix.jsa2mat(<any>A);
+  } else {
+    return A;//preserve number
   }
 }
 
