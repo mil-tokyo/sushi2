@@ -70,7 +70,13 @@ function max_along_axis_old(A: Matrix, dim?: number): Matrix {
   return dst;
 }
 
-function make_reduction_along_axis(var_decl: string, var_update: string, result_assign: string) {
+function _argmax_ones_like(A: Matrix): { M: Matrix, I: Matrix } {
+  var amax = new Matrix(A._size, 'int32');
+  amax._data.fill(1);
+  return { M: A, I: amax };
+}
+
+function make_reduction_along_axis(var_decl: string, var_update: string, result_assign: string, out_argmax: boolean) {
   var f: any;
   eval([
     "f = function(A, dim) {",
@@ -87,7 +93,7 @@ function make_reduction_along_axis(var_decl: string, var_update: string, result_
     "    }",
     "    if (dim > A._ndims) {",
     "        //max along axis with size 1",
-    "        return A.copy();",
+    out_argmax ? "return _argmax_ones_like(A.copy());" : "return A.copy();",
     "    }",
     "    var dstsize = A._size.slice();",
     "    if (dstsize[dim - 1] !== 0) {",
@@ -98,10 +104,11 @@ function make_reduction_along_axis(var_decl: string, var_update: string, result_
     "        //only change shape",
     "        var dst_onlyreshape = A.copy();",
     "        dst_onlyreshape.reshape_inplace(dstsize);",
-    "        return dst_onlyreshape;",
+    out_argmax ? "return _argmax_ones_like(dst_onlyreshape);" : "return dst_onlyreshape;",
     "    }",
     "    //reduction actually needed",
     "    var dst = new Matrix(dstsize, A._klass);",
+    out_argmax ? "var amax = new Matrix(dstsize, 'int32'); var amax_data = amax._data;": "",
     "    var input_strides = A._strides;",
     "    var output_strides = dst._strides.slice();",
     "    while (output_strides.length <= input_strides.length) {",
@@ -131,19 +138,19 @@ function make_reduction_along_axis(var_decl: string, var_update: string, result_
     //"        dst_data[dst_idx] = curret;",
     result_assign,
     "    }",
-    "    return dst;",
+    out_argmax ? "return {M:dst,I:amax};": "return dst;",
     "}", ].join('\n'));
   return f;
 }
 
 var max_along_axis = make_reduction_along_axis('var curret = val;',
   'if(val>curret){curret=val;}',
-  'dst_data[dst_idx]=curret;');
+  'dst_data[dst_idx]=curret;', false);
 var max_elementwise = func_generator.make_binary_arith_func_all('Math.max(%a,%b)');
 
 var min_along_axis = make_reduction_along_axis('var curret = val;',
   'if(val<curret){curret=val;}',
-  'dst_data[dst_idx]=curret;');
+  'dst_data[dst_idx]=curret;', false);
 var min_elementwise = func_generator.make_binary_arith_func_all('Math.min(%a,%b)');
 
 export function max(A: MatrixOrNumber, B?: MatrixOrNumber, dim?: number): Matrix {
@@ -165,6 +172,17 @@ export function min(A: MatrixOrNumber, B?: MatrixOrNumber, dim?: number): Matrix
   }
 }
 
-export function argmax(A: MatrixOrNumber, dummy?: any, dim?: number): Matrix {
-  return null;
+
+var argmax_along_axis = make_reduction_along_axis('var curret = val, curamax = 0;',
+  'if(val>curret){curret=val;curamax=red;}',
+  'dst_data[dst_idx]=curret; amax_data[dst_idx]=curamax+1;', true);
+export function argmax(A: MatrixOrNumber, dummy?: any, dim?: number): { M: Matrix, I: Matrix } {
+  return argmax_along_axis(util.as_mat(A), dim);
+}
+
+var argmin_along_axis = make_reduction_along_axis('var curret = val, curamax = 0;',
+  'if(val<curret){curret=val;curamax=red;}',
+  'dst_data[dst_idx]=curret; amax_data[dst_idx]=curamax+1;', true);
+export function argmin(A: MatrixOrNumber, dummy?: any, dim?: number): { M: Matrix, I: Matrix } {
+  return argmin_along_axis(util.as_mat(A), dim);
 }

@@ -899,4 +899,47 @@ describe('Sushi class', function() {
     matc = $M.min(mata, matb);
     expect($M.mat2jsa(matc)).toEqual([[1, 2], [3, 1]]);
   });
+  
+  it('argmax_min', function(){
+    var mat = $M.jsa2mat([3, 5, 1], false);//row vector
+    var {M,I} = $M.argmax(mat);
+    expect($M.sizejsa(M)).toEqual([1,1]);
+    expect($M.sizejsa(I)).toEqual([1,1]);
+    expect(M.get()).toEqual(5);
+    expect(I.get()).toEqual(2);
+    
+    mat = $M.zeros(3, 4, 5);
+    mat.set(1, 1, 2, 10);
+    mat.set(3, 1, 2, 10);
+    mat.set(2, 3, 1, 20);
+    mat.set(3, 3, 1, 20);
+    var {M,I} = $M.argmax(mat);//along row
+    expect($M.sizejsa(M)).toEqual([1, 4, 5]);
+    expect(M.get(1, 1, 2)).toEqual(10);
+    expect(M.get(1, 3, 1)).toEqual(20);
+    expect($M.sizejsa(I)).toEqual([1, 4, 5]);
+    expect(I.get(1, 1, 2)).toEqual(1);//returns index of first occurence
+    expect(I.get(1, 3, 1)).toEqual(2);
+    
+    var {M,I} = $M.argmax(mat, null, 4);//no change
+    expect($M.sizejsa(M)).toEqual([3, 4, 5]);
+    expect(M.get(1, 1, 2)).toEqual(10);
+    expect(M.get(2, 3, 1)).toEqual(20);
+    expect($M.sizejsa(I)).toEqual([3, 4, 5]);//all elements are 1
+    expect(I.get(1, 1, 2)).toEqual(1);
+    expect(I.get(2, 3, 1)).toEqual(1);
+    
+    mat = $M.zeros(3, 4, 5);
+    mat.set(1, 1, 2, 10);
+    mat.set(2, 3, 1, 20);
+    mat.set(3, 1, 2, -2);
+    mat.set(1, 3, 1, -5);
+    var {M,I} = $M.argmin(mat);//along row
+    expect($M.sizejsa(M)).toEqual([1, 4, 5]);
+    expect(M.get(1, 1, 2)).toEqual(-2);
+    expect(M.get(1, 3, 1)).toEqual(-5);
+    expect($M.sizejsa(I)).toEqual([1, 4, 5]);
+    expect(I.get(1, 1, 2)).toEqual(3);
+    expect(I.get(1, 3, 1)).toEqual(1);
+  });
 });
