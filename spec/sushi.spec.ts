@@ -805,7 +805,7 @@ describe('Sushi class', function() {
 
   });
 
-  it('reduction', function() {
+  it('max_axis', function() {
     var mat = $M.jsa2mat([3, 5, 1], false);//row vector
     var mat2 = $M.max(mat);//1x1 matrix
     expect($M.sizejsa(mat2)).toEqual([1, 1]);
@@ -815,7 +815,7 @@ describe('Sushi class', function() {
     mat2 = $M.max(mat);//1x1 matrix
     expect($M.sizejsa(mat2)).toEqual([1, 1]);
     expect(mat2.get()).toEqual(6);
-    
+
     mat2 = $M.max(5);
     expect($M.sizejsa(mat2)).toEqual([1, 1]);
     expect(mat2.get()).toEqual(5);
@@ -873,5 +873,18 @@ describe('Sushi class', function() {
     mat = $M.zeros(2, 2, 0);
     mat2 = $M.max(mat, null, 3);
     expect($M.sizejsa(mat2)).toEqual([2, 2, 0]);
+  });
+
+  it('max_element', function() {
+    var mata = $M.jsa2mat([[1, 2], [3, 4]]);
+    var matb = $M.jsa2mat([[5, 2], [6, 1]]);
+    var matc = $M.max(mata, matb);
+    expect($M.mat2jsa(matc)).toEqual([[5, 2], [6, 4]]);
+    var matc = $M.max(mata, 3);
+    expect($M.mat2jsa(matc)).toEqual([[3, 3], [3, 4]]);
+    var matc = $M.max(2, matb);
+    expect($M.mat2jsa(matc)).toEqual([[5, 2], [6, 2]]);
+    var matc = $M.max(5, 6);
+    expect($M.mat2jsa(matc)).toEqual([[6]]);
   });
 });

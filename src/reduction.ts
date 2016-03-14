@@ -1,5 +1,6 @@
 import Matrix = require('./matrix');
 import util = require('./util');
+import func_generator = require('./func_generator');
 
 declare type MatrixOrNumber = Matrix | number;
 
@@ -68,14 +69,16 @@ function max_along_axis(A: Matrix, dim?: number): Matrix {
   return dst;
 }
 
+var max_elementwise = func_generator.make_binary_arith_func_all('Math.max(%a,%b)');
+
 export function max(A: MatrixOrNumber, B?: MatrixOrNumber, dim?: number): Matrix {
   if (B == null) {
     //max along axis
     return max_along_axis(util.as_mat(A), dim);
   } else {
     //elementwise max
+    return max_elementwise(A, B);
   }
-  return null;
 }
 
 export function argmax(A: MatrixOrNumber, dummy?: any, dim?: number): Matrix {
