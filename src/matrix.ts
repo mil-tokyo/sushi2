@@ -200,37 +200,38 @@ class Matrix {
       //1x1 matrix
       mat = new Matrix([1, 1], klass);
       mat.set_scalar(<number>ary, [1]);
-    }
-    if (ary.length == 0) {
-      //0x0 matrix
-      mat = new Matrix([0, 0], klass);
-    } else if (ary[0].length === void 0) {
-      //1-d array
-      var vecshape = one_d_column ? [ary.length, 1] : [1, ary.length];
-      mat = new Matrix(vecshape, klass);
-      for (var i = 0; i < ary.length; i++) {
-        mat.set_scalar(ary[i], [i + 1]);
-      }
     } else {
-      var dim_size: number[] = [];
-      //treat as row-major memory order; ary[row][col][dim3][dim4]
-      var inner = ary;
-      while (!!inner.length) {
-        dim_size.push(inner.length);
-        inner = inner[0];
-      }
-      if (dim_size.length != 2) {
-        throw new Error('Currently array must be 2-D');
-      }
-      mat = new Matrix(dim_size, klass);
-      var rawdata = mat._alloccpu();
+      if (ary.length == 0) {
+        //0x0 matrix
+        mat = new Matrix([0, 0], klass);
+      } else if (ary[0].length === void 0) {
+        //1-d array
+        var vecshape = one_d_column ? [ary.length, 1] : [1, ary.length];
+        mat = new Matrix(vecshape, klass);
+        for (var i = 0; i < ary.length; i++) {
+          mat.set_scalar(ary[i], [i + 1]);
+        }
+      } else {
+        var dim_size: number[] = [];
+        //treat as row-major memory order; ary[row][col][dim3][dim4]
+        var inner = ary;
+        while (!!inner.length) {
+          dim_size.push(inner.length);
+          inner = inner[0];
+        }
+        if (dim_size.length != 2) {
+          throw new Error('Currently array must be 2-D');
+        }
+        mat = new Matrix(dim_size, klass);
+        var rawdata = mat._alloccpu();
       
-      //TODO: support n-d array
-      for (var row = 0; row < dim_size[0]; row++) {
-        var rowdata = ary[row];
-        for (var col = 0; col < dim_size[1]; col++) {
-          var val = rowdata[col];
-          mat.set_scalar(val, [row + 1, col + 1]);
+        //TODO: support n-d array
+        for (var row = 0; row < dim_size[0]; row++) {
+          var rowdata = ary[row];
+          for (var col = 0; col < dim_size[1]; col++) {
+            var val = rowdata[col];
+            mat.set_scalar(val, [row + 1, col + 1]);
+          }
         }
       }
     }

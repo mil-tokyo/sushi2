@@ -815,6 +815,10 @@ describe('Sushi class', function() {
     mat2 = $M.max(mat);//1x1 matrix
     expect($M.sizejsa(mat2)).toEqual([1, 1]);
     expect(mat2.get()).toEqual(6);
+    
+    mat2 = $M.max(5);
+    expect($M.sizejsa(mat2)).toEqual([1, 1]);
+    expect(mat2.get()).toEqual(5);
 
     mat = $M.zeros(3, 4, 5);
     mat.set(1, 1, 2, 10);
