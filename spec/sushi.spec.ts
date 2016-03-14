@@ -550,7 +550,7 @@ describe('Sushi class', function() {
   it('gpuArray', function() {
     var cpu = $M.jsa2mat([1, 3, 5]);
     var gpu = $M.gpuArray(cpu);
-    var direct_gpu = $M.gpuArray([1,3,5]);
+    var direct_gpu = $M.gpuArray([1, 3, 5]);
     var again_cpu = $M.gather(gpu);
     expect($M.mat2jsa(again_cpu)).toEqual([[1, 3, 5]]);
     expect($M.mat2jsa($M.gather(direct_gpu))).toEqual([[1, 3, 5]]);
@@ -803,5 +803,71 @@ describe('Sushi class', function() {
     expect($M.sizejsa(mat2)).toEqual([4, 9, 4, 5]);
 
 
+  });
+
+  it('reduction', function() {
+    var mat = $M.jsa2mat([3, 5, 1], false);//row vector
+    var mat2 = $M.max(mat);//1x1 matrix
+    expect($M.sizejsa(mat2)).toEqual([1, 1]);
+    expect(mat2.get()).toEqual(5);
+
+    mat = $M.jsa2mat([2, 4, 6], true);//column vector
+    mat2 = $M.max(mat);//1x1 matrix
+    expect($M.sizejsa(mat2)).toEqual([1, 1]);
+    expect(mat2.get()).toEqual(6);
+
+    mat = $M.zeros(3, 4, 5);
+    mat.set(1, 1, 2, 10);
+    mat.set(2, 3, 1, 20);
+    mat2 = $M.max(mat);//along row
+    expect($M.sizejsa(mat2)).toEqual([1, 4, 5]);
+    expect(mat2.get(1, 1, 2)).toEqual(10);
+    expect(mat2.get(1, 3, 1)).toEqual(20);
+
+    mat2 = $M.max(mat, null, 2);
+    expect($M.sizejsa(mat2)).toEqual([3, 1, 5]);
+    expect(mat2.get(1, 1, 2)).toEqual(10);
+    expect(mat2.get(2, 1, 1)).toEqual(20);
+    mat2 = $M.max(mat, null, 3);
+    expect($M.sizejsa(mat2)).toEqual([3, 4]);
+    expect(mat2.get(1, 1)).toEqual(10);
+    expect(mat2.get(2, 3)).toEqual(20);
+    mat2 = $M.max(mat, null, 4);
+    expect($M.sizejsa(mat2)).toEqual([3, 4, 5]);
+    expect(mat2.get(1, 1, 2)).toEqual(10);
+    expect(mat2.get(2, 3, 1)).toEqual(20);
+
+    mat = $M.zeros(2, 1, 1, 3);
+    mat.set(2, 1, 1, 2, 10);
+    mat.set(1, 1, 1, 3, 20);
+    mat2 = $M.max(mat, null, 4);
+    expect($M.sizejsa(mat2)).toEqual([2, 1]);
+    expect(mat2.get(2, 1, 1)).toEqual(10);
+    expect(mat2.get(1, 1, 1)).toEqual(20);
+
+    mat = $M.zeros(0, 0);
+    mat2 = $M.max(mat);
+    expect($M.sizejsa(mat2)).toEqual([0, 0]);
+    mat = $M.zeros(0, 1);
+    mat2 = $M.max(mat);
+    expect($M.sizejsa(mat2)).toEqual([0, 1]);
+    mat = $M.zeros(1, 0);
+    mat2 = $M.max(mat);
+    expect($M.sizejsa(mat2)).toEqual([1, 0]);
+    mat = $M.zeros(2, 0);
+    mat2 = $M.max(mat);
+    expect($M.sizejsa(mat2)).toEqual([1, 0]);
+    mat = $M.zeros(0, 2);
+    mat2 = $M.max(mat);
+    expect($M.sizejsa(mat2)).toEqual([0, 2]);
+    mat = $M.zeros(2, 2, 0);
+    mat2 = $M.max(mat, null, 1);
+    expect($M.sizejsa(mat2)).toEqual([1, 2, 0]);
+    mat = $M.zeros(2, 2, 0);
+    mat2 = $M.max(mat, null, 2);
+    expect($M.sizejsa(mat2)).toEqual([2, 1, 0]);
+    mat = $M.zeros(2, 2, 0);
+    mat2 = $M.max(mat, null, 3);
+    expect($M.sizejsa(mat2)).toEqual([2, 2, 0]);
   });
 });

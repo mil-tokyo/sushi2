@@ -4,6 +4,7 @@ export import colon = require('./colonwrap');
 import util = require('./util');
 import func_generator = require('./func_generator');
 import shape_converter = require('./shape_converter');
+import reduction = require('./reduction');
 //export import MatrixCL = require('./cl/matrix_cl');
 
 export var end = -1;
@@ -186,6 +187,8 @@ export var fix = func_generator.make_unary_arith_func_all('(%a > 0 ? Math.floor(
 export var ceil = func_generator.make_unary_arith_func_all('Math.ceil(%a)');
 export var uplus = func_generator.make_unary_arith_func_all('+%a');
 export var uminus = func_generator.make_unary_arith_func_all('-%a');
+
+export var max = reduction.max;
 
 export function reshape(A: Matrix, ...sz: any[]): Matrix {
   var dst = A.copy();
