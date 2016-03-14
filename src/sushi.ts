@@ -189,6 +189,7 @@ export var uplus = func_generator.make_unary_arith_func_all('+%a');
 export var uminus = func_generator.make_unary_arith_func_all('-%a');
 
 export var max = reduction.max;
+export var min = reduction.min;
 
 export function reshape(A: Matrix, ...sz: any[]): Matrix {
   var dst = A.copy();
