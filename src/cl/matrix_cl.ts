@@ -20,7 +20,7 @@ class MatrixCL extends Matrix {
     }
     this._clbuffer = $CL.createBuffer(buffer_size);
   }
-  
+
   to_cpu(): Matrix {
     var cpumat = new Matrix(this._size, this._klass);
     this.read(cpumat._data);
@@ -107,12 +107,38 @@ class MatrixCL extends Matrix {
       MatrixCL.kernel_cache[kernel_name] = kernel;
     }
 
-    $CL.executeKernel(kernel, [
-      { access: WebCL.MEM_WRITE_ONLY, datum: clone },
-      { access: WebCL.MEM_READ_ONLY, datum: this },
-      { datum: this._numel, type: WebCL.type.UINT }
-    ], this._numel);
+    if (this._numel > 0) {
+      $CL.executeKernel(kernel, [
+        { access: WebCL.MEM_WRITE_ONLY, datum: clone },
+        { access: WebCL.MEM_READ_ONLY, datum: this },
+        { datum: this._numel, type: WebCL.type.UINT }
+      ], this._numel);
+    }
     return clone;
+  }
+
+  _fill(val: number): void {
+    var kernel_name = 'fill_' + this._klass;
+    var kernel = MatrixCL.kernel_cache[kernel_name];
+    if (!kernel) {
+      kernel = $CL.createKernel([
+        '#define DST_TYPE ' + ctypes[this._klass],
+        '__kernel void kernel_func(__global DST_TYPE *dst, uint length, DST_TYPE val) {',
+        '  uint i = get_global_id(0);',
+        '  if (i >= length) { return; }',
+        '  dst[i] = val;',
+        '}'
+      ].join('\n'));
+      MatrixCL.kernel_cache[kernel_name] = kernel;
+    }
+
+    if (this._numel > 0) {
+      $CL.executeKernel(kernel, [
+        { access: WebCL.MEM_WRITE_ONLY, datum: this },
+        { datum: this._numel, type: WebCL.type.UINT },
+        { datum: val, type: webcltypes[this._klass] }
+      ], this._numel);
+    }
   }
 
   get(): number;

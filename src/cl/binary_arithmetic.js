@@ -124,6 +124,12 @@ var util_cl = require('./util_cl');
   subsitute_binary_arith('rdivide', '((left) / (right))');
   subsitute_binary_arith('ldivide', '((right) / (left))');
   subsitute_binary_arith('power', '(pow((float)(left), (float)(right)))');
+  $M.CL._max_elementwise_cl = function (A, B) {
+    return binary_arith_cl(A, B, 'max_elementwise_cl', '(((left) > (right)) ? (left) : (right))');
+  };
+  $M.CL._min_elementwise_cl = function (A, B) {
+    return binary_arith_cl(A, B, 'min_elementwise_cl', '(((left) < (right)) ? (left) : (right))');
+  };
 
 
   var compare_cl = function (A, B, name, operator) {
