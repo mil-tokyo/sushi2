@@ -318,6 +318,9 @@ describe('Sushi class', function() {
     mat2.set($M.jsa2mat([1, 3, 5]), 10);
     expect($M.mat2jsa(mat2)).toEqual([[10, 2, 3], [4, 10, 6], [10, 8, 9]]);
     mat2 = mat.copy();
+    mat2.set($M.colon(), 5);//all
+    expect($M.mat2jsa(mat2)).toEqual([[5, 5, 5], [5, 5, 5], [5, 5, 5]]);
+    mat2 = mat.copy();
     mat2.set($M.jsa2mat([1, 3, 5]), $M.jsa2mat([10]));
     expect($M.mat2jsa(mat2)).toEqual([[10, 2, 3], [4, 10, 6], [10, 8, 9]]);
     mat2 = mat.copy();
@@ -606,6 +609,9 @@ describe('Sushi class', function() {
     mat2 = mat.copy();
     mat2.set($M.jsa2mat([1, 3, 5]), 10);
     expect($M.mat2jsa(mat2)).toEqual([[10, 2, 3], [4, 10, 6], [10, 8, 9]]);
+    mat2 = mat.copy();
+    mat2.set($M.colon(), 5);//all
+    expect($M.mat2jsa(mat2)).toEqual([[5, 5, 5], [5, 5, 5], [5, 5, 5]]);
     mat2 = mat.copy();
     mat2.set($M.jsa2mat([1, 3, 5]), $M.jsa2mat([10]));
     expect($M.mat2jsa(mat2)).toEqual([[10, 2, 3], [4, 10, 6], [10, 8, 9]]);
