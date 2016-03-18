@@ -29,6 +29,31 @@ module.exports = $M;
     return mat;
   };
 
+  var zeros_native = $M.zeros;
+  $M.zeros = function () {
+    //generate gpuArray if final argument is 'gpuArray'
+    if (arguments[arguments.length - 1] == 'gpuArray') {
+      var format = util.calc_zeros_size(Array.prototype.slice.call(arguments, 0, -1));
+      var mat = new MatrixCL(format.size, format.klass);
+      mat._fill(0);
+      return mat;
+    } else {
+      return zeros_native.apply(null, arguments);
+    }
+  };
+  var ones_native = $M.ones;
+  $M.ones = function () {
+    //generate gpuArray if final argument is 'gpuArray'
+    if (arguments[arguments.length - 1] == 'gpuArray') {
+      var format = util.calc_zeros_size(Array.prototype.slice.call(arguments, 0, -1));
+      var mat = new MatrixCL(format.size, format.klass);
+      mat._fill(1);
+      return mat;
+    } else {
+      return ones_native.apply(null, arguments);
+    }
+  };
+
   require('./binary_arithmetic');
   require('./unary_arithmetic');
   require('./shape_converter_cl');

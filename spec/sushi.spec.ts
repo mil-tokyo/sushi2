@@ -135,6 +135,14 @@ describe('Sushi class', function() {
     expect(() => $M.zeros(2, 0, 1.1)).toThrow();
     expect(() => $M.zeros(2, 3, 'foo')).toThrow();//unknown klass
     expect(() => $M.zeros(2, 3, 'like', null)).toThrow();
+
+    if (MatrixCL) {
+      var matg = $M.zeros(2, 3, 'gpuArray');
+      expect(matg instanceof MatrixCL).toBeTruthy();
+      expect(matg._size).toEqual([2, 3]);
+      expect(matg.get(1)).toEqual(0);
+      expect(matg.get(6)).toEqual(0);
+    }
   });
 
   it('ones', function() {
@@ -173,12 +181,25 @@ describe('Sushi class', function() {
     expect(mat._klass).toEqual('int32');
     expect(mat._data).toEqual(jasmine.any(Int32Array));
     expect(mat._data[0]).toEqual(1);//only type is copied, not data
+    
+    
+    if (MatrixCL) {
+      var matg = $M.ones(2, 3, 'gpuArray');
+      expect(matg instanceof MatrixCL).toBeTruthy();
+      expect(matg._size).toEqual([2, 3]);
+      expect(matg.get(1)).toEqual(1);
+      expect(matg.get(6)).toEqual(1);
+    }
   });
 
   it('eye', function() {
     var mat = $M.eye();
     expect(mat._size).toEqual([1, 1]);
     expect($M.mat2jsa(mat)).toEqual([[1]]);
+    mat = $M.eye(4);
+    expect($M.mat2jsa(mat)).toEqual([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]]);
+    mat = $M.eye(3, 4);
+    expect($M.mat2jsa(mat)).toEqual([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0]]);
   });
 
   it('valueOf', function() {
