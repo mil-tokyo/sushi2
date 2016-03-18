@@ -67,5 +67,7 @@ var util_cl = require('./util_cl');
   subsitute_unary_arith('floor', 'floor((float)(left))');
   subsitute_unary_arith('fix', '((left) > 0 ? floor((float)(left)): ceil((float)(left)))');
   subsitute_unary_arith('ceil', 'ceil((float)(left))');
+  subsitute_unary_arith('exp', 'exp((float)(left))');
+  subsitute_unary_arith('log', 'log((float)(left))');
 
 })();

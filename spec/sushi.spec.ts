@@ -1081,4 +1081,34 @@ describe('Sushi class', function() {
     expect(I.get(1, 1, 2)).toEqual(3);
     expect(I.get(1, 3, 1)).toEqual(1);
   });
+  
+  it('exp_log', function () {
+    var mat = $M.jsa2mat([0.0,1.0,10.0]);
+    var mat2 = $M.exp(mat);
+    expect($M.sizejsa(mat2)).toEqual([1,3]);
+    expect(mat2.get(1)).toBeCloseTo(1.0,2);
+    expect(mat2.get(2)).toBeCloseTo(2.718,2);
+    expect(mat2.get(3)).toBeCloseTo(22026.47,1);
+    var mat3 = $M.log(mat2);
+    expect($M.sizejsa(mat3)).toEqual([1,3]);
+    expect(mat3.get(1)).toBeCloseTo(0.0,2);
+    expect(mat3.get(2)).toBeCloseTo(1.0,2);
+    expect(mat3.get(3)).toBeCloseTo(10.0,1);
+  });
+  
+  it('exp_log_gpu', function () {
+    var mat = $M.gpuArray($M.jsa2mat([0.0,1.0,10.0]));
+    var mat2 = $M.exp(mat);
+    expect($M.sizejsa(mat2)).toEqual([1,3]);
+    expect(mat2.get(1)).toBeCloseTo(1.0,2);
+    expect(mat2.get(2)).toBeCloseTo(2.718,2);
+    expect(mat2.get(3)).toBeCloseTo(22026.47,1);
+    expect(mat2 instanceof MatrixCL).toBeTruthy();
+    var mat3 = $M.log(mat2);
+    expect($M.sizejsa(mat3)).toEqual([1,3]);
+    expect(mat3.get(1)).toBeCloseTo(0.0,2);
+    expect(mat3.get(2)).toBeCloseTo(1.0,2);
+    expect(mat3.get(3)).toBeCloseTo(10.0,1);
+    expect(mat3 instanceof MatrixCL).toBeTruthy();
+  });
 });

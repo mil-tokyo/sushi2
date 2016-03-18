@@ -187,6 +187,8 @@ export var fix = func_generator.make_unary_arith_func_all('(%a > 0 ? Math.floor(
 export var ceil = func_generator.make_unary_arith_func_all('Math.ceil(%a)');
 export var uplus = func_generator.make_unary_arith_func_all('+%a');
 export var uminus = func_generator.make_unary_arith_func_all('-%a');
+export var exp = func_generator.make_unary_arith_func_all('Math.exp(%a)');
+export var log = func_generator.make_unary_arith_func_all('Math.log(%a)');
 
 export var max = reduction.max;
 export var min = reduction.min;
