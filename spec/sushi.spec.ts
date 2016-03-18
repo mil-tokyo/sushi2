@@ -873,7 +873,7 @@ describe('Sushi class', function() {
     mat = $M.zeros(2, 2, 0);
     mat2 = $M.max(mat, null, 3);
     expect($M.sizejsa(mat2)).toEqual([2, 2, 0]);
-    
+
     mat = $M.zeros(3, 4, 5);
     mat.set(1, 1, 2, 10);
     mat.set(2, 3, 1, 20);
@@ -899,42 +899,42 @@ describe('Sushi class', function() {
     matc = $M.min(mata, matb);
     expect($M.mat2jsa(matc)).toEqual([[1, 2], [3, 1]]);
   });
-  
-  it('argmax_min', function(){
+
+  it('argmax_min', function() {
     var mat = $M.jsa2mat([3, 5, 1], false);//row vector
-    var {M,I} = $M.argmax(mat);
-    expect($M.sizejsa(M)).toEqual([1,1]);
-    expect($M.sizejsa(I)).toEqual([1,1]);
+    var {M, I} = $M.argmax(mat);
+    expect($M.sizejsa(M)).toEqual([1, 1]);
+    expect($M.sizejsa(I)).toEqual([1, 1]);
     expect(M.get()).toEqual(5);
     expect(I.get()).toEqual(2);
-    
+
     mat = $M.zeros(3, 4, 5);
     mat.set(1, 1, 2, 10);
     mat.set(3, 1, 2, 10);
     mat.set(2, 3, 1, 20);
     mat.set(3, 3, 1, 20);
-    var {M,I} = $M.argmax(mat);//along row
+    var {M, I} = $M.argmax(mat);//along row
     expect($M.sizejsa(M)).toEqual([1, 4, 5]);
     expect(M.get(1, 1, 2)).toEqual(10);
     expect(M.get(1, 3, 1)).toEqual(20);
     expect($M.sizejsa(I)).toEqual([1, 4, 5]);
     expect(I.get(1, 1, 2)).toEqual(1);//returns index of first occurence
     expect(I.get(1, 3, 1)).toEqual(2);
-    
-    var {M,I} = $M.argmax(mat, null, 4);//no change
+
+    var {M, I} = $M.argmax(mat, null, 4);//no change
     expect($M.sizejsa(M)).toEqual([3, 4, 5]);
     expect(M.get(1, 1, 2)).toEqual(10);
     expect(M.get(2, 3, 1)).toEqual(20);
     expect($M.sizejsa(I)).toEqual([3, 4, 5]);//all elements are 1
     expect(I.get(1, 1, 2)).toEqual(1);
     expect(I.get(2, 3, 1)).toEqual(1);
-    
+
     mat = $M.zeros(3, 4, 5);
     mat.set(1, 1, 2, 10);
     mat.set(2, 3, 1, 20);
     mat.set(3, 1, 2, -2);
     mat.set(1, 3, 1, -5);
-    var {M,I} = $M.argmin(mat);//along row
+    var {M, I} = $M.argmin(mat);//along row
     expect($M.sizejsa(M)).toEqual([1, 4, 5]);
     expect(M.get(1, 1, 2)).toEqual(-2);
     expect(M.get(1, 3, 1)).toEqual(-5);
@@ -942,7 +942,7 @@ describe('Sushi class', function() {
     expect(I.get(1, 1, 2)).toEqual(3);
     expect(I.get(1, 3, 1)).toEqual(1);
   });
-  
+
   it('max_min_element_gpu', function() {
     var mata = $M.gpuArray($M.jsa2mat([[1, 2], [3, 4]]));
     var matb = $M.gpuArray($M.jsa2mat([[5, 2], [6, 1]]));
@@ -957,8 +957,8 @@ describe('Sushi class', function() {
     matc = $M.min(mata, matb);
     expect($M.mat2jsa(matc)).toEqual([[1, 2], [3, 1]]);
   });
-  
-  
+
+
   it('max_min_axis_gpu', function() {
     var mat = $M.gpuArray($M.jsa2mat([3, 5, 1], false));//row vector
     var mat2 = $M.max(mat);//1x1 matrix
@@ -1027,7 +1027,7 @@ describe('Sushi class', function() {
     mat = $M.zeros(2, 2, 0);
     mat2 = $M.max(mat, null, 3);
     expect($M.sizejsa(mat2)).toEqual([2, 2, 0]);
-    
+
     mat = $M.gpuArray($M.zeros(3, 4, 5));
     mat.set(1, 1, 2, 10);
     mat.set(2, 3, 1, 20);
@@ -1038,42 +1038,42 @@ describe('Sushi class', function() {
     expect(mat2.get(1, 1, 2)).toEqual(-2);
     expect(mat2.get(1, 3, 1)).toEqual(-5);
   });
-  
-  it('argmax_min_gpu', function(){
+
+  it('argmax_min_gpu', function() {
     var mat = $M.gpuArray($M.jsa2mat([3, 5, 1], false));//row vector
-    var {M,I} = $M.argmax(mat);
-    expect($M.sizejsa(M)).toEqual([1,1]);
-    expect($M.sizejsa(I)).toEqual([1,1]);
+    var {M, I} = $M.argmax(mat);
+    expect($M.sizejsa(M)).toEqual([1, 1]);
+    expect($M.sizejsa(I)).toEqual([1, 1]);
     expect(M.get()).toEqual(5);
     expect(I.get()).toEqual(2);
-    
+
     mat = $M.gpuArray($M.zeros(3, 4, 5));
     mat.set(1, 1, 2, 10);
     mat.set(3, 1, 2, 10);
     mat.set(2, 3, 1, 20);
     mat.set(3, 3, 1, 20);
-    var {M,I} = $M.argmax(mat);//along row
+    var {M, I} = $M.argmax(mat);//along row
     expect($M.sizejsa(M)).toEqual([1, 4, 5]);
     expect(M.get(1, 1, 2)).toEqual(10);
     expect(M.get(1, 3, 1)).toEqual(20);
     expect($M.sizejsa(I)).toEqual([1, 4, 5]);
     expect(I.get(1, 1, 2)).toEqual(1);//returns index of first occurence
     expect(I.get(1, 3, 1)).toEqual(2);
-    
-    var {M,I} = $M.argmax(mat, null, 4);//no change
+
+    var {M, I} = $M.argmax(mat, null, 4);//no change
     expect($M.sizejsa(M)).toEqual([3, 4, 5]);
     expect(M.get(1, 1, 2)).toEqual(10);
     expect(M.get(2, 3, 1)).toEqual(20);
     expect($M.sizejsa(I)).toEqual([3, 4, 5]);//all elements are 1
     expect(I.get(1, 1, 2)).toEqual(1);
     expect(I.get(2, 3, 1)).toEqual(1);
-    
+
     mat = $M.gpuArray($M.zeros(3, 4, 5));
     mat.set(1, 1, 2, 10);
     mat.set(2, 3, 1, 20);
     mat.set(3, 1, 2, -2);
     mat.set(1, 3, 1, -5);
-    var {M,I} = $M.argmin(mat);//along row
+    var {M, I} = $M.argmin(mat);//along row
     expect($M.sizejsa(M)).toEqual([1, 4, 5]);
     expect(M.get(1, 1, 2)).toEqual(-2);
     expect(M.get(1, 3, 1)).toEqual(-5);
@@ -1081,74 +1081,74 @@ describe('Sushi class', function() {
     expect(I.get(1, 1, 2)).toEqual(3);
     expect(I.get(1, 3, 1)).toEqual(1);
   });
-  
-  it('exp_log', function () {
-    var mat = $M.jsa2mat([0.0,1.0,10.0]);
+
+  it('exp_log', function() {
+    var mat = $M.jsa2mat([0.0, 1.0, 10.0]);
     var mat2 = $M.exp(mat);
-    expect($M.sizejsa(mat2)).toEqual([1,3]);
-    expect(mat2.get(1)).toBeCloseTo(1.0,2);
-    expect(mat2.get(2)).toBeCloseTo(2.718,2);
-    expect(mat2.get(3)).toBeCloseTo(22026.47,1);
+    expect($M.sizejsa(mat2)).toEqual([1, 3]);
+    expect(mat2.get(1)).toBeCloseTo(1.0, 2);
+    expect(mat2.get(2)).toBeCloseTo(2.718, 2);
+    expect(mat2.get(3)).toBeCloseTo(22026.47, 1);
     var mat3 = $M.log(mat2);
-    expect($M.sizejsa(mat3)).toEqual([1,3]);
-    expect(mat3.get(1)).toBeCloseTo(0.0,2);
-    expect(mat3.get(2)).toBeCloseTo(1.0,2);
-    expect(mat3.get(3)).toBeCloseTo(10.0,1);
+    expect($M.sizejsa(mat3)).toEqual([1, 3]);
+    expect(mat3.get(1)).toBeCloseTo(0.0, 2);
+    expect(mat3.get(2)).toBeCloseTo(1.0, 2);
+    expect(mat3.get(3)).toBeCloseTo(10.0, 1);
   });
-  
-  it('exp_log_gpu', function () {
-    var mat = $M.gpuArray($M.jsa2mat([0.0,1.0,10.0]));
+
+  it('exp_log_gpu', function() {
+    var mat = $M.gpuArray($M.jsa2mat([0.0, 1.0, 10.0]));
     var mat2 = $M.exp(mat);
-    expect($M.sizejsa(mat2)).toEqual([1,3]);
-    expect(mat2.get(1)).toBeCloseTo(1.0,2);
-    expect(mat2.get(2)).toBeCloseTo(2.718,2);
-    expect(mat2.get(3)).toBeCloseTo(22026.47,1);
+    expect($M.sizejsa(mat2)).toEqual([1, 3]);
+    expect(mat2.get(1)).toBeCloseTo(1.0, 2);
+    expect(mat2.get(2)).toBeCloseTo(2.718, 2);
+    expect(mat2.get(3)).toBeCloseTo(22026.47, 1);
     expect(mat2 instanceof MatrixCL).toBeTruthy();
     var mat3 = $M.log(mat2);
-    expect($M.sizejsa(mat3)).toEqual([1,3]);
-    expect(mat3.get(1)).toBeCloseTo(0.0,2);
-    expect(mat3.get(2)).toBeCloseTo(1.0,2);
-    expect(mat3.get(3)).toBeCloseTo(10.0,1);
+    expect($M.sizejsa(mat3)).toEqual([1, 3]);
+    expect(mat3.get(1)).toBeCloseTo(0.0, 2);
+    expect(mat3.get(2)).toBeCloseTo(1.0, 2);
+    expect(mat3.get(3)).toBeCloseTo(10.0, 1);
     expect(mat3 instanceof MatrixCL).toBeTruthy();
   });
-  
-  it('rand', function (){
-    var mat = $M.rand(2,3);
-    expect($M.sizejsa(mat)).toEqual([2,3]);
-    for(var i=1;i<=$M.numel(mat);i++){
+
+  it('rand', function() {
+    var mat = $M.rand(2, 3);
+    expect($M.sizejsa(mat)).toEqual([2, 3]);
+    for (var i = 1; i <= $M.numel(mat); i++) {
       var val = mat.get(i);
       expect(val >= 0.0).toBeTruthy();
       expect(val < 1.0).toBeTruthy();
     }
-    
-    mat = $M.randn(20,50);
-    expect($M.sizejsa(mat)).toEqual([20,50]);
+
+    mat = $M.randn(20, 50);
+    expect($M.sizejsa(mat)).toEqual([20, 50]);
     var sum = 0.0;
     var sqsum = 0.0;
-    for(var i=1;i<=$M.numel(mat);i++){
+    for (var i = 1; i <= $M.numel(mat); i++) {
       var val = mat.get(i);
       sum += val;
       sqsum += val * val;
     }
-    var mean = sum / (20*50);
-    var variance = sqsum / (20*50) - mean * mean;
-    
+    var mean = sum / (20 * 50);
+    var variance = sqsum / (20 * 50) - mean * mean;
+
     expect(mean > -0.1).toBeTruthy();
     expect(mean < 0.1).toBeTruthy();
     expect(variance > 0.9).toBeTruthy();
     expect(variance < 1.1).toBeTruthy();
-    
-    mat = $M.randi(3,4,5);
-    expect($M.sizejsa(mat)).toEqual([4,5]);
-    for(var i=1;i<=$M.numel(mat);i++){
+
+    mat = $M.randi(3, 4, 5);
+    expect($M.sizejsa(mat)).toEqual([4, 5]);
+    for (var i = 1; i <= $M.numel(mat); i++) {
       var val = mat.get(i);
       expect(val >= 1).toBeTruthy();
       expect(val <= 3).toBeTruthy();
     }
-    
-    mat = $M.randi([10,20],4,5);
-    expect($M.sizejsa(mat)).toEqual([4,5]);
-    for(var i=1;i<=$M.numel(mat);i++){
+
+    mat = $M.randi([10, 20], 4, 5);
+    expect($M.sizejsa(mat)).toEqual([4, 5]);
+    for (var i = 1; i <= $M.numel(mat); i++) {
       var val = mat.get(i);
       expect(val >= 10).toBeTruthy();
       expect(val <= 20).toBeTruthy();
