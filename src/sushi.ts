@@ -55,8 +55,48 @@ export function zeros(...args: any[]): Matrix {
 
 export function ones(...args: any[]): Matrix {
   var mat = zeros(...args);
-  for (var i = 0; i < mat._data.length; i++) {
-    mat._data[i] = 1;
+  mat._data.fill(1);
+  return mat;
+}
+
+export function rand(...args: any[]): Matrix {
+  var mat = zeros(...args);
+  var data = mat._data;
+  for (var i = 0, length = data.length; i < length; i++) {
+    data[i] = Math.random();
+  }
+  return mat;
+}
+
+export function randi(imax: number | number[], ...args: any[]): Matrix {
+  //first argument: imax or [imin, imax]
+  var _imin = 1, _imax = 1;
+  if ((<any>imax).length != null) {
+    if ((<any>imax).length === 2) {
+      _imin = imax[0];
+      _imax = imax[1];
+    } else {
+      throw new Error('Invalid imax');
+    }
+  } else {
+    _imax = <number>imax;
+  }
+
+  var mat = zeros(...args);
+  var data = mat._data;
+  for (var i = 0, length = data.length; i < length; i++) {
+    data[i] = Math.floor(Math.random() * (_imax - _imin + 1)) + _imin;
+  }
+  return mat;
+}
+
+export function randn(...args: any[]): Matrix {
+  var mat = zeros(...args);
+  var data = mat._data;
+  for (var i = 0, length = data.length; i < length; i++) {
+    var alpha = Math.random();
+    var beta = Math.random();
+    data[i] = Math.sqrt(-2 * Math.log(alpha)) * Math.sin(2 * Math.PI * beta);
   }
   return mat;
 }

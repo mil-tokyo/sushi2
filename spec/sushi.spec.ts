@@ -1111,4 +1111,47 @@ describe('Sushi class', function() {
     expect(mat3.get(3)).toBeCloseTo(10.0,1);
     expect(mat3 instanceof MatrixCL).toBeTruthy();
   });
+  
+  it('rand', function (){
+    var mat = $M.rand(2,3);
+    expect($M.sizejsa(mat)).toEqual([2,3]);
+    for(var i=1;i<=$M.numel(mat);i++){
+      var val = mat.get(i);
+      expect(val >= 0.0).toBeTruthy();
+      expect(val < 1.0).toBeTruthy();
+    }
+    
+    mat = $M.randn(20,50);
+    expect($M.sizejsa(mat)).toEqual([20,50]);
+    var sum = 0.0;
+    var sqsum = 0.0;
+    for(var i=1;i<=$M.numel(mat);i++){
+      var val = mat.get(i);
+      sum += val;
+      sqsum += val * val;
+    }
+    var mean = sum / (20*50);
+    var variance = sqsum / (20*50) - mean * mean;
+    
+    expect(mean > -0.1).toBeTruthy();
+    expect(mean < 0.1).toBeTruthy();
+    expect(variance > 0.9).toBeTruthy();
+    expect(variance < 1.1).toBeTruthy();
+    
+    mat = $M.randi(3,4,5);
+    expect($M.sizejsa(mat)).toEqual([4,5]);
+    for(var i=1;i<=$M.numel(mat);i++){
+      var val = mat.get(i);
+      expect(val >= 1).toBeTruthy();
+      expect(val <= 3).toBeTruthy();
+    }
+    
+    mat = $M.randi([10,20],4,5);
+    expect($M.sizejsa(mat)).toEqual([4,5]);
+    for(var i=1;i<=$M.numel(mat);i++){
+      var val = mat.get(i);
+      expect(val >= 10).toBeTruthy();
+      expect(val <= 20).toBeTruthy();
+    }
+  });
 });
