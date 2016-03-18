@@ -186,3 +186,26 @@ var argmin_along_axis = make_reduction_along_axis('var curret = val, curamax = 0
 export function argmin(A: MatrixOrNumber, dummy?: any, dim?: number): { M: Matrix, I: Matrix } {
   return argmin_along_axis(util.as_mat(A), dim);
 }
+
+var sum_along_axis = make_reduction_along_axis('var curret = val;',
+'curret += val;', 'dst_data[dst_idx] = curret;', false);
+export function sum(A: Matrix): Matrix;
+export function sum(A: Matrix, dim: number, outtype?: string): Matrix;
+export function sum(A: Matrix, outtype?: string): Matrix;
+export function sum(A: Matrix, ...args: any[]): Matrix {
+  var dim = undefined;
+  var outtype = undefined;
+  while (args.length > 0) {
+    var arg = args.pop();
+    if (typeof(arg) === 'string') {
+      if (arg != 'native') {
+        throw new Error('Outtype other than native is currently not supported');
+      }
+    } else if (typeof(arg) === 'number') {
+      dim = arg;
+    } else {
+      throw new Error('Unknown argument ' + arg);
+    }
+  }
+  return sum_along_axis(A, dim);
+}

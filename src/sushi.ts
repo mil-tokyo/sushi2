@@ -234,6 +234,7 @@ export var max = reduction.max;
 export var min = reduction.min;
 export var argmax = reduction.argmax;
 export var argmin = reduction.argmin;
+export var sum = reduction.sum;
 
 export function reshape(A: Matrix, ...sz: any[]): Matrix {
   var dst = A.copy();

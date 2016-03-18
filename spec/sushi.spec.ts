@@ -1181,4 +1181,25 @@ describe('Sushi class', function() {
       expect(val <= 20).toBeTruthy();
     }
   });
+
+  it('sum', function() {
+    var mat = $M.jsa2mat([[1, 2, 3], [40, 50, 60]]);
+    var mat2 = $M.sum(mat);
+    expect($M.sizejsa(mat2)).toEqual([1, 3]);
+    expect($M.mat2jsa(mat2)).toEqual([[41, 52, 63]]);
+    mat2 = $M.sum(mat, 1);
+    expect($M.sizejsa(mat2)).toEqual([1, 3]);
+    expect($M.mat2jsa(mat2)).toEqual([[41, 52, 63]]);
+    mat2 = $M.sum(mat, 2);
+    expect($M.sizejsa(mat2)).toEqual([2, 1]);
+    expect($M.mat2jsa(mat2)).toEqual([[6], [150]]);
+    mat = $M.jsa2mat([[1, 2, 3]]);
+    mat2 = $M.sum(mat);
+    expect($M.sizejsa(mat2)).toEqual([1, 1]);
+    expect($M.mat2jsa(mat2)).toEqual([[6]]);
+    mat2 = $M.sum(mat, 1);
+    expect($M.sizejsa(mat2)).toEqual([1, 3]);
+    expect($M.mat2jsa(mat2)).toEqual([[1, 2, 3]]);
+
+  });
 });
