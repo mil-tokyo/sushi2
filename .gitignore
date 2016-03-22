@@ -11,5 +11,6 @@ src/util.js
 src/func_generator.js
 src/shape_converter.js
 src/reduction.js
+src/mul.js
 src/cl/matrix_cl.js
 spec/sushi.spec.js

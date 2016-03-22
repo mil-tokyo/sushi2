@@ -5,6 +5,7 @@ import util = require('./util');
 import func_generator = require('./func_generator');
 import shape_converter = require('./shape_converter');
 import reduction = require('./reduction');
+import mul = require('./mul');
 //export import MatrixCL = require('./cl/matrix_cl');
 
 export var end = -1;
@@ -235,6 +236,8 @@ export var min = reduction.min;
 export var argmax = reduction.argmax;
 export var argmin = reduction.argmin;
 export var sum = reduction.sum;
+
+export var mtimes = mul.mtimes;
 
 export function reshape(A: Matrix, ...sz: any[]): Matrix {
   var dst = A.copy();
