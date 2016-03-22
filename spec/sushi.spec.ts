@@ -1221,4 +1221,23 @@ describe('Sushi class', function() {
     expect(() => $M.mtimes($M.zeros(3, 3, 'int32'), mata)).toThrow();
 
   });
+  
+  it('mtimes_gpu', function() {
+    var mata = $M.gpuArray([[1, 2], [3, 4], [5, 6]]);
+    var matb = $M.gpuArray([[8, 7, 6], [5, 4, 3]]);
+    var matc = $M.mtimes(mata, matb);
+    expect($M.sizejsa(matc)).toEqual([3, 3]);
+    expect($M.mat2jsa(matc)).toEqual([[18, 15, 12], [44, 37, 30], [70, 59, 48]]);
+
+    matb = $M.gpuArray([[10], [20]]);
+    matc = $M.mtimes(mata, matb);
+    expect($M.sizejsa(matc)).toEqual([3, 1]);
+    expect($M.mat2jsa(matc)).toEqual([[50], [110], [170]]);
+
+    expect(() => $M.mtimes(matb, mata)).toThrow();
+    expect(() => $M.mtimes($M.zeros(3, 3, 3), mata)).toThrow();
+    expect(() => $M.mtimes(mata, $M.zeros(3, 3, 3))).toThrow();
+    expect(() => $M.mtimes($M.zeros(3, 3, 'int32'), mata)).toThrow();
+
+  });
 });

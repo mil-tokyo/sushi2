@@ -58,4 +58,5 @@ module.exports = $M;
   require('./unary_arithmetic');
   require('./shape_converter_cl');
   require('./reduction_cl');
+  require('./clblasgemm');
 })();
