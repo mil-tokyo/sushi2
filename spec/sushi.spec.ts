@@ -467,7 +467,7 @@ describe('Sushi class', function() {
   });
 
   it('comparison', function() {
-    //eq, ge, gt, le, lt, ne, isequal, isequaln
+    //eq, ge, gt, le, lt, ne, isequal, isequaln, isclose, allclose
     var check = function(op, a, b, expected, expected_size, gpu) {
       if (Array.isArray(a)) {
         a = $M.jsa2mat(a);
@@ -537,6 +537,22 @@ describe('Sushi class', function() {
     check([[[NaN, 2, 3]], [[NaN, 2, 3]]], false, true);
     check([[[NaN, 2, 3]], [[1, 2, 3]]], false, false);
     check([[[1.1, 2, 3]], [[1, 2, 3]]], false, false);
+    
+    //nearly equal (as in numpy)
+    var check_nearlyequal = function(a, b, expected_isclose, expected_allclose, rtol, atol, equal_nan) {
+      var mata = $M.jsa2mat(a);
+      var matb = $M.jsa2mat(b);
+      expect($M.mat2jsa($M.isclose(mata, matb, rtol, atol, equal_nan))).toEqual(expected_isclose);
+      //expect($M.allclose(mata, matb, rtol, atol, equal_nan)).toEqual(expected_allclose);
+    }
+
+    //default rtol = 1e-5, atol = 1e-8
+    check_nearlyequal([1e10, 1e-7], [1.000009e10, 1e-8], [[1, 0]], false, undefined, undefined, undefined);
+    check_nearlyequal([1e10, 1e-7], [1.000020e10, 1e-8], [[0, 1]], false, undefined, 1e-7, undefined);
+    check_nearlyequal([1e10, 1e-7], [1.000090e10, 1e-8], [[1, 1]], true, 1e-4, 1e-7, undefined);
+    check_nearlyequal([1e10, NaN], [NaN, NaN], [[0, 0]], false, undefined, undefined, undefined);
+    check_nearlyequal([1e10, NaN], [NaN, NaN], [[0, 1]], false, undefined, undefined, true);
+
   });
 
   it('binary_operation', function() {
@@ -1221,7 +1237,7 @@ describe('Sushi class', function() {
     expect(() => $M.mtimes($M.zeros(3, 3, 'int32'), mata)).toThrow();
 
   });
-  
+
   it('mtimes_gpu', function() {
     var mata = $M.gpuArray([[1, 2], [3, 4], [5, 6]]);
     var matb = $M.gpuArray([[8, 7, 6], [5, 4, 3]]);

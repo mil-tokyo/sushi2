@@ -228,3 +228,106 @@ export function isequaln(...As: Matrix[]): boolean {
 
   return true;
 }
+
+
+function make_isclose_func_all(): (A: MatrixOrNumber, B: MatrixOrNumber, rtol?: number, atol?: number, equal_nan?: boolean) => Matrix {
+  var func_s_s = make_isclose_func(false, false);
+  var func_s_m = make_isclose_func(false, true);
+  var func_m_s = make_isclose_func(true, false);
+  var func_m_m = make_isclose_func(true, true);
+  return function(A: MatrixOrNumber, B: MatrixOrNumber, rtol: number = 1e-5, atol: number = 1e-8, equal_nan: boolean = false) {
+    A = util.force_cpu_scalar(A);
+    B = util.force_cpu_scalar(B);
+    if (A instanceof Matrix) {
+      if (B instanceof Matrix) {
+        return func_m_m(A, B, rtol, atol, equal_nan);
+      } else {
+        return func_m_s(A, B, rtol, atol, equal_nan);
+      }
+    } else {
+      if (B instanceof Matrix) {
+        return func_s_m(A, B, rtol, atol, equal_nan);
+      } else {
+        return func_s_s(A, B, rtol, atol, equal_nan);
+      }
+    }
+  }
+}
+
+export function make_isclose_func(a_mat: boolean, b_mat: boolean): (A: MatrixOrNumber, B: MatrixOrNumber, rtol?: number, atol?: number, equal_nan?: boolean) => Matrix {
+  var l_shape;
+  var l_size_check = '';
+  var l_def_adata = '';
+  var l_def_bdata = '';
+  var l_get_a;
+  var l_get_b;
+  if (a_mat) {
+    l_shape = 'A._size';
+    l_def_adata = 'var a_data = A._data;';
+    l_get_a = 'a_data[i]';
+    if (b_mat) {
+      l_size_check = 'if (!e_util.jsaequal(A._size, B._size)) {throw new Error("Dimension mismatch");}';
+    }
+  } else {
+    l_get_a = 'A';
+    if (b_mat) {
+      l_shape = 'B._size';
+    } else {
+      l_shape = '[1,1]';
+    }
+  }
+
+  if (b_mat) {
+    l_def_bdata = 'var b_data = B._data;';
+    l_get_b = 'b_data[i]';
+  } else {
+    l_get_b = 'B';
+  }
+
+  var f: any;
+  var e_Matrix = Matrix;
+  var e_util = util;
+
+  eval([
+    'f = function(A, B, rtol, atol, equal_nan) {',
+    'var shape = ' + l_shape + ';',
+    l_size_check,
+    l_def_adata,
+    l_def_bdata,
+    'var dst = new e_Matrix(shape, "logical");',
+    'var dst_data = dst._data;',
+    'if (equal_nan) {',
+    '  for (var i = 0, length = dst._numel; i < length; i++) {',
+    '    var val_a = ' + l_get_a + ';',
+    '    var val_b = ' + l_get_b + ';',
+    '    var absdiff = val_a - val_b;',
+    '    if (absdiff < 0) {absdiff = -absdiff}',
+    '    var ret = 0;',
+    '    if (absdiff <= atol + rtol * ((val_b > 0) ? val_b : -val_b)) {',
+    '      ret = 1;',
+    '    }',
+    '    if ((val_a !== val_a) && (val_b !== val_b)) {',
+    '      ret = 1;',
+    '    }',
+    '    dst_data[i] = ret;',
+    '  }',
+    '} else {',
+    '  for (var i = 0, length = dst._numel; i < length; i++) {',
+    '    var val_a = ' + l_get_a + ';',
+    '    var val_b = ' + l_get_b + ';',
+    '    var absdiff = val_a - val_b;',
+    '    if (absdiff < 0) {absdiff = -absdiff}',
+    '    var ret = 0;',
+    '    if (absdiff <= atol + rtol * ((val_b > 0) ? val_b : -val_b)) {',
+    '      ret = 1;',
+    '    }',
+    '    dst_data[i] = ret;',
+    '  }',
+    '}',
+    'return dst;',
+    '}'
+  ].join('\n'));
+  return f;
+}
+
+export var isclose = make_isclose_func_all();
