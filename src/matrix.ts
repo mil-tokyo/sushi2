@@ -89,7 +89,11 @@ class Matrix {
   
   inspect(depth: number): string {
     var shape_str = this._size.join('x');
-    return 'Matrix ' + shape_str + ' ' + this._klass + '\n' + this.toString();
+    if (this._numel <= 100) {
+      return 'Matrix ' + shape_str + ' ' + this._klass + '\n' + this.toString();
+    } else {
+      return 'Matrix ' + shape_str + ' ' + this._klass;
+    }
   }
   
   static typedarray2mat(size: number[], klass: string = 'single', data: typedef.AllowedTypedArray): Matrix {
