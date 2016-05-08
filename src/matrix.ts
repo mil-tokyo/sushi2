@@ -86,7 +86,7 @@ class Matrix {
     //release memory
     this._data = null;
   }
-  
+
   inspect(depth: number): string {
     var shape_str = this._size.join('x');
     if (this._numel <= 100) {
@@ -95,18 +95,18 @@ class Matrix {
       return 'Matrix ' + shape_str + ' ' + this._klass;
     }
   }
-  
+
   static typedarray2mat(size: number[], klass: string = 'single', data: typedef.AllowedTypedArray): Matrix {
     //type check
     if (!(data instanceof Matrix.data_ctors[klass])) {
       throw Error('klass and data type mismatch');
     }
-    
+
     var m = new Matrix(size, klass, true);
     if (data.length < m._numel) {
       throw Error('The length of data is smaller than matrix size');
     }
-    
+
     m._data = data;
     if (klass === 'logical') {
       //force values to 0/1
@@ -151,8 +151,8 @@ class Matrix {
     //get copy of data in TypedArray
     return this._data;
   }
-  
-  getdataref(src_offset:number = 0, length?: number): typedef.AllowedTypedArray {
+
+  getdataref(src_offset: number = 0, length?: number): typedef.AllowedTypedArray {
     //get read-only view of array
     if (!src_offset && length == null) {
       return this._data;
@@ -163,7 +163,7 @@ class Matrix {
       return new this._data_ctor(this._data.buffer, src_offset * this._data.BYTES_PER_ELEMENT, length);
     }
   }
-  
+
   getdatacopy(src_offset: number = 0, length?: number, dst?: typedef.AllowedTypedArray): typedef.AllowedTypedArray {
     if (length == null) {
       length = this._numel - src_offset;
@@ -171,10 +171,15 @@ class Matrix {
     if (!dst) {
       dst = new this._data_ctor(length);
     }
-    
+
     var range_view = new this._data_ctor(this._data.buffer, src_offset * this._data.BYTES_PER_ELEMENT, length);
     dst.set(range_view);
     return dst;
+  }
+
+  setdata(src: typedef.AllowedTypedArray, dst_offset: number = 0): void {
+    //set raw data into buffer
+    this._data.set(src, dst_offset);
   }
 
   _isvalidindex(inds: number[]): boolean {
@@ -280,7 +285,7 @@ class Matrix {
         }
         mat = new Matrix(dim_size, klass);
         var rawdata = mat._alloccpu();
-      
+
         //TODO: support n-d array
         for (var row = 0; row < dim_size[0]; row++) {
           var rowdata = ary[row];
@@ -354,7 +359,7 @@ class Matrix {
       }
     }
   }
-  
+
   // returns value of (1,1) or 0
   valueOf(): number {
     if (this._numel > 0) {
@@ -405,7 +410,7 @@ class Matrix {
         //number
         dimidx = [<number>dimind];
       }
-        
+
       //range check
       var dim_size = this._size[dim] || 1;//exceed dimension must be [1,1,...]
       for (var i = 0; i < dimidx.length; i++) {
@@ -432,7 +437,7 @@ class Matrix {
       }
 
       output_data[i] = input_data[input_raw_idx];
-        
+
       //increment input index
       for (var dim = 0; dim < inputdimctr.length; dim++) {
         var element = ++inputdimctr[dim];
@@ -609,7 +614,7 @@ class Matrix {
         //number
         dimidx = [<number>dimind];
       }
-        
+
       //range check
       var dim_size = this._size[dim] || 1;//exceed dimension must be [1,1,...]
       for (var i = 0; i < dimidx.length; i++) {
@@ -654,7 +659,7 @@ class Matrix {
           }
 
           rawdata[input_raw_idx] = Matrix._logical_cast(val_data[i]);
-        
+
           //increment input index
           for (var dim = 0; dim < inputdimctr.length; dim++) {
             var element = ++inputdimctr[dim];
@@ -676,7 +681,7 @@ class Matrix {
           }
 
           rawdata[input_raw_idx] = val_data[i];
-        
+
           //increment input index
           for (var dim = 0; dim < inputdimctr.length; dim++) {
             var element = ++inputdimctr[dim];
@@ -708,7 +713,7 @@ class Matrix {
         }
 
         rawdata[input_raw_idx] = scalar_val;
-        
+
         //increment input index
         for (var dim = 0; dim < inputdimctr.length; dim++) {
           var element = ++inputdimctr[dim];
@@ -814,7 +819,7 @@ class Matrix {
     } else {
       _size = Array.prototype.slice.call(args);
     }
-    
+
     //type check
     var tmpnumel: number = 1;
     var strides: number[] = [];
@@ -854,7 +859,7 @@ class Matrix {
     if (tmpnumel !== this._numel) {
       throw new Error('New shape must have same elements');
     }
-    
+
     //remove tail dimensions with size 1 (retain minimum 2 dimensions)
     last_none_one_dim = Math.max(last_none_one_dim, 1) + 1;
     _size.splice(last_none_one_dim);

@@ -77,8 +77,8 @@ class MatrixCL extends Matrix {
     this.read(typed_array);
     return typed_array;
   }
-  
-  getdataref(src_offset:number = 0, length?: number): typedef.AllowedTypedArray {
+
+  getdataref(src_offset: number = 0, length?: number): typedef.AllowedTypedArray {
     //get read-only view of array
     // copy minimum range of gpu array
     if (length == null) {
@@ -88,7 +88,7 @@ class MatrixCL extends Matrix {
     this.read(typed_array, src_offset * this._data_ctor.BYTES_PER_ELEMENT);
     return typed_array;
   }
-  
+
   getdatacopy(src_offset: number = 0, length?: number, dst?: typedef.AllowedTypedArray): typedef.AllowedTypedArray {
     if (length == null) {
       length = this._numel - src_offset;
@@ -96,11 +96,16 @@ class MatrixCL extends Matrix {
     if (!dst) {
       dst = new this._data_ctor(length);
     }
-    
+
     var range_view = new this._data_ctor(dst.buffer, 0, length);
     this.read(range_view, src_offset * this._data_ctor.BYTES_PER_ELEMENT);
-    
+
     return dst;
+  }
+
+  setdata(src: typedef.AllowedTypedArray, dst_offset: number = 0): void {
+    //set raw data into buffer
+    this.write(src, dst_offset * this._data_ctor.BYTES_PER_ELEMENT);
   }
 
   static get_cast_str(dst_klass: string, src_klass: string): string {
@@ -219,7 +224,7 @@ class MatrixCL extends Matrix {
         //number
         dimidx = [<number>dimind];
       }
-        
+
       //range check
       var dim_size = this._size[dim] || 1;//exceed dimension must be [1,1,...]
       for (var i = 0; i < dimidx.length; i++) {
@@ -351,9 +356,9 @@ class MatrixCL extends Matrix {
 
   get_matrix_logical(map: Matrix): MatrixCL {
     // equivalent to this.get(find(map))
-    
+
     //not paralleled; very slow
-    
+
     //first, count output size
     var map_cl: MatrixCL;
     var destruct_map_cl = false;
@@ -401,7 +406,7 @@ class MatrixCL extends Matrix {
 
       var output_length = count_array[0];
       var max_i = count_array[1];
-    
+
       //second, read sequentially and write
       if (this._numel <= max_i) {
         throw new Error('Index out of bounds');
@@ -629,7 +634,7 @@ class MatrixCL extends Matrix {
         //number
         dimidx = [<number>dimind];
       }
-        
+
       //range check
       var dim_size = this._size[dim] || 1;//exceed dimension must be [1,1,...]
       for (var i = 0; i < dimidx.length; i++) {
@@ -770,7 +775,7 @@ class MatrixCL extends Matrix {
 
   set_matrix_logical(val: number | Matrix, map: Matrix): void {
     //not paralleled; very slow
-    
+
     //first, count output size
     var map_cl: MatrixCL;
     var destruct_map_cl = false;
@@ -820,7 +825,7 @@ class MatrixCL extends Matrix {
 
       var output_length = count_array[0];
       var max_i = count_array[1];
-    
+
       //second, read sequentially and write
       if (this._numel <= max_i) {
         throw new Error('Index out of bounds');
