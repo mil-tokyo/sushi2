@@ -34,17 +34,17 @@ class MatrixCL extends Matrix {
     }
   }
 
-  write(src_typed_array: any, offset?: number) {
+  write(src_typed_array: any, dst_bytes_offset?: number) {
     this.throw_if_destructed();
     if (src_typed_array.length > 0) {
-      $CL.writeBuffer(this._clbuffer, src_typed_array, offset);
+      $CL.writeBuffer(this._clbuffer, src_typed_array, dst_bytes_offset);
     }
   }
 
-  read(dst_typed_array: any, offset?: number) {
+  read(dst_typed_array: any, src_bytes_offset?: number) {
     this.throw_if_destructed();
     if (dst_typed_array.length > 0) {
-      $CL.readBuffer(this._clbuffer, dst_typed_array, offset);
+      $CL.readBuffer(this._clbuffer, dst_typed_array, src_bytes_offset);
     }
   }
 
@@ -76,6 +76,31 @@ class MatrixCL extends Matrix {
     var typed_array = this._data_ctor(this._numel);
     this.read(typed_array);
     return typed_array;
+  }
+  
+  getdataref(src_offset:number = 0, length?: number): typedef.AllowedTypedArray {
+    //get read-only view of array
+    // copy minimum range of gpu array
+    if (length == null) {
+      length = this._numel - src_offset;
+    }
+    var typed_array = new this._data_ctor(length);
+    this.read(typed_array, src_offset * this._data_ctor.BYTES_PER_ELEMENT);
+    return typed_array;
+  }
+  
+  getdatacopy(src_offset: number = 0, length?: number, dst?: typedef.AllowedTypedArray): typedef.AllowedTypedArray {
+    if (length == null) {
+      length = this._numel - src_offset;
+    }
+    if (!dst) {
+      dst = new this._data_ctor(length);
+    }
+    
+    var range_view = new this._data_ctor(dst.buffer, 0, length);
+    this.read(range_view, src_offset * this._data_ctor.BYTES_PER_ELEMENT);
+    
+    return dst;
   }
 
   static get_cast_str(dst_klass: string, src_klass: string): string {

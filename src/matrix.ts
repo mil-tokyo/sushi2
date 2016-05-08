@@ -151,6 +151,31 @@ class Matrix {
     //get copy of data in TypedArray
     return this._data;
   }
+  
+  getdataref(src_offset:number = 0, length?: number): typedef.AllowedTypedArray {
+    //get read-only view of array
+    if (!src_offset && length == null) {
+      return this._data;
+    } else {
+      if (length == null) {
+        length = this._numel;
+      }
+      return new this._data_ctor(this._data.buffer, src_offset * this._data.BYTES_PER_ELEMENT, length);
+    }
+  }
+  
+  getdatacopy(src_offset: number = 0, length?: number, dst?: typedef.AllowedTypedArray): typedef.AllowedTypedArray {
+    if (length == null) {
+      length = this._numel - src_offset;
+    }
+    if (!dst) {
+      dst = new this._data_ctor(length);
+    }
+    
+    var range_view = new this._data_ctor(this._data.buffer, src_offset * this._data.BYTES_PER_ELEMENT, length);
+    dst.set(range_view);
+    return dst;
+  }
 
   _isvalidindex(inds: number[]): boolean {
     if (this._numel == 0) {

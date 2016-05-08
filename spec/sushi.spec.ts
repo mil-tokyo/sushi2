@@ -670,6 +670,37 @@ describe('Sushi class', function() {
     expect($M.mat2jsa(mat2)).toEqual([[1, 10, 20], [4, 30, 40], [7, 8, 9]]);
   });
 
+  it('getdata', function() {
+    var mat: $M.Matrix;
+    var tary: (Float32Array | Int32Array | Uint8Array);
+    for (var gpu = 0; gpu < 2; gpu++) {
+      mat = $M.jsa2mat([10, 20, 30, 40, 50]);
+      if (gpu == 1) {
+        mat = $M.gpuArray(mat);
+      }
+      tary = mat.getdatacopy();
+      expect(tary.length).toEqual(5);
+      expect(tary[0]).toEqual(10);
+      expect(tary[4]).toEqual(50);
+      tary[1] = 55;
+      expect(mat.get(2)).toEqual(20);//not modified
+      tary = new Float32Array([51, 52, 53]);
+      mat.getdatacopy(1, 2, tary);
+      expect(tary[0]).toEqual(20);
+      expect(tary[2]).toEqual(53);//not modified out of range
+      
+      tary = mat.getdataref();
+      expect(tary.length).toEqual(5);
+      expect(tary[0]).toEqual(10);
+      expect(tary[4]).toEqual(50);
+      
+      tary = mat.getdataref(1, 2);
+      expect(tary.length).toEqual(2);
+      expect(tary[0]).toEqual(20);
+      expect(tary[1]).toEqual(30);
+    }
+  });
+
   it('binary_operation_gpu', function() {
     $M.autodestruct(function() {
       var cast_check = function(klass_a, klass_b, klass_out) {
