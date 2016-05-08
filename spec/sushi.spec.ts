@@ -202,6 +202,19 @@ describe('Sushi class', function() {
     expect($M.mat2jsa(mat)).toEqual([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0]]);
   });
 
+  it('typedarray2mat', function() {
+    expect(() => $M.typedarray2mat([1, 2], 'single', new Uint8Array(2))).toThrow();//type mismatch
+    expect(() => $M.typedarray2mat([2, 2], 'single', new Float32Array(2))).toThrow();//size insufficient
+    expect(() => $M.typedarray2mat([2, 2], 'single', new Float32Array(10))).not.toThrow();//size exceed
+    var mat = $M.typedarray2mat([2, 3], 'int32', new Int32Array([10, 20, 30, 40, 50, 60]));
+    expect(mat.get(2, 1)).toEqual(20);
+    expect(mat.get(2, 3)).toEqual(60);
+    mat = $M.typedarray2mat([5, 1], 'logical', new Uint8Array([0, 1, 2, 3, 4]));
+    expect(mat.get(1)).toEqual(0);
+    expect(mat.get(2)).toEqual(1);
+    expect(mat.get(5)).toEqual(1);//converted to 1
+  });
+
   it('valueOf', function() {
     var mat = $M.jsa2mat([[10, 2, 3], [4, 5, 6], [7, 8, 9]]);
     expect(<any>mat + 0).toEqual(10);

@@ -91,6 +91,27 @@ class Matrix {
     var shape_str = this._size.join('x');
     return 'Matrix ' + shape_str + ' ' + this._klass + '\n' + this.toString();
   }
+  
+  static typedarray2mat(size: number[], klass: string = 'single', data: typedef.AllowedTypedArray): Matrix {
+    //type check
+    if (!(data instanceof Matrix.data_ctors[klass])) {
+      throw Error('klass and data type mismatch');
+    }
+    
+    var m = new Matrix(size, klass, true);
+    if (data.length < m._numel) {
+      throw Error('The length of data is smaller than matrix size');
+    }
+    
+    m._data = data;
+    if (klass === 'logical') {
+      //force values to 0/1
+      for (var i = 0; i < m._numel; i++) {
+        data[i] = Number(data[i] != 0);
+      }
+    }
+    return m;
+  }
 
   static _isinteger(x) {
     return Math.round(x) == x;

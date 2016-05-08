@@ -49,6 +49,8 @@ export function autodestruct(f: () => any): any {
   return mats_to_save;
 }
 
+export var typedarray2mat = Matrix.typedarray2mat;
+
 export function zeros(...args: any[]): Matrix {
   var format = util.calc_zeros_size(args);
   return new Matrix(format.size, format.klass);
