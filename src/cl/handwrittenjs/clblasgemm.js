@@ -6,14 +6,14 @@
 // Copyright 2013 Advanced Micro Devices, Inc.
 
 (function () {
-  var $M = require('../sushi');
-  var util = require('../util');
+  var $M = require('../../sushi');
+  var util = require('../../util');
   var util_cl = require('./util_cl');
   var $CL = require('./driver');
   $M.CL = $CL;
 
-  var Matrix = require('../matrix');
-  var MatrixCL = require('./matrix_cl');
+  var Matrix = require('../../matrix');
+  var MatrixCL = require('../matrix_cl');
   var WebCL = $M.CL.WebCL;
   var ctypes = util_cl.ctypes;
   var webcltypes = util_cl.webcltypes;

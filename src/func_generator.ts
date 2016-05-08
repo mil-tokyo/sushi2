@@ -1,7 +1,7 @@
 import Matrix = require('./matrix');
 import util = require('./util');
 
-declare type MatrixOrNumber = Matrix | number;
+export type MatrixOrNumber = util.MatrixOrNumber;
 export function make_compare_func_all(operation: string): (A: MatrixOrNumber, B: MatrixOrNumber) => Matrix {
   var func_s_s = make_binary_arith_func(operation, false, false, 'logical');
   var func_s_m = make_binary_arith_func(operation, false, true, 'logical');

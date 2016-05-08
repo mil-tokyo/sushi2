@@ -9,8 +9,8 @@ import mul = require('./mul');
 //export import MatrixCL = require('./cl/matrix_cl');
 
 export var end = -1;
-declare type MatrixOrNumber = Matrix | number;
-declare type MatrixLike = Matrix | number | number[] | number[][];
+export type MatrixOrNumber = util.MatrixOrNumber;
+export type MatrixLike = Matrix | number | number[] | number[][];
 
 export function autodestruct(f: () => any): any {
   Matrix.autodestruct_push();

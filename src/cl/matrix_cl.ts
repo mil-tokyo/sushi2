@@ -1,12 +1,13 @@
 import Matrix = require('../matrix');
 import Colon = require('../colon');
-import $CL = require('./driver');
+import typedef = require('../typedef');
+import $CL = require('./handwrittenjs/driver');
 var WebCL = $CL.WebCL;
 
 var ctypes = { single: 'float', int32: 'int', uint8: 'uchar', logical: 'uchar' };
 var webcltypes = { single: WebCL.type.FLOAT, int32: WebCL.type.INT, uint8: WebCL.type.UCHAR, logical: WebCL.type.UCHAR };
 
-declare type AllowedTypedArray = Float32Array | Int32Array | Uint8Array;
+type AllowedTypedArray = typedef.AllowedTypedArray;
 
 class MatrixCL extends Matrix {
   _clbuffer: $CL.clBuffer;
@@ -57,7 +58,7 @@ class MatrixCL extends Matrix {
     }
   }
 
-  static _fromtypedarray(src_typed_array: AllowedTypedArray, klass: string): MatrixCL {
+  static _fromtypedarray(src_typed_array: typedef.AllowedTypedArray, klass: string): MatrixCL {
     var mat = new MatrixCL([1, src_typed_array.length], klass);
     mat.write(src_typed_array);
     return mat;
@@ -70,7 +71,7 @@ class MatrixCL extends Matrix {
     }
   }
 
-  _getdata(): AllowedTypedArray {
+  _getdata(): typedef.AllowedTypedArray {
     //get copy of data in TypedArray
     var typed_array = this._data_ctor(this._numel);
     this.read(typed_array);

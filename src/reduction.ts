@@ -2,7 +2,7 @@ import Matrix = require('./matrix');
 import util = require('./util');
 import func_generator = require('./func_generator');
 
-declare type MatrixOrNumber = Matrix | number;
+export type MatrixOrNumber = util.MatrixOrNumber;
 
 function max_along_axis_old(A: Matrix, dim?: number): Matrix {
   if (dim == null) {

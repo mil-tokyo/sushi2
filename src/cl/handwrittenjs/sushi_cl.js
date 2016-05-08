@@ -1,8 +1,8 @@
 'use strict';
 // overwrites functions in $M by opencl-aware version
 
-var $M = require('../sushi');
-var util = require('../util');
+var $M = require('../../sushi');
+var util = require('../../util');
 module.exports = $M;
 
 (function () {
@@ -12,8 +12,8 @@ module.exports = $M;
   var $CL = require('./driver');
   $M.CL = $CL;
 
-  var Matrix = require('../matrix');
-  var MatrixCL = require('./matrix_cl');
+  var Matrix = require('../../matrix');
+  var MatrixCL = require('../matrix_cl');
   var WebCL = $M.CL.WebCL;
 
   $M.gpuArray = function (A) {

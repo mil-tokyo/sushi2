@@ -1,13 +1,13 @@
 'use strict';
 
-var $M = require('../sushi');
+var $M = require('../../sushi');
 
 (function () {
   var $CL = require('./driver');
   $M.CL = $CL;
 
-  var Matrix = require('../matrix');
-  var MatrixCL = require('./matrix_cl');
+  var Matrix = require('../../matrix');
+  var MatrixCL = require('../matrix_cl');
   var WebCL = $M.CL.WebCL;
   var ctypes = { single: 'float', int32: 'int', uint8: 'uchar', logical: 'uchar' };
   module.exports.ctypes = ctypes;

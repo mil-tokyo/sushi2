@@ -1,5 +1,5 @@
 import Matrix = require('./matrix');
-declare type MatrixOrNumber = Matrix | number;
+export type MatrixOrNumber = Matrix | number;
 
 
 /**

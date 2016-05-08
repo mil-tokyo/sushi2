@@ -1,6 +1,7 @@
 import Colon = require('./colon');
+import typedef = require('./typedef');
 
-declare type AllowedTypedArray = Float32Array | Int32Array | Uint8Array;
+type AllowedTypedArray = typedef.AllowedTypedArray;//TODO: find way to use AllowedTypedArray in public methods
 
 class Matrix {
   _size: number[];
@@ -8,7 +9,7 @@ class Matrix {
   _numel: number;
   _klass: string;
   _data_ctor: any;
-  _data: AllowedTypedArray;//allocated in constructor
+  _data: typedef.AllowedTypedArray;//allocated in constructor
   _strides: number[];// in typedarray index (not byte)
   static _autodestruct_stack: Matrix[][] = [];
   static _autodestruct_stack_top: Matrix[] = null;
@@ -107,7 +108,7 @@ class Matrix {
     return Number(Boolean(val));
   }
 
-  private _alloccpu(): AllowedTypedArray {
+  private _alloccpu(): typedef.AllowedTypedArray {
     // allocate cpu buffer if not exist
     if (!this._data) {
       this._data = new this._data_ctor(this._numel);
@@ -120,7 +121,7 @@ class Matrix {
     return this;
   }
 
-  _getdata(): AllowedTypedArray {
+  _getdata(): typedef.AllowedTypedArray {
     //override in gpu
     //get copy of data in TypedArray
     return this._data;

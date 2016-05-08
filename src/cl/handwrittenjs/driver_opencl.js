@@ -1,7 +1,7 @@
 'use strict';
 
 (function () {
-  var $M = require('../sushi');
+  var $M = require('../../sushi');
 
   var $CL = {};
   $CL.WebCL = createWebCLObject();

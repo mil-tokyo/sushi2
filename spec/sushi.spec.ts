@@ -7,7 +7,7 @@ var cl_enabled = Boolean(Number(process.env['TEST_CL']));
 console.log('OpenCL ' + cl_enabled);
 var MatrixCL = null;
 if (cl_enabled) {
-  var f: typeof $M = require('../src/cl/sushi_cl');
+  var f: typeof $M = require('../src/cl/handwrittenjs/sushi_cl');
   MatrixCL = require('../src/cl/matrix_cl');
 }
 
@@ -46,7 +46,7 @@ describe('Sushi class', function() {
 
     mat = $M.zeros(3, 4, 5, 6);
     expect(mat._size).toEqual([3, 4, 5, 6]);
-    
+
     //zero-dimension case
     mat = $M.zeros(0);
     expect(mat._size).toEqual([0, 0]);
@@ -67,7 +67,7 @@ describe('Sushi class', function() {
     mat = $M.zeros(2, 2, 0, 3);
     expect(mat._size).toEqual([2, 2, 0, 3]);
     expect(mat._numel).toEqual(0);
-    
+
     //tailing 1
     mat = $M.zeros(1);
     expect(mat._size).toEqual([1, 1]);
@@ -93,9 +93,9 @@ describe('Sushi class', function() {
     mat = $M.zeros(2, 3, 2, 1, 0);
     expect(mat._size).toEqual([2, 3, 2, 1, 0]);
     expect(mat._numel).toEqual(0);
-    
+
     //TODO: from size matrix
-    
+
     //type specification
     mat = $M.zeros(2, 3, 'single');
     expect(mat._size).toEqual([2, 3]);
@@ -125,7 +125,7 @@ describe('Sushi class', function() {
     expect(mat._klass).toEqual('int32');
     expect(mat._data).toEqual(jasmine.any(Int32Array));
     expect(mat._data[0]).toEqual(0);//only type is copied, not data
-    
+
     //invalid argument
     expect(() => $M.zeros(-1)).toThrow();//negative
     expect(() => $M.zeros(1.1)).toThrow();//not integer
@@ -181,8 +181,8 @@ describe('Sushi class', function() {
     expect(mat._klass).toEqual('int32');
     expect(mat._data).toEqual(jasmine.any(Int32Array));
     expect(mat._data[0]).toEqual(1);//only type is copied, not data
-    
-    
+
+
     if (MatrixCL) {
       var matg = $M.ones(2, 3, 'gpuArray');
       expect(matg instanceof MatrixCL).toBeTruthy();
@@ -248,7 +248,7 @@ describe('Sushi class', function() {
     expect(mat.get(4)).toEqual(41);
     expect(mat.get($M.end - 2)).toEqual(41);
     expect($M.end).toEqual(-1);//end is same as -1
-    
+
     mat = $M.zeros(3, 4, 5);
     mat.set(1, 2, 3, 10);
     expect(mat.get(1, 2, 3)).toEqual(10);
@@ -260,7 +260,7 @@ describe('Sushi class', function() {
     expect(mat.get(2, 3, 1)).toEqual(20);
     expect(mat.get(1 + 2 * 3 + 1)).toEqual(20);
     expect(mat.get($M.end - 1, $M.end - 1)).toEqual(20);
-    
+
     //logical value
     //in typedarray, inputting false becomes 0, true becomes 1
     //false==0, false!==0, true==1, true!==1
@@ -271,7 +271,7 @@ describe('Sushi class', function() {
     expect(mat.get(1, 1)).toEqual(0);
     mat.set(1, 1, 2);
     expect(mat.get(1, 1)).toEqual(1);//converted to 0/1
-    
+
     //invalid index
     mat = $M.zeros(0, 0);
     expect(() => mat.get(1)).toThrow();//any index is error
@@ -290,7 +290,7 @@ describe('Sushi class', function() {
     expect(() => mat.get($M.end - 7)).toThrow();
     mat = $M.zeros(3, 4, 5);
     expect(() => mat.get(1, 1, 6)).toThrow();
-    
+
     //TODO: automatic expansion of multidimensional matrix
   });
 
@@ -298,7 +298,7 @@ describe('Sushi class', function() {
     var mat = $M.jsa2mat([[1, 2, 3], [4, 5, 6], [7, 8, 9]]);
     var mat2: $M.Matrix;
     var extracted: $M.Matrix;
-    
+
     //linear indexing
     extracted = mat.get($M.colon(2, 5));
     expect($M.mat2jsa(extracted)).toEqual([[4, 7, 2, 5]]);
@@ -326,8 +326,8 @@ describe('Sushi class', function() {
     mat2 = mat.copy();
     mat2.set($M.jsa2mat([1, 3, 5]), $M.jsa2mat([10, 20, 30]));
     expect($M.mat2jsa(mat2)).toEqual([[10, 2, 3], [4, 30, 6], [20, 8, 9]]);
-    
-    
+
+
     //2-d indexing
     extracted = mat.get($M.colon(2, 3), $M.colon(1, 2));
     expect($M.mat2jsa(extracted)).toEqual([[4, 5], [7, 8]]);
@@ -347,9 +347,9 @@ describe('Sushi class', function() {
     mat2 = mat.copy();
     mat2.set($M.colon(1, 2), $M.colon(2, 3), $M.jsa2mat([[10, 20], [30, 40]]));
     expect($M.mat2jsa(mat2)).toEqual([[1, 10, 20], [4, 30, 40], [7, 8, 9]]);
-    
-    
-    
+
+
+
     //TODO: n-d matrix
   });
 
@@ -428,7 +428,7 @@ describe('Sushi class', function() {
     expect(mat.get(1, 1)).toEqual(10);
     expect(mat.get(1, 2)).toEqual(20);
     expect(mat.get(1, 3)).toEqual(30);
-    
+
     // TODO: support of n-d array
   });
 
@@ -462,7 +462,7 @@ describe('Sushi class', function() {
     expect($M.mat2jsa(mat)).toEqual([[], []]);
     mat = $M.zeros(0, 2);
     expect($M.mat2jsa(mat)).toEqual([]);//limitation of representation ability
-    
+
     //TODO: support of n-d array
   });
 
@@ -515,7 +515,7 @@ describe('Sushi class', function() {
     var b = $M.jsa2mat([0, 1, 1], false, 'logical');
     var res = $M.eq(a, b);
     expect(res.mat2jsa(true)).toEqual([1, 1, 0]);//compared as number
-    
+
     //invalid shape
     expect(() => $M.eq($M.zeros(1, 2), $M.zeros(1, 3))).toThrow();
   });
@@ -537,7 +537,7 @@ describe('Sushi class', function() {
     check([[[NaN, 2, 3]], [[NaN, 2, 3]]], false, true);
     check([[[NaN, 2, 3]], [[1, 2, 3]]], false, false);
     check([[[1.1, 2, 3]], [[1, 2, 3]]], false, false);
-    
+
     //nearly equal (as in numpy)
     var check_nearlyequal = function(a, b, expected_isclose, expected_allclose, rtol, atol, equal_nan) {
       var mata = $M.jsa2mat(a);
@@ -606,7 +606,7 @@ describe('Sushi class', function() {
     var mat = $M.gpuArray($M.jsa2mat([[1, 2, 3], [4, 5, 6], [7, 8, 9]]));
     var mat2: $M.Matrix;
     var extracted: $M.Matrix;
-    
+
     //linear indexing
     extracted = mat.get($M.colon(2, 5));
     expect($M.mat2jsa(extracted)).toEqual([[4, 7, 2, 5]]);
@@ -634,8 +634,8 @@ describe('Sushi class', function() {
     mat2 = mat.copy();
     mat2.set($M.jsa2mat([1, 3, 5]), $M.jsa2mat([10, 20, 30]));
     expect($M.mat2jsa(mat2)).toEqual([[10, 2, 3], [4, 30, 6], [20, 8, 9]]);
-    
-    
+
+
     //2-d indexing
     extracted = mat.get($M.colon(2, 3), $M.colon(1, 2));
     expect($M.mat2jsa(extracted)).toEqual([[4, 5], [7, 8]]);
@@ -675,7 +675,7 @@ describe('Sushi class', function() {
 
         var matout = $M.plus(mata, matb);
         expect($M.klass(matout)).toEqual(klass_out);
-      
+
         //matrix is scalar
         if (klass_a) {
           mata = $M.gpuArray($M.jsa2mat([1], false, klass_a));
@@ -1140,19 +1140,21 @@ describe('Sushi class', function() {
   });
 
   it('exp_log_gpu', function() {
-    var mat = $M.gpuArray($M.jsa2mat([0.0, 1.0, 10.0]));
-    var mat2 = $M.exp(mat);
-    expect($M.sizejsa(mat2)).toEqual([1, 3]);
-    expect(mat2.get(1)).toBeCloseTo(1.0, 2);
-    expect(mat2.get(2)).toBeCloseTo(2.718, 2);
-    expect(mat2.get(3)).toBeCloseTo(22026.47, 1);
-    expect(mat2 instanceof MatrixCL).toBeTruthy();
-    var mat3 = $M.log(mat2);
-    expect($M.sizejsa(mat3)).toEqual([1, 3]);
-    expect(mat3.get(1)).toBeCloseTo(0.0, 2);
-    expect(mat3.get(2)).toBeCloseTo(1.0, 2);
-    expect(mat3.get(3)).toBeCloseTo(10.0, 1);
-    expect(mat3 instanceof MatrixCL).toBeTruthy();
+    if (MatrixCL) {
+      var mat = $M.gpuArray($M.jsa2mat([0.0, 1.0, 10.0]));
+      var mat2 = $M.exp(mat);
+      expect($M.sizejsa(mat2)).toEqual([1, 3]);
+      expect(mat2.get(1)).toBeCloseTo(1.0, 2);
+      expect(mat2.get(2)).toBeCloseTo(2.718, 2);
+      expect(mat2.get(3)).toBeCloseTo(22026.47, 1);
+      expect(mat2 instanceof MatrixCL).toBeTruthy();
+      var mat3 = $M.log(mat2);
+      expect($M.sizejsa(mat3)).toEqual([1, 3]);
+      expect(mat3.get(1)).toBeCloseTo(0.0, 2);
+      expect(mat3.get(2)).toBeCloseTo(1.0, 2);
+      expect(mat3.get(3)).toBeCloseTo(10.0, 1);
+      expect(mat3 instanceof MatrixCL).toBeTruthy();
+    }
   });
 
   it('rand', function() {
