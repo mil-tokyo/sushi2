@@ -85,6 +85,11 @@ class Matrix {
     //release memory
     this._data = null;
   }
+  
+  inspect(depth: number): string {
+    var shape_str = this._size.join('x');
+    return 'Matrix ' + shape_str + ' ' + this._klass + '\n' + this.toString();
+  }
 
   static _isinteger(x) {
     return Math.round(x) == x;
