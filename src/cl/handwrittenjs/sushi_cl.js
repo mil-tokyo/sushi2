@@ -17,6 +17,9 @@ module.exports = $M;
   var WebCL = $M.CL.WebCL;
 
   $M.gpuArray = function (A) {
+    if (A instanceof MatrixCL) {
+      return A.copy();
+    }
     A = util.as_mat(A);
     var mat = new MatrixCL(A._size, A._klass);
     mat.write(A._data);
@@ -24,10 +27,22 @@ module.exports = $M;
   };
 
   $M.gather = function (A) {
+    if (!(A instanceof MatrixCL)) {
+      return A.copy();
+    }
     var mat = new Matrix(A._size, A._klass);
     A.read(mat._data);
     return mat;
   };
+
+  $M.devicetype = function (A) {
+    if (A instanceof MatrixCL) {
+      return 'cl';
+    } else if (A instanceof Matrix) {
+      return 'cpu';
+    }
+    return null;
+  }
 
   var zeros_native = $M.zeros;
   $M.zeros = function () {

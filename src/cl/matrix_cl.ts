@@ -70,6 +70,15 @@ class MatrixCL extends Matrix {
       this._clbuffer = null;
     }
   }
+  
+  inspect(depth: number): string {
+    var shape_str = this._size.join('x');
+    if (this._numel <= 100) {
+      return 'MatrixCL ' + shape_str + ' ' + this._klass + '\n' + this.toString();
+    } else {
+      return 'MatrixCL ' + shape_str + ' ' + this._klass;
+    }
+  }
 
   _getdata(): typedef.AllowedTypedArray {
     //get copy of data in TypedArray

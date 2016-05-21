@@ -7,10 +7,28 @@ import shape_converter = require('./shape_converter');
 import reduction = require('./reduction');
 import mul = require('./mul');
 //export import MatrixCL = require('./cl/matrix_cl');
+export var CL: any = null;// for webcl
 
 export var end = -1;
 export type MatrixOrNumber = util.MatrixOrNumber;
 export type MatrixLike = Matrix | number | number[] | number[][];
+
+declare var require;
+export function initcl(): boolean {
+  try {
+    var dummy: any = require('../src/cl/handwrittenjs/sushi_cl');
+  } catch (ex) {
+    return false;
+  }
+  return true;
+}
+
+export function devicetype(A: Matrix): string {
+  if (A instanceof Matrix) {
+    return 'cpu';
+  }
+  return null;
+}
 
 export function autodestruct(f: () => any): any {
   Matrix.autodestruct_push();
