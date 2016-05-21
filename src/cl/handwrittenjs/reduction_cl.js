@@ -189,4 +189,23 @@ var util_cl = require('./util_cl');
       return argmin_native(A, dummy, dim);
     }
   };
+  
+  var sum_native = $M.sum;
+  $M.sum = function (A) {
+    //TODO: compute in gpu
+    var a_cl = false;
+    if (A instanceof MatrixCL) {
+      A = $M.gather(A);
+      a_cl = true;
+    }
+    var args = [A];
+    for (var _i = 1; _i < arguments.length; _i++) {
+        args[_i] = arguments[_i];
+    }
+    var ret = sum_native.apply(null, args);
+    if (a_cl) {
+      ret = $M.gpuArray(ret);
+    }
+    return ret;
+  }
 })();

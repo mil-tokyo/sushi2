@@ -7,7 +7,7 @@ var cl_enabled = Boolean(Number(process.env['TEST_CL']));
 console.log('OpenCL ' + cl_enabled);
 var MatrixCL = null;
 if (cl_enabled) {
-  var f: typeof $M = require('../src/cl/handwrittenjs/sushi_cl');
+  $M.initcl();
   MatrixCL = require('../src/cl/matrix_cl');
 }
 
@@ -604,7 +604,9 @@ describe('Sushi class', function() {
     var cpu = $M.jsa2mat([1, 3, 5]);
     var gpu = $M.gpuArray(cpu);
     var direct_gpu = $M.gpuArray([1, 3, 5]);
+    expect($M.devicetype(direct_gpu)).toEqual('cl');
     var again_cpu = $M.gather(gpu);
+    expect($M.devicetype(again_cpu)).toEqual('cpu');
     expect($M.mat2jsa(again_cpu)).toEqual([[1, 3, 5]]);
     expect($M.mat2jsa($M.gather(direct_gpu))).toEqual([[1, 3, 5]]);
     expect(gpu.get(2)).toEqual(3);
@@ -1280,6 +1282,27 @@ describe('Sushi class', function() {
 
   });
 
+  it('sum_gpu', function() {
+    var mat = $M.gpuArray($M.jsa2mat([[1, 2, 3], [40, 50, 60]]));
+    var mat2 = $M.sum(mat);
+    expect($M.sizejsa(mat2)).toEqual([1, 3]);
+    expect($M.mat2jsa(mat2)).toEqual([[41, 52, 63]]);
+    mat2 = $M.sum(mat, 1);
+    expect($M.sizejsa(mat2)).toEqual([1, 3]);
+    expect($M.mat2jsa(mat2)).toEqual([[41, 52, 63]]);
+    mat2 = $M.sum(mat, 2);
+    expect($M.sizejsa(mat2)).toEqual([2, 1]);
+    expect($M.mat2jsa(mat2)).toEqual([[6], [150]]);
+    mat = $M.gpuArray($M.jsa2mat([[1, 2, 3]]));
+    mat2 = $M.sum(mat);
+    expect($M.sizejsa(mat2)).toEqual([1, 1]);
+    expect($M.mat2jsa(mat2)).toEqual([[6]]);
+    mat2 = $M.sum(mat, 1);
+    expect($M.sizejsa(mat2)).toEqual([1, 3]);
+    expect($M.mat2jsa(mat2)).toEqual([[1, 2, 3]]);
+
+  });
+  
   it('mtimes', function() {
     var mata = $M.jsa2mat([[1, 2], [3, 4], [5, 6]]);
     var matb = $M.jsa2mat([[8, 7, 6], [5, 4, 3]]);
