@@ -82,7 +82,7 @@ class MatrixCL extends Matrix {
 
   _getdata(): typedef.AllowedTypedArray {
     //get copy of data in TypedArray
-    var typed_array = this._data_ctor(this._numel);
+    var typed_array = new this._data_ctor(this._numel);
     this.read(typed_array);
     return typed_array;
   }
