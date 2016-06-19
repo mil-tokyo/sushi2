@@ -18,6 +18,7 @@ export function initcl(): boolean {
   try {
     var dummy: any = require('../src/cl/handwrittenjs/sushi_cl');
   } catch (ex) {
+    console.error(ex);
     return false;
   }
   return true;
