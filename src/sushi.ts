@@ -44,7 +44,7 @@ export function autodestruct(f: () => any): any {
         mats_list = [mats_to_save];
       } else if (mats_to_save.length !== undefined) {
         //array-like
-        mats_list = mats_to_save;
+        mats_list = mats_to_save.filter((v) => (v instanceof Matrix));
       } else {
         //dictionary
         mats_list = [];
@@ -55,11 +55,16 @@ export function autodestruct(f: () => any): any {
         }
       }
 
+      var stack_top = Matrix._autodestruct_stack_top;
+      var stack_second_top = Matrix._autodestruct_stack[Matrix._autodestruct_stack.length - 2];
       for (var i = 0; i < mats_list.length; i++) {
         var mat = mats_list[i];
-        var delete_idx = Matrix._autodestruct_stack_top.indexOf(mat);
+        var delete_idx = stack_top.indexOf(mat);
         if (delete_idx >= 0) {
-          Matrix._autodestruct_stack_top.splice(delete_idx, 1);
+          stack_top.splice(delete_idx, 1);
+          if (stack_second_top) {
+            stack_second_top.push(mat);//maybe destructed in nested autodestruct
+          }
         }
       }
     }
