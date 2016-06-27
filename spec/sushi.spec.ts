@@ -3,7 +3,10 @@ import $M = require('../src/sushi');
 
 declare var require;
 declare var process;
+declare var Buffer;
+var os = require('os');
 var fs = require('fs');
+var child_process = require('child_process');
 var cl_enabled = Boolean(Number(process.env['TEST_CL']));
 console.log('OpenCL ' + cl_enabled);
 var MatrixCL = null;
@@ -1406,5 +1409,24 @@ describe('npy io', function () {
     expect($M.sizejsa(mat)).toEqual([1, 2]);
     expect($M.mat2jsa(mat)).toEqual([[1, 0]]);
     expect($M.klass(mat)).toEqual('logical');
+  });
+
+
+  it('writes_npy', function () {
+    var mat = $M.jsa2mat([[10, 20, 30], [40, 50, 60]]);
+    var ab = $M.npysave(mat);
+    var out_path_1 = os.tmpdir() + '/numpy_save_1.npy';
+    var mat2 = $M.jsa2mat([[10, 20, 30], [40, 50, 60]], false, 'int32');
+    mat2.reshape_inplace(1, 1, 1, 1, 1, 1, 1, 1, 2, 3);
+    var out_path_2 = os.tmpdir() + '/numpy_save_2.npy';
+    var ab2 = $M.npysave(mat2);
+    fs.writeFileSync(out_path_1, new Buffer(ab));
+    fs.writeFileSync(out_path_2, new Buffer(ab2));
+    expect(() => 
+    {
+      child_process.execSync('python spec/check_numpy_save.py ' + out_path_1 + ' ' + out_path_2);
+    }).not.toThrow();
+    fs.unlinkSync(out_path_1);
+    fs.unlinkSync(out_path_2);
   });
 });

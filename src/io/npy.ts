@@ -145,6 +145,43 @@ export function npyread(data: ArrayBuffer | Uint8Array): Matrix {
   return mat;
 }
 
+var save_klass_map = {'logical': 'b1', 'uint8': 'u1', 'int32': 'i4', 'single': 'f4'};
+var header_padding = '';
 export function npysave(A: Matrix): ArrayBuffer {
-  return null;
+
+  var klass = A._klass;
+  var endian_char;
+  switch (klass) {
+    case 'logical':
+    case 'uint8':
+      endian_char = '|';//not applicable
+      break;  
+    default:
+      endian_char = is_little_endian() ? '<' : '>';
+      break;
+  }
+  var header_str = "{'descr': '"+endian_char + save_klass_map[klass] + 
+  "', 'fortran_order': True, 'shape': (" + A._size.join(', ') + "), }";
+  //pad header_str to be (multiple of 16) - (magic 10 + last \n)
+  var pad_len = (header_str.length + 5) % 16;
+  header_str += '                '.substr(0, pad_len) + '\n';
+  var header_len = header_str.length;
+  var header_total_len = header_len + 10;//header with magic number
+  var dst_size = A._numel * A._data_ctor.BYTES_PER_ELEMENT + header_total_len;
+  var dst = new ArrayBuffer(dst_size);
+  var dst_byte_offset = 0;
+  var header_dst_view = new Uint8Array(dst, dst_byte_offset, header_total_len);
+  var const_header = [0x93, 0x4e, 0x55, 0x4d, 0x50, 0x59, 0x01, 0x00];
+  for (var i = 0; i < const_header.length; i++) {
+    header_dst_view[i] = const_header[i];
+  }
+  header_dst_view[8] = header_len % 256;
+  header_dst_view[9] = Math.floor(header_len / 256);
+  for (var i = 0; i < header_len; i++) {
+    header_dst_view[10+i] = header_str.charCodeAt(i);
+  }
+
+  var body_dst_view = new A._data_ctor(dst, dst_byte_offset + header_total_len, A._numel);
+  body_dst_view.set(A.getdataref());
+  return dst;
 }
