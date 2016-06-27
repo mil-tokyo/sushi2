@@ -1365,5 +1365,46 @@ describe('npy io', function () {
     expect($M.mat2jsa(mat)).toEqual([[10], [20], [30]]);
     expect($M.klass(mat)).toEqual('int32');
     
+    mat = $M.npyread(new Uint8Array(fs.readFileSync('spec/fixture/npy/int32_2x3_forder.npy')));
+    expect($M.sizejsa(mat)).toEqual([2, 3]);
+    expect($M.mat2jsa(mat)).toEqual([[10, 20, 30], [40, 50, 60]]);
+    expect($M.klass(mat)).toEqual('int32');
+    
+    mat = $M.npyread(new Uint8Array(fs.readFileSync('spec/fixture/npy/int32_2x3_corder.npy')));
+    expect($M.sizejsa(mat)).toEqual([2, 3]);
+    expect($M.mat2jsa(mat)).toEqual([[10, 20, 30], [40, 50, 60]]);
+    expect($M.klass(mat)).toEqual('int32');
+
+    mat = $M.npyread(new Uint8Array(fs.readFileSync('spec/fixture/npy/int32_2x3x4_forder.npy')));
+    expect($M.sizejsa(mat)).toEqual([2, 3, 4]);
+    expect($M.mat2jsa($M.squeeze(mat.get(1, $M.colon(), $M.colon())))).toEqual([[0,1,2,3],[4,5,6,7],[8,9,10,11]]);
+    expect($M.mat2jsa($M.squeeze(mat.get(2, $M.colon(), $M.colon())))).toEqual([[12,13,14,15],[16,17,18,19],[20,21,22,23]]);
+    expect($M.klass(mat)).toEqual('int32');
+
+    mat = $M.npyread(new Uint8Array(fs.readFileSync('spec/fixture/npy/int32_2x3x4_corder.npy')));
+    expect($M.sizejsa(mat)).toEqual([2, 3, 4]);
+    expect($M.mat2jsa($M.squeeze(mat.get(1, $M.colon(), $M.colon())))).toEqual([[0,1,2,3],[4,5,6,7],[8,9,10,11]]);
+    expect($M.mat2jsa($M.squeeze(mat.get(2, $M.colon(), $M.colon())))).toEqual([[12,13,14,15],[16,17,18,19],[20,21,22,23]]);
+    expect($M.klass(mat)).toEqual('int32');
+
+    mat = $M.npyread(new Uint8Array(fs.readFileSync('spec/fixture/npy/float32_1x2.npy')));
+    expect($M.sizejsa(mat)).toEqual([1, 2]);
+    expect($M.mat2jsa(mat)).toEqual([[1.0, 1.5]]);
+    expect($M.klass(mat)).toEqual('single');
+
+    mat = $M.npyread(new Uint8Array(fs.readFileSync('spec/fixture/npy/float64_1x2.npy')));
+    expect($M.sizejsa(mat)).toEqual([1, 2]);
+    expect($M.mat2jsa(mat)).toEqual([[1.0, 1.5]]);
+    expect($M.klass(mat)).toEqual('single');//no double type
+
+    mat = $M.npyread(new Uint8Array(fs.readFileSync('spec/fixture/npy/uint8_1x2.npy')));
+    expect($M.sizejsa(mat)).toEqual([1, 2]);
+    expect($M.mat2jsa(mat)).toEqual([[1, 2]]);
+    expect($M.klass(mat)).toEqual('uint8');
+
+    mat = $M.npyread(new Uint8Array(fs.readFileSync('spec/fixture/npy/bool_1x2.npy')));
+    expect($M.sizejsa(mat)).toEqual([1, 2]);
+    expect($M.mat2jsa(mat)).toEqual([[1, 0]]);
+    expect($M.klass(mat)).toEqual('logical');
   });
 });

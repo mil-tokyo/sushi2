@@ -3,7 +3,7 @@
 import Matrix = require('../matrix');
 
 function parse_header(header_data: Uint8Array): { descr_wo_endian: string, fortran_order: boolean, shape: number[], little_endian: boolean } {
-  //{'descr': '<i4', 'fortran_order': False, 'shape': (3,), }            \n
+  //{'descr': '<i4', 'fortran_order': False, 'shape': (3, 1), }            \n
   var header_str = '';
   for (var i = 0; i < header_data.length; i++) {
     var element = header_data[i];
@@ -104,10 +104,42 @@ export function npyread(data: ArrayBuffer | Uint8Array): Matrix {
   var view_bytestep = view_bytestep_map[data_type.descr_wo_endian];
   var numel = mat._numel;
   var view_little_endian = data_type.little_endian;
-  for (var i = 0; i < numel; i++) {
-    //TODO:support c-order
-    var val = view_accessor.call(data_view, view_bytestep * i, view_little_endian);
-    mat_data[i] = val;
+  if (data_type.fortran_order) {
+    // sequentially copy
+    for (var i = 0; i < numel; i++) {
+      var val = view_accessor.call(data_view, view_bytestep * i, view_little_endian);
+      mat_data[i] = val;
+    }
+  } else {
+    //change order from c-order to fortran-order
+    /*
+    Size of matrix: (I, J, K)
+    c-order strides: (J*K, K, 1)
+    f-order strides: (1, I, I*J)
+    when linear index in c-order is x:
+    matrix index: (x / (J*K) % I * 1, x / K % J * I, x / 1 % K * I * J)
+    that is: x / cstride[i] % size[i] * fstride[i] (i = 0,1,2)
+    */
+    var size = mat._size;
+    var cstride = [];
+    var fstride = [];
+    var last_cstride = 1;
+    var last_fstride = 1;
+    for (var dim = 0; dim < size.length; dim++) {
+      cstride.unshift(last_cstride);
+      fstride.push(last_fstride);
+      last_cstride *= size[size.length - 1 - dim];
+      last_fstride *= size[dim];
+    }
+    for (var i = 0; i < numel; i++) {
+      var val = view_accessor.call(data_view, view_bytestep * i, view_little_endian);
+      var fidx = 0;
+      for (var dim = 0; dim < size.length; dim++) {
+        fidx += Math.floor(i / cstride[dim]) % size[dim] * fstride[dim];
+      }
+      mat_data[fidx] = val;
+    }
+
   }
 
   return mat;
