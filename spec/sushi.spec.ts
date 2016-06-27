@@ -1345,10 +1345,25 @@ describe('Sushi class', function () {
 
 describe('npy io', function () {
   it('reads_npy', function () {
-    var raw = fs.readFileSync('spec/fixture/npy/int32_3x1.npy');
-    var mat = $M.npyread(raw);
+    var mat = $M.npyread(fs.readFileSync('spec/fixture/npy/int32_3x1.npy'));
     expect($M.sizejsa(mat)).toEqual([3, 1]);
     expect($M.mat2jsa(mat)).toEqual([[10], [20], [30]]);
     expect($M.klass(mat)).toEqual('int32');
+    
+    mat = $M.npyread(new Uint8Array(fs.readFileSync('spec/fixture/npy/int32_3x1.npy')));
+    expect($M.sizejsa(mat)).toEqual([3, 1]);
+    expect($M.mat2jsa(mat)).toEqual([[10], [20], [30]]);
+    expect($M.klass(mat)).toEqual('int32');
+
+    mat = $M.npyread(new Uint8Array(fs.readFileSync('spec/fixture/npy/int32_3x1_bigendian.npy')));
+    expect($M.sizejsa(mat)).toEqual([3, 1]);
+    expect($M.mat2jsa(mat)).toEqual([[10], [20], [30]]);
+    expect($M.klass(mat)).toEqual('int32');
+    
+    mat = $M.npyread(new Uint8Array(fs.readFileSync('spec/fixture/npy/int32_3x1_1d.npy')));
+    expect($M.sizejsa(mat)).toEqual([3, 1]);//1d array to 2d column vector
+    expect($M.mat2jsa(mat)).toEqual([[10], [20], [30]]);
+    expect($M.klass(mat)).toEqual('int32');
+    
   });
 });
