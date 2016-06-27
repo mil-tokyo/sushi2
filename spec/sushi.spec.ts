@@ -3,6 +3,7 @@ import $M = require('../src/sushi');
 
 declare var require;
 declare var process;
+var fs = require('fs');
 var cl_enabled = Boolean(Number(process.env['TEST_CL']));
 console.log('OpenCL ' + cl_enabled);
 var MatrixCL = null;
@@ -11,12 +12,12 @@ if (cl_enabled) {
   MatrixCL = require('../src/cl/matrix_cl');
 }
 
-describe('Sushi class', function() {
-  it('exist Sushi class', function() {
+describe('Sushi class', function () {
+  it('exist Sushi class', function () {
     expect($M).toBeDefined();
   });
 
-  it('zeros', function() {
+  it('zeros', function () {
     var mat = $M.zeros();
     expect(mat._size).toEqual([1, 1]);//1x1 matrix of 0
     expect(mat._klass).toEqual('single');//default type is single (Float32Array)
@@ -145,7 +146,7 @@ describe('Sushi class', function() {
     }
   });
 
-  it('ones', function() {
+  it('ones', function () {
     //same as zeros except that content is filled with 1
     var mat = $M.ones();
     expect(mat._size).toEqual([1, 1]);//1x1 matrix of 0
@@ -192,7 +193,7 @@ describe('Sushi class', function() {
     }
   });
 
-  it('eye', function() {
+  it('eye', function () {
     var mat = $M.eye();
     expect(mat._size).toEqual([1, 1]);
     expect($M.mat2jsa(mat)).toEqual([[1]]);
@@ -202,7 +203,7 @@ describe('Sushi class', function() {
     expect($M.mat2jsa(mat)).toEqual([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0]]);
   });
 
-  it('typedarray2mat', function() {
+  it('typedarray2mat', function () {
     expect(() => $M.typedarray2mat([1, 2], 'single', new Uint8Array(2))).toThrow();//type mismatch
     expect(() => $M.typedarray2mat([2, 2], 'single', new Float32Array(2))).toThrow();//size insufficient
     expect(() => $M.typedarray2mat([2, 2], 'single', new Float32Array(10))).not.toThrow();//size exceed
@@ -215,14 +216,14 @@ describe('Sushi class', function() {
     expect(mat.get(5)).toEqual(1);//converted to 1
   });
 
-  it('valueOf', function() {
+  it('valueOf', function () {
     var mat = $M.jsa2mat([[10, 2, 3], [4, 5, 6], [7, 8, 9]]);
     expect(<any>mat + 0).toEqual(10);
     mat = $M.ones(0, 0);
     expect(<any>mat + 0).toEqual(0);//zero-sized matrix gives 0
   });
 
-  it('get_set_scalar', function() {
+  it('get_set_scalar', function () {
     //matrix indexing
     //reference: http://jp.mathworks.com/help/matlab/math/matrix-indexing.html
     //reference:  http://jp.mathworks.com/help/matlab/math/multidimensional-arrays.html
@@ -307,7 +308,7 @@ describe('Sushi class', function() {
     //TODO: automatic expansion of multidimensional matrix
   });
 
-  it('get_set_matrix', function() {
+  it('get_set_matrix', function () {
     var mat = $M.jsa2mat([[1, 2, 3], [4, 5, 6], [7, 8, 9]]);
     var mat2: $M.Matrix;
     var extracted: $M.Matrix;
@@ -366,7 +367,7 @@ describe('Sushi class', function() {
     //TODO: n-d matrix
   });
 
-  it('size and related', function() {
+  it('size and related', function () {
     //size, length, ndims, numel, iscolumn, isempty, ismatrix, isrow, isscalar, isvector
     var mat = $M.zeros(2, 3);
     expect($M.size(mat, 1)).toEqual(2);
@@ -389,7 +390,7 @@ describe('Sushi class', function() {
     expect($M.ndims(mat)).toEqual(3);
     expect($M.numel(mat)).toEqual(24);
 
-    var ischeck = function(shape: number[], iscolumn: boolean, isrow: boolean, isvector: boolean, ismatrix: boolean, isscalar: boolean, isempty: boolean) {
+    var ischeck = function (shape: number[], iscolumn: boolean, isrow: boolean, isvector: boolean, ismatrix: boolean, isscalar: boolean, isempty: boolean) {
       var m = $M.zeros(...shape);
       expect($M.iscolumn(m)).toEqual(iscolumn);
       expect($M.isrow(m)).toEqual(isrow);
@@ -415,7 +416,7 @@ describe('Sushi class', function() {
 
   });
 
-  it('jsa2mat', function() {
+  it('jsa2mat', function () {
     var ary = [];//0x0
     var mat = $M.jsa2mat(ary);
     expect(mat._size).toEqual([0, 0]);
@@ -445,7 +446,7 @@ describe('Sushi class', function() {
     // TODO: support of n-d array
   });
 
-  it('mat2jsa', function() {
+  it('mat2jsa', function () {
     var mat = $M.zeros(2, 3);
     //[10 30 50;20 40 60]
     mat.set(1, 1, 10);
@@ -479,9 +480,9 @@ describe('Sushi class', function() {
     //TODO: support of n-d array
   });
 
-  it('comparison', function() {
+  it('comparison', function () {
     //eq, ge, gt, le, lt, ne, isequal, isequaln, isclose, allclose
-    var check = function(op, a, b, expected, expected_size, gpu) {
+    var check = function (op, a, b, expected, expected_size, gpu) {
       if (Array.isArray(a)) {
         a = $M.jsa2mat(a);
         if (gpu) {
@@ -502,7 +503,7 @@ describe('Sushi class', function() {
       expect(res.mat2jsa()).toEqual(expected);
     }
 
-    var check_allop = function(a, b, expected_eq, expected_ge,
+    var check_allop = function (a, b, expected_eq, expected_ge,
       expected_gt, expected_le, expected_lt, expected_ne, expected_size) {
       for (var gpu = 0; gpu < 2; gpu++) {
         check($M.eq, a, b, expected_eq, expected_size, gpu == 1);
@@ -533,8 +534,8 @@ describe('Sushi class', function() {
     expect(() => $M.eq($M.zeros(1, 2), $M.zeros(1, 3))).toThrow();
   });
 
-  it('isequal', function() {
-    var check = function(mats_jsa, expected_equal, expected_equaln) {
+  it('isequal', function () {
+    var check = function (mats_jsa, expected_equal, expected_equaln) {
       var mats = mats_jsa.map((m) => $M.jsa2mat(m));
       expect($M.isequal.apply(null, mats)).toEqual(expected_equal);
       expect($M.isequaln.apply(null, mats)).toEqual(expected_equaln);
@@ -552,7 +553,7 @@ describe('Sushi class', function() {
     check([[[1.1, 2, 3]], [[1, 2, 3]]], false, false);
 
     //nearly equal (as in numpy)
-    var check_nearlyequal = function(a, b, expected_isclose, expected_allclose, rtol, atol, equal_nan) {
+    var check_nearlyequal = function (a, b, expected_isclose, expected_allclose, rtol, atol, equal_nan) {
       var mata = $M.jsa2mat(a);
       var matb = $M.jsa2mat(b);
       expect($M.mat2jsa($M.isclose(mata, matb, rtol, atol, equal_nan))).toEqual(expected_isclose);
@@ -568,7 +569,7 @@ describe('Sushi class', function() {
 
   });
 
-  it('binary_operation', function() {
+  it('binary_operation', function () {
     var mata = $M.jsa2mat([1, 2, 3]);
     var matb = $M.jsa2mat([2, 8, 15]);
     expect($M.mat2jsa($M.plus(mata, matb))).toEqual([[3, 10, 18]]);
@@ -579,7 +580,7 @@ describe('Sushi class', function() {
     expect($M.mat2jsa($M.power(matb, mata))).toEqual([[2, 64, 15 * 15 * 15]]);
   });
 
-  it('unary_operation', function() {
+  it('unary_operation', function () {
     expect($M.mat2jsa($M.floor($M.jsa2mat([0.0, 0.1, 0.5, 0.9, 1.0, -0.1, -0.9, -1.0])))).toEqual([[0, 0, 0, 0, 1, -1, -1, -1]]);
     expect($M.mat2jsa($M.fix($M.jsa2mat([0.0, 0.1, 0.5, 0.9, 1.0, -0.1, -0.9, -1.0])))).toEqual([[0, 0, 0, 0, 1, 0, 0, -1]]);
     expect($M.mat2jsa($M.ceil($M.jsa2mat([0.0, 0.1, 0.5, 0.9, 1.0, -0.1, -0.9, -1.0])))).toEqual([[0, 1, 1, 1, 1, 0, 0, -1]]);
@@ -592,7 +593,7 @@ describe('Sushi class', function() {
     expect($M.mat2jsa($M.uplus(2))).toEqual([[2]]);
   });
 
-  it('unary_operation_gpu', function() {
+  it('unary_operation_gpu', function () {
     expect($M.mat2jsa($M.floor($M.gpuArray([0.0, 0.1, 0.5, 0.9, 1.0, -0.1, -0.9, -1.0])))).toEqual([[0, 0, 0, 0, 1, -1, -1, -1]]);
     expect($M.mat2jsa($M.fix($M.gpuArray([0.0, 0.1, 0.5, 0.9, 1.0, -0.1, -0.9, -1.0])))).toEqual([[0, 0, 0, 0, 1, 0, 0, -1]]);
     expect($M.mat2jsa($M.ceil($M.gpuArray([0.0, 0.1, 0.5, 0.9, 1.0, -0.1, -0.9, -1.0])))).toEqual([[0, 1, 1, 1, 1, 0, 0, -1]]);
@@ -600,7 +601,7 @@ describe('Sushi class', function() {
     expect($M.mat2jsa($M.uplus($M.gpuArray([0.0, 2.5, -2.5, Infinity, -Infinity])))).toEqual([[0.0, 2.5, -2.5, Infinity, -Infinity]]);
   });
 
-  it('gpuArray', function() {
+  it('gpuArray', function () {
     var cpu = $M.jsa2mat([1, 3, 5]);
     var gpu = $M.gpuArray(cpu);
     var direct_gpu = $M.gpuArray([1, 3, 5]);
@@ -672,7 +673,7 @@ describe('Sushi class', function() {
     expect($M.mat2jsa(mat2)).toEqual([[1, 10, 20], [4, 30, 40], [7, 8, 9]]);
   });
 
-  it('getdata', function() {
+  it('getdata', function () {
     var mat: $M.Matrix;
     var tary: (Float32Array | Int32Array | Uint8Array);
     for (var gpu = 0; gpu < 2; gpu++) {
@@ -703,7 +704,7 @@ describe('Sushi class', function() {
     }
   });
 
-  it('setdata', function() {
+  it('setdata', function () {
     var mat: $M.Matrix;
     var tary: (Float32Array | Int32Array | Uint8Array);
     for (var gpu = 0; gpu < 2; gpu++) {
@@ -718,9 +719,9 @@ describe('Sushi class', function() {
     }
   });
 
-  it('binary_operation_gpu', function() {
-    $M.autodestruct(function() {
-      var cast_check = function(klass_a, klass_b, klass_out) {
+  it('binary_operation_gpu', function () {
+    $M.autodestruct(function () {
+      var cast_check = function (klass_a, klass_b, klass_out) {
         var mata = null;
         if (klass_a) {
           mata = $M.gpuArray($M.jsa2mat([1, 2, 3], false, klass_a));
@@ -788,7 +789,7 @@ describe('Sushi class', function() {
     });
   });
 
-  it('reshape', function() {
+  it('reshape', function () {
     var mat = $M.jsa2mat([[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]]);//12 elements
     mat.reshape_inplace(3, 4);
     //value is preserved in fortran-order
@@ -821,7 +822,7 @@ describe('Sushi class', function() {
     expect($M.sizejsa(mat2)).toEqual([2, 3, 2]);
   });
 
-  it('transpose', function() {
+  it('transpose', function () {
     var mat = $M.jsa2mat([[1, 2, 3], [4, 5, 6]]);
     var t = $M.transpose(mat);
     expect($M.mat2jsa(t)).toEqual([[1, 4], [2, 5], [3, 6]]);
@@ -833,7 +834,7 @@ describe('Sushi class', function() {
     }
   });
 
-  it('squeeze', function() {
+  it('squeeze', function () {
     var mat = $M.zeros(1, 2, 3);
     mat.squeeze_inplace();
     expect($M.sizejsa(mat)).toEqual([2, 3]);
@@ -865,7 +866,7 @@ describe('Sushi class', function() {
     expect(mat2.get(2, 1, 2, 5, 4)).toEqual(20);
   });
 
-  it('colonvec', function() {
+  it('colonvec', function () {
     var vec = $M.colonvec(1, 5);
     expect($M.mat2jsa(vec)).toEqual([[1, 2, 3, 4, 5]]);
     expect($M.klass(vec)).toEqual('single');
@@ -885,7 +886,7 @@ describe('Sushi class', function() {
     expect($M.mat2jsa(vec)).toEqual([[1e9, 1e9 + 1, 1e9 + 2, 1e9 + 3]]);
   });
 
-  it('repmat', function() {
+  it('repmat', function () {
     var mat = $M.gpuArray($M.colonvec(1, 6));
     mat.reshape_inplace(2, 3);
 
@@ -909,7 +910,7 @@ describe('Sushi class', function() {
 
   });
 
-  it('max_min_axis', function() {
+  it('max_min_axis', function () {
     var mat = $M.jsa2mat([3, 5, 1], false);//row vector
     var mat2 = $M.max(mat);//1x1 matrix
     expect($M.sizejsa(mat2)).toEqual([1, 1]);
@@ -989,7 +990,7 @@ describe('Sushi class', function() {
     expect(mat2.get(1, 3, 1)).toEqual(-5);
   });
 
-  it('max_min_element', function() {
+  it('max_min_element', function () {
     var mata = $M.jsa2mat([[1, 2], [3, 4]]);
     var matb = $M.jsa2mat([[5, 2], [6, 1]]);
     var matc = $M.max(mata, matb);
@@ -1004,7 +1005,7 @@ describe('Sushi class', function() {
     expect($M.mat2jsa(matc)).toEqual([[1, 2], [3, 1]]);
   });
 
-  it('argmax_min', function() {
+  it('argmax_min', function () {
     var mat = $M.jsa2mat([3, 5, 1], false);//row vector
     var {M, I} = $M.argmax(mat);
     expect($M.sizejsa(M)).toEqual([1, 1]);
@@ -1047,7 +1048,7 @@ describe('Sushi class', function() {
     expect(I.get(1, 3, 1)).toEqual(1);
   });
 
-  it('max_min_element_gpu', function() {
+  it('max_min_element_gpu', function () {
     var mata = $M.gpuArray($M.jsa2mat([[1, 2], [3, 4]]));
     var matb = $M.gpuArray($M.jsa2mat([[5, 2], [6, 1]]));
     var matc = $M.max(mata, matb);
@@ -1063,7 +1064,7 @@ describe('Sushi class', function() {
   });
 
 
-  it('max_min_axis_gpu', function() {
+  it('max_min_axis_gpu', function () {
     var mat = $M.gpuArray($M.jsa2mat([3, 5, 1], false));//row vector
     var mat2 = $M.max(mat);//1x1 matrix
     expect($M.sizejsa(mat2)).toEqual([1, 1]);
@@ -1143,7 +1144,7 @@ describe('Sushi class', function() {
     expect(mat2.get(1, 3, 1)).toEqual(-5);
   });
 
-  it('argmax_min_gpu', function() {
+  it('argmax_min_gpu', function () {
     var mat = $M.gpuArray($M.jsa2mat([3, 5, 1], false));//row vector
     var {M, I} = $M.argmax(mat);
     expect($M.sizejsa(M)).toEqual([1, 1]);
@@ -1186,7 +1187,7 @@ describe('Sushi class', function() {
     expect(I.get(1, 3, 1)).toEqual(1);
   });
 
-  it('exp_log', function() {
+  it('exp_log', function () {
     var mat = $M.jsa2mat([0.0, 1.0, 10.0]);
     var mat2 = $M.exp(mat);
     expect($M.sizejsa(mat2)).toEqual([1, 3]);
@@ -1200,7 +1201,7 @@ describe('Sushi class', function() {
     expect(mat3.get(3)).toBeCloseTo(10.0, 1);
   });
 
-  it('exp_log_gpu', function() {
+  it('exp_log_gpu', function () {
     if (MatrixCL) {
       var mat = $M.gpuArray($M.jsa2mat([0.0, 1.0, 10.0]));
       var mat2 = $M.exp(mat);
@@ -1218,7 +1219,7 @@ describe('Sushi class', function() {
     }
   });
 
-  it('rand', function() {
+  it('rand', function () {
     var mat = $M.rand(2, 3);
     expect($M.sizejsa(mat)).toEqual([2, 3]);
     for (var i = 1; i <= $M.numel(mat); i++) {
@@ -1261,7 +1262,7 @@ describe('Sushi class', function() {
     }
   });
 
-  it('sum', function() {
+  it('sum', function () {
     var mat = $M.jsa2mat([[1, 2, 3], [40, 50, 60]]);
     var mat2 = $M.sum(mat);
     expect($M.sizejsa(mat2)).toEqual([1, 3]);
@@ -1282,7 +1283,7 @@ describe('Sushi class', function() {
 
   });
 
-  it('sum_gpu', function() {
+  it('sum_gpu', function () {
     var mat = $M.gpuArray($M.jsa2mat([[1, 2, 3], [40, 50, 60]]));
     var mat2 = $M.sum(mat);
     expect($M.sizejsa(mat2)).toEqual([1, 3]);
@@ -1302,8 +1303,8 @@ describe('Sushi class', function() {
     expect($M.mat2jsa(mat2)).toEqual([[1, 2, 3]]);
 
   });
-  
-  it('mtimes', function() {
+
+  it('mtimes', function () {
     var mata = $M.jsa2mat([[1, 2], [3, 4], [5, 6]]);
     var matb = $M.jsa2mat([[8, 7, 6], [5, 4, 3]]);
     var matc = $M.mtimes(mata, matb);
@@ -1322,7 +1323,7 @@ describe('Sushi class', function() {
 
   });
 
-  it('mtimes_gpu', function() {
+  it('mtimes_gpu', function () {
     var mata = $M.gpuArray([[1, 2], [3, 4], [5, 6]]);
     var matb = $M.gpuArray([[8, 7, 6], [5, 4, 3]]);
     var matc = $M.mtimes(mata, matb);
@@ -1339,5 +1340,15 @@ describe('Sushi class', function() {
     expect(() => $M.mtimes(mata, $M.zeros(3, 3, 3))).toThrow();
     expect(() => $M.mtimes($M.zeros(3, 3, 'int32'), mata)).toThrow();
 
+  });
+});
+
+describe('npy io', function () {
+  it('reads_npy', function () {
+    var raw = fs.readFileSync('spec/fixture/npy/int32_3x1.npy');
+    var mat = $M.npyread(raw);
+    expect($M.sizejsa(mat)).toEqual([3, 1]);
+    expect($M.mat2jsa(mat)).toEqual([[10], [20], [30]]);
+    expect($M.klass(mat)).toEqual('int32');
   });
 });

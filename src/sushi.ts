@@ -6,6 +6,7 @@ import func_generator = require('./func_generator');
 import shape_converter = require('./shape_converter');
 import reduction = require('./reduction');
 import mul = require('./mul');
+import npy = require('./io/npy');
 //export import MatrixCL = require('./cl/matrix_cl');
 export var CL: any = null;// for webcl
 
@@ -288,6 +289,9 @@ export var transpose = shape_converter.transpose;
 export var t = transpose;//alias
 
 export var repmat = shape_converter.repmat;
+
+export var npyread = npy.npyread;
+export var npysave = npy.npysave;
 
 //indexing
 //TODO:test
