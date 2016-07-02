@@ -289,6 +289,9 @@ export var transpose = shape_converter.transpose;
 export var t = transpose;//alias
 
 export var repmat = shape_converter.repmat;
+export var cat = shape_converter.cat;
+export var horzcat = shape_converter.horzcat;
+export var vertcat = shape_converter.vertcat;
 
 export var npyread = npy.npyread;
 export var npysave = npy.npysave;

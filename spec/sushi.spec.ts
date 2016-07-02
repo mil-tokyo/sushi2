@@ -1344,6 +1344,19 @@ describe('Sushi class', function () {
     expect(() => $M.mtimes($M.zeros(3, 3, 'int32'), mata)).toThrow();
 
   });
+
+  it('cat', function () {
+    var mat1 = $M.jsa2mat([[1, 2], [3, 4]]);
+    var mat2 = $M.jsa2mat([[5, 6], [7, 8]]);
+
+    var matv = $M.vertcat(mat1, mat2);
+    expect($M.mat2jsa(matv)).toEqual(([[1, 2], [3, 4], [5, 6], [7, 8]]));
+    var math = $M.horzcat(mat1, mat2);
+    expect($M.mat2jsa(math)).toEqual(([[1, 2, 5, 6], [3, 4, 7, 8]]));
+    var mat3 = $M.cat(3, mat1, mat2);
+    expect($M.mat2jsa(mat3.get($M.colon(), $M.colon(), 1))).toEqual(([[1, 2], [3, 4]]));
+    expect($M.mat2jsa(mat3.get($M.colon(), $M.colon(), 2))).toEqual(([[5, 6], [7, 8]]));
+  });
 });
 
 describe('npy io', function () {
@@ -1352,7 +1365,7 @@ describe('npy io', function () {
     expect($M.sizejsa(mat)).toEqual([3, 1]);
     expect($M.mat2jsa(mat)).toEqual([[10], [20], [30]]);
     expect($M.klass(mat)).toEqual('int32');
-    
+
     mat = $M.npyread(new Uint8Array(fs.readFileSync('spec/fixture/npy/int32_3x1.npy')));
     expect($M.sizejsa(mat)).toEqual([3, 1]);
     expect($M.mat2jsa(mat)).toEqual([[10], [20], [30]]);
@@ -1362,17 +1375,17 @@ describe('npy io', function () {
     expect($M.sizejsa(mat)).toEqual([3, 1]);
     expect($M.mat2jsa(mat)).toEqual([[10], [20], [30]]);
     expect($M.klass(mat)).toEqual('int32');
-    
+
     mat = $M.npyread(new Uint8Array(fs.readFileSync('spec/fixture/npy/int32_3x1_1d.npy')));
     expect($M.sizejsa(mat)).toEqual([3, 1]);//1d array to 2d column vector
     expect($M.mat2jsa(mat)).toEqual([[10], [20], [30]]);
     expect($M.klass(mat)).toEqual('int32');
-    
+
     mat = $M.npyread(new Uint8Array(fs.readFileSync('spec/fixture/npy/int32_2x3_forder.npy')));
     expect($M.sizejsa(mat)).toEqual([2, 3]);
     expect($M.mat2jsa(mat)).toEqual([[10, 20, 30], [40, 50, 60]]);
     expect($M.klass(mat)).toEqual('int32');
-    
+
     mat = $M.npyread(new Uint8Array(fs.readFileSync('spec/fixture/npy/int32_2x3_corder.npy')));
     expect($M.sizejsa(mat)).toEqual([2, 3]);
     expect($M.mat2jsa(mat)).toEqual([[10, 20, 30], [40, 50, 60]]);
@@ -1380,14 +1393,14 @@ describe('npy io', function () {
 
     mat = $M.npyread(new Uint8Array(fs.readFileSync('spec/fixture/npy/int32_2x3x4_forder.npy')));
     expect($M.sizejsa(mat)).toEqual([2, 3, 4]);
-    expect($M.mat2jsa($M.squeeze(mat.get(1, $M.colon(), $M.colon())))).toEqual([[0,1,2,3],[4,5,6,7],[8,9,10,11]]);
-    expect($M.mat2jsa($M.squeeze(mat.get(2, $M.colon(), $M.colon())))).toEqual([[12,13,14,15],[16,17,18,19],[20,21,22,23]]);
+    expect($M.mat2jsa($M.squeeze(mat.get(1, $M.colon(), $M.colon())))).toEqual([[0, 1, 2, 3], [4, 5, 6, 7], [8, 9, 10, 11]]);
+    expect($M.mat2jsa($M.squeeze(mat.get(2, $M.colon(), $M.colon())))).toEqual([[12, 13, 14, 15], [16, 17, 18, 19], [20, 21, 22, 23]]);
     expect($M.klass(mat)).toEqual('int32');
 
     mat = $M.npyread(new Uint8Array(fs.readFileSync('spec/fixture/npy/int32_2x3x4_corder.npy')));
     expect($M.sizejsa(mat)).toEqual([2, 3, 4]);
-    expect($M.mat2jsa($M.squeeze(mat.get(1, $M.colon(), $M.colon())))).toEqual([[0,1,2,3],[4,5,6,7],[8,9,10,11]]);
-    expect($M.mat2jsa($M.squeeze(mat.get(2, $M.colon(), $M.colon())))).toEqual([[12,13,14,15],[16,17,18,19],[20,21,22,23]]);
+    expect($M.mat2jsa($M.squeeze(mat.get(1, $M.colon(), $M.colon())))).toEqual([[0, 1, 2, 3], [4, 5, 6, 7], [8, 9, 10, 11]]);
+    expect($M.mat2jsa($M.squeeze(mat.get(2, $M.colon(), $M.colon())))).toEqual([[12, 13, 14, 15], [16, 17, 18, 19], [20, 21, 22, 23]]);
     expect($M.klass(mat)).toEqual('int32');
 
     mat = $M.npyread(new Uint8Array(fs.readFileSync('spec/fixture/npy/float32_1x2.npy')));
@@ -1422,8 +1435,7 @@ describe('npy io', function () {
     var ab2 = $M.npysave(mat2);
     fs.writeFileSync(out_path_1, new Buffer(ab));
     fs.writeFileSync(out_path_2, new Buffer(ab2));
-    expect(() => 
-    {
+    expect(() => {
       child_process.execSync('python spec/check_numpy_save.py ' + out_path_1 + ' ' + out_path_2);
     }).not.toThrow();
     fs.unlinkSync(out_path_1);

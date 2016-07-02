@@ -1,5 +1,6 @@
 import Matrix = require('./matrix');
 import util = require('./util');
+import colon = require('./colonwrap');
 
 export function transpose(A: Matrix): Matrix {
   if (A._ndims != 2) {
@@ -101,4 +102,68 @@ export function repmat(A: Matrix, ...args: any[]): Matrix {
 
   }
   return dst;
+}
+
+export function cat(dim: number, ...As: Matrix[]): Matrix {
+  //dimension other than concatenating dimension must be same
+  var dst_size = As[0]._size.concat();
+  // if dim == 4, [2, 3] => [2, 3, 1, 1]
+  while (dst_size.length < dim) {
+    dst_size.push(1);
+  }
+  var concat_offsets = [1];
+  for (var i = 1; i < As.length; i++) {
+    var A = As[i];
+    if (A._numel == 0) {
+      concat_offsets.push(0);//not used
+      continue;
+    }
+    var a_size = A._size;
+    if (a_size.length > dst_size.length) {
+      throw Error('Dimension mismatch');
+    }
+    for (var d = 0; d < dst_size.length; d++) {
+      var a_dim = a_size[d] || 1;
+      if (d == dim - 1) {
+        // dimension to concat
+        concat_offsets.push(dst_size[d] + 1);
+        dst_size[d] += a_dim;
+      } else {
+        if (a_dim != dst_size[d]) {
+          throw Error('Dimension mismatch');
+        }
+      }
+      
+    }
+  }
+
+  var dst = new Matrix(dst_size, As[0]._klass);
+  for (var i = 0; i < As.length; i++) {
+    var A = As[i];
+    if (A._numel == 0) {
+      continue;
+    }
+    var args: any[] = [];
+    for (var d = 0; d < dst_size.length; d++) {
+      var element = A._size[d] || 1;
+      if (d == dim - 1) {
+        args.push(colon(concat_offsets[i], concat_offsets[i] + element - 1));
+      } else {
+        args.push(colon());
+      }
+    }
+    args.push(A);
+
+    dst.set(...args);
+  }
+
+  return dst;
+}
+
+export function horzcat(...As: Matrix[]): Matrix {
+  return cat(2, ...As);
+}
+
+export function vertcat(...As: Matrix[]): Matrix {
+  return cat(1, ...As);
 }
