@@ -1357,6 +1357,42 @@ describe('Sushi class', function () {
     expect($M.mat2jsa(mat3.get($M.colon(), $M.colon(), 1))).toEqual(([[1, 2], [3, 4]]));
     expect($M.mat2jsa(mat3.get($M.colon(), $M.colon(), 2))).toEqual(([[5, 6], [7, 8]]));
   });
+
+  it('permute', function () {
+    var mat1 = $M.reshape($M.colonvec(1, 2 * 3 * 5), 2, 3, 5);
+    var mat2 = $M.permute(mat1, [2, 1, 3]);
+    var pairs = [
+      [[1, 2, 3], [2, 1, 3]],
+      [[2, 3, 5], [3, 2, 5]]];
+    expect($M.sizejsa(mat2)).toEqual([3, 2, 5]);
+    pairs.forEach(([left, right]) => {
+      expect(mat1.get(...left)).toEqual(mat2.get(...right));
+    });
+    var mat3 = $M.ipermute(mat2, [2, 1, 3]);
+    expect($M.isequal(mat1, mat3)).toBeTruthy();
+
+    mat2 = $M.permute(mat1, [3, 1, 2]);
+    pairs = [
+      [[1, 2, 3], [3, 1, 2]],
+      [[2, 3, 5], [5, 2, 3]]];
+    expect($M.sizejsa(mat2)).toEqual([5, 2, 3]);
+    pairs.forEach(([left, right]) => {
+      expect(mat1.get(...left)).toEqual(mat2.get(...right));
+    });
+    mat3 = $M.ipermute(mat2, [3, 1, 2]);
+    expect($M.isequal(mat1, mat3)).toBeTruthy();
+
+    mat2 = $M.permute(mat1, [3, 1, 5, 2, 4]);
+    pairs = [
+      [[1, 2, 3], [3, 1, 1, 2]],
+      [[2, 3, 5], [5, 2, 1, 3]]];
+    expect($M.sizejsa(mat2)).toEqual([5, 2, 1, 3]);
+    pairs.forEach(([left, right]) => {
+      expect(mat1.get(...left)).toEqual(mat2.get(...right));
+    });
+    mat3 = $M.ipermute(mat2, [3, 1, 5, 2, 4]);
+    expect($M.isequal(mat1, mat3)).toBeTruthy();
+  });
 });
 
 describe('npy io', function () {

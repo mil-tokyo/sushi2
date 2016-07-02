@@ -49,7 +49,7 @@ export function repmat(A: Matrix, ...args: any[]): Matrix {
   while (_rs.length < A._ndims) {
     _rs.push(1);
   }
-  
+
   // remove tailing 1
   while ((_rs.length > A._ndims) && (_rs[_rs.length - 1] == 1)) {
     _rs.pop();
@@ -133,7 +133,7 @@ export function cat(dim: number, ...As: Matrix[]): Matrix {
           throw Error('Dimension mismatch');
         }
       }
-      
+
     }
   }
 
@@ -166,4 +166,52 @@ export function horzcat(...As: Matrix[]): Matrix {
 
 export function vertcat(...As: Matrix[]): Matrix {
   return cat(1, ...As);
+}
+
+export function permute(A: Matrix, order: number[]): Matrix {
+  var src_size = A._size.concat();
+  var numel = A._numel;
+  if (order.length < src_size.length) {
+    throw Error('order must include at least input dimension');
+  }
+  var ndim = order.length;
+  var src_strides = A._strides.concat();
+  while (src_size.length < ndim) {
+    //append dimension of 1
+    src_size.push(1);
+    src_strides.push(numel);
+  }
+  var dst_size: number[] = [];
+  for (var d = 0; d < ndim; d++) {
+    var element = order[d] - 1;//order start from 1
+    dst_size.push(src_size[element]);
+  }
+
+  var dst = new Matrix(dst_size, A._klass);
+  var dst_strides = dst._strides.concat();
+  while (dst_strides.length < ndim) {
+    // occur when last dimensions are 1
+    dst_strides.push(numel);
+  }
+  var dst_strides_perm = [];
+  order.forEach((o, i) => dst_strides_perm[o - 1] = dst_strides[i]);
+  var src_data = A.getdataref();
+  var dst_data = dst._data;
+  for (var i = 0; i < numel; i++) {
+    var dst_idx = 0;
+    for (var d = 0; d < ndim; d++) {
+      dst_idx += Math.floor(i / src_strides[d]) % src_size[d] * dst_strides_perm[d];
+    }
+    dst_data[dst_idx] = src_data[i];
+  }
+  return dst;
+}
+
+export function ipermute(A: Matrix, order: number[]): Matrix {
+  // reverse order
+  var rev_order = order.concat();//have same elements
+  for (var d = 0; d < order.length; d++) {
+    rev_order[order[d] - 1] = d + 1;
+  }
+  return permute(A, rev_order);
 }

@@ -292,6 +292,8 @@ export var repmat = shape_converter.repmat;
 export var cat = shape_converter.cat;
 export var horzcat = shape_converter.horzcat;
 export var vertcat = shape_converter.vertcat;
+export var permute = shape_converter.permute;
+export var ipermute = shape_converter.ipermute;
 
 export var npyread = npy.npyread;
 export var npysave = npy.npysave;
