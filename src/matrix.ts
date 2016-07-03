@@ -295,7 +295,7 @@ class Matrix {
       var data: AllowedTypedArray = new data_ctor(numel);
       var flat_i = 0;
 
-      var n = function (a, dim) {
+      var n = function (a, dim, fidx_ofs) {
         if (a.length != size[dim]) {
           throw Error('Inconsistent size of n-d array');
         }
@@ -303,22 +303,19 @@ class Matrix {
           // a contains numbers
           for (var i = 0; i < size[dim]; i++) {
             var val = a[i];
-            var fidx = 0;
-            for (var dim2 = 0; dim2 < size.length; dim2++) {
-              fidx += Math.floor(flat_i / cstride[dim2]) % size[dim2] * fstride[dim2];
-            }
+            var fidx = fidx_ofs + Math.floor(flat_i / cstride[dim]) % size[dim] * fstride[dim];
             data[fidx] = val;
             flat_i++;
           }
 
         } else {
           for (var i = 0; i < size[dim]; i++) {
-            n(a[i], dim + 1);
+            n(a[i], dim + 1, fidx_ofs + Math.floor(flat_i / cstride[dim]) % size[dim] * fstride[dim]);
           }
         }
       }
 
-      n(ary, 0);
+      n(ary, 0, 0);
       if (ndims == 1) {
         if (one_d_column) {
           size = [size[0], 1];
