@@ -446,7 +446,29 @@ describe('Sushi class', function () {
     expect(mat.get(1, 2)).toEqual(20);
     expect(mat.get(1, 3)).toEqual(30);
 
-    // TODO: support of n-d array
+    ary = [[[10, 20, 30], [40, 50, 60]], [[70, 80, 90], [100, 110, 120]]];
+    mat = $M.jsa2mat(ary);
+    expect(mat._size).toEqual([2, 2, 3]);
+    expect(mat.get(1, 1, 1)).toEqual(ary[0][0][0]);
+    expect(mat.get(2, 1, 2)).toEqual(ary[1][0][1]);
+
+    ary = [[[[10, 20, 30], [40, 50, 60]], [[70, 80, 90], [100, 110, 120]]]];
+    mat = $M.jsa2mat(ary);
+    expect(mat._size).toEqual([1, 2, 2, 3]);
+    expect(mat.get(1, 1, 1, 1)).toEqual(ary[0][0][0][0]);
+    expect(mat.get(1, 2, 1, 2)).toEqual(ary[0][1][0][1]);
+
+    ary = [[[10, 20, 30], [40, 50, 60]], [[70, 80, 90], [100, 110]]];
+    expect(() => $M.jsa2mat(ary)).toThrow();
+
+    ary = [[[10], [40]], [[70], [100]]];//[2][2][1]
+    mat = $M.jsa2mat(ary);
+    expect(mat._size).toEqual([2, 2]);
+    expect(mat.get(2, 1)).toEqual(ary[1][0][0]);
+
+    mat = $M.jsa2mat(<any>10);
+    expect(mat._size).toEqual([1, 1]);
+    expect(mat.get(1)).toEqual(10);
   });
 
   it('mat2jsa', function () {

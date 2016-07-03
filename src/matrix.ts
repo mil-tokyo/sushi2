@@ -253,7 +253,7 @@ class Matrix {
     return X._size;
   }
 
-  static jsa2mat(ary: any, one_d_column?: boolean, klass?: string): Matrix {
+  static jsa2mat(ary: any, one_d_column: boolean = false, klass: string = 'single'): Matrix {
     // TODO: type inference (contains non-integer => single, contains boolean => logical)
     // get dimension
     var mat: Matrix;
@@ -261,40 +261,73 @@ class Matrix {
       //1x1 matrix
       mat = new Matrix([1, 1], klass);
       mat.set_scalar(<number>ary, [1]);
+    } else if (ary instanceof Matrix) {
+      //simply copy
+      mat = (<Matrix>ary).copy();
+    } else if (!ary.length) {
+      //0x0 matrix (length is undefined or 0)
+      mat = new Matrix([0, 0], klass);
     } else {
-      if (ary.length == 0) {
-        //0x0 matrix
-        mat = new Matrix([0, 0], klass);
-      } else if (ary[0].length === void 0) {
-        //1-d array
-        var vecshape = one_d_column ? [ary.length, 1] : [1, ary.length];
-        mat = new Matrix(vecshape, klass);
-        for (var i = 0; i < ary.length; i++) {
-          mat.set_scalar(ary[i], [i + 1]);
-        }
-      } else {
-        var dim_size: number[] = [];
-        //treat as row-major memory order; ary[row][col][dim3][dim4]
-        var inner = ary;
-        while (!!inner.length) {
-          dim_size.push(inner.length);
-          inner = inner[0];
-        }
-        if (dim_size.length != 2) {
-          throw new Error('Currently array must be 2-D');
-        }
-        mat = new Matrix(dim_size, klass);
-        var rawdata = mat._alloccpu();
+      //n-d matrix
+      //get shape
+      var size: number[] = [];
+      var cur_ary: any[] = ary;
+      var numel = 1;
+      while (cur_ary.length !== void 0) {
+        size.push(cur_ary.length);
+        numel *= cur_ary.length;
+        cur_ary = cur_ary[0];
+      }
+      var ndims = size.length;
+      var cstride = [];
+      var fstride = [];
+      var last_cstride = 1;
+      var last_fstride = 1;
+      for (var dim = 0; dim < size.length; dim++) {
+        cstride.unshift(last_cstride);
+        fstride.push(last_fstride);
+        last_cstride *= size[size.length - 1 - dim];
+        last_fstride *= size[dim];
+      }
 
-        //TODO: support n-d array
-        for (var row = 0; row < dim_size[0]; row++) {
-          var rowdata = ary[row];
-          for (var col = 0; col < dim_size[1]; col++) {
-            var val = rowdata[col];
-            mat.set_scalar(val, [row + 1, col + 1]);
+      //flatten data
+      var data_ctor = Matrix.data_ctors[klass];
+      var data: AllowedTypedArray = new data_ctor(numel);
+      var flat_i = 0;
+
+      var n = function (a, dim) {
+        if (a.length != size[dim]) {
+          throw Error('Inconsistent size of n-d array');
+        }
+        if (dim == ndims - 1) {
+          // a contains numbers
+          for (var i = 0; i < size[dim]; i++) {
+            var val = a[i];
+            var fidx = 0;
+            for (var dim2 = 0; dim2 < size.length; dim2++) {
+              fidx += Math.floor(flat_i / cstride[dim2]) % size[dim2] * fstride[dim2];
+            }
+            data[fidx] = val;
+            flat_i++;
+          }
+
+        } else {
+          for (var i = 0; i < size[dim]; i++) {
+            n(a[i], dim + 1);
           }
         }
       }
+
+      n(ary, 0);
+      if (ndims == 1) {
+        if (one_d_column) {
+          size = [size[0], 1];
+        } else {
+          size = [1, size[0]];
+        }
+      }
+
+      mat = Matrix.typedarray2mat(size, klass, data);
     }
 
     return mat;
