@@ -520,7 +520,6 @@ describe('Sushi class', function () {
     mat = $M.zeros(0, 2);
     expect($M.mat2jsa(mat)).toEqual([]);//limitation of representation ability
 
-    //TODO: support of n-d array
     mat = $M.rand(2, 3, 4);
     var jsa = $M.mat2jsa(mat);
     expect(jsa.length).toEqual(2);
@@ -529,6 +528,9 @@ describe('Sushi class', function () {
     expect(jsa[0][0][0]).toEqual(mat.get(1, 1, 1));
     expect(jsa[1][0][1]).toEqual(mat.get(2, 1, 2));
     expect(jsa[1][2][3]).toEqual(mat.get(2, 3, 4));
+
+    mat = $M.zeros(2, 3, 0);
+    expect($M.mat2jsa(mat)).toEqual([[[], [], []], [[], [], []]]);
   });
 
   it('comparison', function () {

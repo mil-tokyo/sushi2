@@ -348,21 +348,18 @@ class Matrix {
       var fstride = [];
       var last_cstride = 1;
       var last_fstride = 1;
-      for (var dim = 0; dim < size.length; dim++) {
+      for (var dim = 0; dim < ndims; dim++) {
         cstride.unshift(last_cstride);
         fstride.push(last_fstride);
-        last_cstride *= size[size.length - 1 - dim];
+        last_cstride *= size[ndims - 1 - dim];
         last_fstride *= size[dim];
       }
 
       var flat_i = 0;//c-order
-      var n = function (a, dim) {
+      var n = function (a, dim, fidx_ofs) {
         if (dim == ndims - 1) {
           for (var i = 0; i < size[dim]; i++) {
-            var fidx = 0;
-            for (var dim2 = 0; dim2 < size.length; dim2++) {
-              fidx += Math.floor(flat_i / cstride[dim2]) % size[dim2] * fstride[dim2];
-            }
+            var fidx = fidx_ofs + Math.floor(flat_i / cstride[dim]) % size[dim] * fstride[dim];
             a.push(data[fidx]);
             flat_i++;
           }
@@ -370,12 +367,12 @@ class Matrix {
           for (var i = 0; i < size[dim]; i++) {
             var newa = [];
             a.push(newa);
-            n(newa, dim + 1);
+            n(newa, dim + 1, fidx_ofs + Math.floor(flat_i / cstride[dim]) % size[dim] * fstride[dim]);
           }
         }
       }
 
-      n(ary, 0);
+      n(ary, 0, 0);
     }
     return ary;
   }
