@@ -331,37 +331,51 @@ class Matrix {
   }
 
   mat2jsa(one_d_flatten: boolean = false): any[] {
-    //TODO: support n-d array
     //empty matrix will be [] not [[]]
-    if (this._ndims > 2) {
-      throw new Error('Currently matrix must be 2-D');
-    }
     var ary = [];
-    var flattened = false;
-    if (one_d_flatten) {
-      if (this._numel == this._size[0]) {
-        //column vector
-        for (var row = 0; row < this._size[0]; row++) {
-          ary.push(this.get_scalar([row + 1, 1]));
-        }
-        flattened = true;
-      } else if (this._numel == this._size[1]) {
-        //row vector
-        for (var col = 0; col < this._size[1]; col++) {
-          ary.push(this.get_scalar([1, col + 1]));
-        }
-        flattened = true;
+    if (one_d_flatten && this._ndims == 2 && (this._size[0] == 1 || this._size[1] == 1)) {
+      var data = this.getdataref();
+      for (var i = 0; i < data.length; i++) {
+        ary.push(data[i]);
       }
-    }
+    } else {
+      //n-d jagged array
+      var size = this._size;
+      var ndims = this._ndims;
+      var data = this.getdataref();
 
-    if (!flattened) {
-      for (var row = 0; row < this._size[0]; row++) {
-        var rowary = [];
-        for (var col = 0; col < this._size[1]; col++) {
-          rowary.push(this.get_scalar([row + 1, col + 1]));
-        }
-        ary.push(rowary);
+      var cstride = [];
+      var fstride = [];
+      var last_cstride = 1;
+      var last_fstride = 1;
+      for (var dim = 0; dim < size.length; dim++) {
+        cstride.unshift(last_cstride);
+        fstride.push(last_fstride);
+        last_cstride *= size[size.length - 1 - dim];
+        last_fstride *= size[dim];
       }
+
+      var flat_i = 0;//c-order
+      var n = function (a, dim) {
+        if (dim == ndims - 1) {
+          for (var i = 0; i < size[dim]; i++) {
+            var fidx = 0;
+            for (var dim2 = 0; dim2 < size.length; dim2++) {
+              fidx += Math.floor(flat_i / cstride[dim2]) % size[dim2] * fstride[dim2];
+            }
+            a.push(data[fidx]);
+            flat_i++;
+          }
+        } else {
+          for (var i = 0; i < size[dim]; i++) {
+            var newa = [];
+            a.push(newa);
+            n(newa, dim + 1);
+          }
+        }
+      }
+
+      n(ary, 0);
     }
     return ary;
   }
