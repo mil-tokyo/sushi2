@@ -1404,8 +1404,7 @@ describe('Sushi class', function () {
     var math = $M.horzcat(mat1, mat2);
     expect($M.mat2jsa(math)).toEqual(([[1, 2, 5, 6], [3, 4, 7, 8]]));
     var mat3 = $M.cat(3, mat1, mat2);
-    expect($M.mat2jsa(mat3.get($M.colon(), $M.colon(), 1))).toEqual(([[1, 2], [3, 4]]));
-    expect($M.mat2jsa(mat3.get($M.colon(), $M.colon(), 2))).toEqual(([[5, 6], [7, 8]]));
+    expect($M.mat2jsa(mat3)).toEqual(([[[1, 5], [2, 6]], [[3, 7], [4, 8]]]));
   });
 
   it('permute', function () {
@@ -1479,14 +1478,14 @@ describe('npy io', function () {
 
     mat = $M.npyread(new Uint8Array(fs.readFileSync('spec/fixture/npy/int32_2x3x4_forder.npy')));
     expect($M.sizejsa(mat)).toEqual([2, 3, 4]);
-    expect($M.mat2jsa($M.squeeze(mat.get(1, $M.colon(), $M.colon())))).toEqual([[0, 1, 2, 3], [4, 5, 6, 7], [8, 9, 10, 11]]);
-    expect($M.mat2jsa($M.squeeze(mat.get(2, $M.colon(), $M.colon())))).toEqual([[12, 13, 14, 15], [16, 17, 18, 19], [20, 21, 22, 23]]);
+    expect($M.mat2jsa(mat.get(1, $M.colon(), $M.colon()))).toEqual([[[0, 1, 2, 3], [4, 5, 6, 7], [8, 9, 10, 11]]]);
+    expect($M.mat2jsa(mat.get(2, $M.colon(), $M.colon()))).toEqual([[[12, 13, 14, 15], [16, 17, 18, 19], [20, 21, 22, 23]]]);
     expect($M.klass(mat)).toEqual('int32');
 
     mat = $M.npyread(new Uint8Array(fs.readFileSync('spec/fixture/npy/int32_2x3x4_corder.npy')));
     expect($M.sizejsa(mat)).toEqual([2, 3, 4]);
-    expect($M.mat2jsa($M.squeeze(mat.get(1, $M.colon(), $M.colon())))).toEqual([[0, 1, 2, 3], [4, 5, 6, 7], [8, 9, 10, 11]]);
-    expect($M.mat2jsa($M.squeeze(mat.get(2, $M.colon(), $M.colon())))).toEqual([[12, 13, 14, 15], [16, 17, 18, 19], [20, 21, 22, 23]]);
+    expect($M.mat2jsa(mat.get(1, $M.colon(), $M.colon()))).toEqual([[[0, 1, 2, 3], [4, 5, 6, 7], [8, 9, 10, 11]]]);
+    expect($M.mat2jsa(mat.get(2, $M.colon(), $M.colon()))).toEqual([[[12, 13, 14, 15], [16, 17, 18, 19], [20, 21, 22, 23]]]);
     expect($M.klass(mat)).toEqual('int32');
 
     mat = $M.npyread(new Uint8Array(fs.readFileSync('spec/fixture/npy/float32_1x2.npy')));
