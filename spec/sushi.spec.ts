@@ -469,6 +469,24 @@ describe('Sushi class', function () {
     mat = $M.jsa2mat(<any>10);
     expect(mat._size).toEqual([1, 1]);
     expect(mat.get(1)).toEqual(10);
+
+
+    ary = [[1.1, 2, 3], [4, 5, 6]];
+    mat = $M.jsa2mat(ary, true, 'int32');
+    expect(mat._size).toEqual([2, 3]);
+    expect(mat._klass).toEqual('int32');
+    expect(mat.get(1, 1)).toEqual(1);
+    expect(mat.get(1, 2)).toEqual(2);
+    expect(mat.get(1, 3)).toEqual(3);
+    expect(mat.get(2, 1)).toEqual(4);
+    expect(mat.get(2, 2)).toEqual(5);
+    expect(mat.get(2, 3)).toEqual(6);
+
+    mat = $M.jsa2mat([2, 0], false, 'logical');
+    expect(mat._size).toEqual([1, 2]);
+    expect(mat._klass).toEqual('logical');
+    expect(mat.get(1, 1)).toEqual(1);
+    expect(mat.get(1, 2)).toEqual(0);
   });
 
   it('mat2jsa', function () {
