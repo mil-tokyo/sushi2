@@ -331,3 +331,14 @@ export function make_isclose_func(a_mat: boolean, b_mat: boolean): (A: MatrixOrN
 }
 
 export var isclose = make_isclose_func_all();
+
+export function allclose(A: MatrixOrNumber, B: MatrixOrNumber, rtol?: number, atol?: number, equal_nan?: boolean): boolean {
+  var isclose_result = isclose(A, B, rtol, atol, equal_nan);
+  var data = isclose_result.getdataref();
+  var prod = 1;
+  for (var i = 0; i < data.length; i++) {
+    prod *= data[i];
+  }
+
+  return prod != 0;
+}

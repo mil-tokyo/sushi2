@@ -244,7 +244,7 @@ export var ne = func_generator.make_compare_func_all('Number(%a != %b)');
 export var isequal = func_generator.isequal;
 export var isequaln = func_generator.isequaln;
 export var isclose = func_generator.isclose;
-//export var allclose = func_generator.allclose;
+export var allclose = func_generator.allclose;
 
 export var plus = func_generator.make_binary_arith_func_all('%a + %b');
 export var minus = func_generator.make_binary_arith_func_all('%a - %b');

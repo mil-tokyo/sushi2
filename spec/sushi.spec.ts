@@ -610,7 +610,7 @@ describe('Sushi class', function () {
       var mata = $M.jsa2mat(a);
       var matb = $M.jsa2mat(b);
       expect($M.mat2jsa($M.isclose(mata, matb, rtol, atol, equal_nan))).toEqual(expected_isclose);
-      //expect($M.allclose(mata, matb, rtol, atol, equal_nan)).toEqual(expected_allclose);
+      expect($M.allclose(mata, matb, rtol, atol, equal_nan)).toEqual(expected_allclose);
     }
 
     //default rtol = 1e-5, atol = 1e-8
