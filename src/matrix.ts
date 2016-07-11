@@ -444,7 +444,7 @@ class Matrix {
       var dimind = inds[dim];
       var dimidx;
       if (dimind instanceof Colon) {
-        dimidx = dimind.tojsa(this._size[dim]);
+        dimidx = dimind.tojsa(this._size[dim] === void 0 ? 1 : this._size[dim]);
       } else if (dimind instanceof Matrix) {
         dimidx = dimind._getdata();
       } else {
@@ -648,7 +648,7 @@ class Matrix {
       var dimind = inds[dim];
       var dimidx;
       if (dimind instanceof Colon) {
-        dimidx = dimind.tojsa(this._size[dim]);
+        dimidx = dimind.tojsa(this._size[dim] || 1);
       } else if (dimind instanceof Matrix) {
         dimidx = dimind._getdata();
       } else {

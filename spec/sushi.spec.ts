@@ -365,9 +365,15 @@ describe('Sushi class', function () {
     mat2.set($M.colon(1, 2), $M.colon(2, 3), $M.jsa2mat([[10, 20], [30, 40]]));
     expect($M.mat2jsa(mat2)).toEqual([[1, 10, 20], [4, 30, 40], [7, 8, 9]]);
 
-
-
     //TODO: n-d matrix
+    mat = $M.jsa2mat([[[10, 20, 30],
+      [40, 50, 60]],
+      [[70, 80, 90],
+        [100, 110, 120]]]);
+    mat2 = mat.get($M.colon(1, 2), $M.colon(1, 1), $M.colon(2, 3));
+    expect($M.mat2jsa(mat2)).toEqual([[[20, 30]],[[80, 90]]]);
+    mat2 = mat.get($M.colon(1, 2), $M.colon(1, 1), $M.colon(2, 3), $M.colon());//excess dimension is allowed
+    expect($M.mat2jsa(mat2)).toEqual([[[20, 30]],[[80, 90]]]);
   });
 
   it('size and related', function () {
