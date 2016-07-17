@@ -209,3 +209,26 @@ export function sum(A: Matrix, ...args: any[]): Matrix {
   }
   return sum_along_axis(A, dim);
 }
+
+var mean_along_axis = make_reduction_along_axis('var curret = val;',
+'curret += val;', 'dst_data[dst_idx] = curret / reduction_count;', false);
+export function mean(A: Matrix): Matrix;
+export function mean(A: Matrix, dim: number, outtype?: string): Matrix;
+export function mean(A: Matrix, outtype?: string): Matrix;
+export function mean(A: Matrix, ...args: any[]): Matrix {
+  var dim = undefined;
+  var outtype = undefined;
+  while (args.length > 0) {
+    var arg = args.pop();
+    if (typeof(arg) === 'string') {
+      if (arg != 'native') {
+        throw new Error('Outtype other than native is currently not supported');
+      }
+    } else if (typeof(arg) === 'number') {
+      dim = arg;
+    } else {
+      throw new Error('Unknown argument ' + arg);
+    }
+  }
+  return mean_along_axis(A, dim);
+}

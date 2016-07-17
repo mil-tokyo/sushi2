@@ -265,6 +265,7 @@ export var min = reduction.min;
 export var argmax = reduction.argmax;
 export var argmin = reduction.argmin;
 export var sum = reduction.sum;
+export var mean = reduction.mean;
 
 export var mtimes = mul.mtimes;
 
