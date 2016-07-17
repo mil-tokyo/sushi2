@@ -371,9 +371,9 @@ describe('Sushi class', function () {
       [[70, 80, 90],
         [100, 110, 120]]]);
     mat2 = mat.get($M.colon(1, 2), $M.colon(1, 1), $M.colon(2, 3));
-    expect($M.mat2jsa(mat2)).toEqual([[[20, 30]],[[80, 90]]]);
+    expect($M.mat2jsa(mat2)).toEqual([[[20, 30]], [[80, 90]]]);
     mat2 = mat.get($M.colon(1, 2), $M.colon(1, 1), $M.colon(2, 3), $M.colon());//excess dimension is allowed
-    expect($M.mat2jsa(mat2)).toEqual([[[20, 30]],[[80, 90]]]);
+    expect($M.mat2jsa(mat2)).toEqual([[[20, 30]], [[80, 90]]]);
   });
 
   it('size and related', function () {
@@ -1393,6 +1393,111 @@ describe('Sushi class', function () {
 
   });
 
+  it('var_std', function () {
+    var mat = $M.jsa2mat([[8, 1, 6], [3, 5, 7]]);
+    var mat2 = $M.variance(mat);
+    expect($M.allclose(mat2, $M.jsa2mat([12.5, 8, 0.5]))).toBeTruthy();
+    mat2 = $M.std(mat);
+    expect($M.allclose(mat2, $M.jsa2mat([3.5355339, 2.8284271, 0.7071068]))).toBeTruthy();
+
+    mat2 = $M.variance(mat, 0);
+    expect($M.allclose(mat2, $M.jsa2mat([12.5, 8, 0.5]))).toBeTruthy();
+    mat2 = $M.std(mat, 0);
+    expect($M.allclose(mat2, $M.jsa2mat([3.5355339, 2.8284271, 0.7071068]))).toBeTruthy();
+
+    mat2 = $M.variance(mat, 1);
+    expect($M.allclose(mat2, $M.jsa2mat([6.25, 4, 0.25]))).toBeTruthy();
+    mat2 = $M.std(mat, 1);
+    expect($M.allclose(mat2, $M.jsa2mat([2.5, 2, 0.5]))).toBeTruthy();
+
+    mat2 = $M.variance(mat, 0, 1);
+    expect($M.allclose(mat2, $M.jsa2mat([12.5, 8, 0.5]))).toBeTruthy();
+    mat2 = $M.std(mat, 0, 1);
+    expect($M.allclose(mat2, $M.jsa2mat([3.5355339, 2.8284271, 0.7071068]))).toBeTruthy();
+
+    mat2 = $M.variance(mat, 0, 2);
+    expect($M.allclose(mat2, $M.jsa2mat([13, 4], true))).toBeTruthy();
+    mat2 = $M.std(mat, 0, 2);
+    expect($M.allclose(mat2, $M.jsa2mat([3.605551, 2], true))).toBeTruthy();
+
+    mat2 = $M.variance(mat, 1, 1);
+    expect($M.allclose(mat2, $M.jsa2mat([6.25, 4, 0.25]))).toBeTruthy();
+    mat2 = $M.std(mat, 1, 1);
+    expect($M.allclose(mat2, $M.jsa2mat([2.5, 2, 0.5]))).toBeTruthy();
+
+    mat2 = $M.variance(mat, 1, 2);
+    expect($M.allclose(mat2, $M.jsa2mat([8.666667, 2.666667], true))).toBeTruthy();
+    mat2 = $M.std(mat, 1, 2);
+    expect($M.allclose(mat2, $M.jsa2mat([2.943920, 1.632993], true))).toBeTruthy();
+
+    mat = $M.jsa2mat([[8, 1, 6]]);
+    mat2 = $M.variance(mat);
+    expect($M.allclose(mat2, $M.jsa2mat([13]))).toBeTruthy();
+    mat2 = $M.std(mat);
+    expect($M.allclose(mat2, $M.jsa2mat([3.605551]))).toBeTruthy();
+    mat2 = $M.variance(mat, 1);
+    expect($M.allclose(mat2, $M.jsa2mat([8.666667]))).toBeTruthy();
+    mat2 = $M.std(mat, 1);
+    expect($M.allclose(mat2, $M.jsa2mat([2.943920]))).toBeTruthy();
+    mat2 = $M.variance(mat, 0, 1);
+    expect($M.allclose(mat2, $M.jsa2mat([0, 0, 0]))).toBeTruthy();
+    mat2 = $M.std(mat, 0, 1);
+    expect($M.allclose(mat2, $M.jsa2mat([0, 0, 0]))).toBeTruthy();
+
+  });
+
+  it('var_std_gpu', function () {
+    var mat = $M.gpuArray($M.jsa2mat([[8, 1, 6], [3, 5, 7]]));
+    var mat2 = $M.variance(mat);
+    expect($M.allclose(mat2, $M.jsa2mat([12.5, 8, 0.5]))).toBeTruthy();
+    mat2 = $M.std(mat);
+    expect($M.allclose(mat2, $M.jsa2mat([3.5355339, 2.8284271, 0.7071068]))).toBeTruthy();
+
+    mat2 = $M.variance(mat, 0);
+    expect($M.allclose(mat2, $M.jsa2mat([12.5, 8, 0.5]))).toBeTruthy();
+    mat2 = $M.std(mat, 0);
+    expect($M.allclose(mat2, $M.jsa2mat([3.5355339, 2.8284271, 0.7071068]))).toBeTruthy();
+
+    mat2 = $M.variance(mat, 1);
+    expect($M.allclose(mat2, $M.jsa2mat([6.25, 4, 0.25]))).toBeTruthy();
+    mat2 = $M.std(mat, 1);
+    expect($M.allclose(mat2, $M.jsa2mat([2.5, 2, 0.5]))).toBeTruthy();
+
+    mat2 = $M.variance(mat, 0, 1);
+    expect($M.allclose(mat2, $M.jsa2mat([12.5, 8, 0.5]))).toBeTruthy();
+    mat2 = $M.std(mat, 0, 1);
+    expect($M.allclose(mat2, $M.jsa2mat([3.5355339, 2.8284271, 0.7071068]))).toBeTruthy();
+
+    mat2 = $M.variance(mat, 0, 2);
+    expect($M.allclose(mat2, $M.jsa2mat([13, 4], true))).toBeTruthy();
+    mat2 = $M.std(mat, 0, 2);
+    expect($M.allclose(mat2, $M.jsa2mat([3.605551, 2], true))).toBeTruthy();
+
+    mat2 = $M.variance(mat, 1, 1);
+    expect($M.allclose(mat2, $M.jsa2mat([6.25, 4, 0.25]))).toBeTruthy();
+    mat2 = $M.std(mat, 1, 1);
+    expect($M.allclose(mat2, $M.jsa2mat([2.5, 2, 0.5]))).toBeTruthy();
+
+    mat2 = $M.variance(mat, 1, 2);
+    expect($M.allclose(mat2, $M.jsa2mat([8.666667, 2.666667], true))).toBeTruthy();
+    mat2 = $M.std(mat, 1, 2);
+    expect($M.allclose(mat2, $M.jsa2mat([2.943920, 1.632993], true))).toBeTruthy();
+
+    mat = $M.gpuArray($M.jsa2mat([[8, 1, 6]]));
+    mat2 = $M.variance(mat);
+    expect($M.allclose(mat2, $M.jsa2mat([13]))).toBeTruthy();
+    mat2 = $M.std(mat);
+    expect($M.allclose(mat2, $M.jsa2mat([3.605551]))).toBeTruthy();
+    mat2 = $M.variance(mat, 1);
+    expect($M.allclose(mat2, $M.jsa2mat([8.666667]))).toBeTruthy();
+    mat2 = $M.std(mat, 1);
+    expect($M.allclose(mat2, $M.jsa2mat([2.943920]))).toBeTruthy();
+    mat2 = $M.variance(mat, 0, 1);
+    expect($M.allclose(mat2, $M.jsa2mat([0, 0, 0]))).toBeTruthy();
+    mat2 = $M.std(mat, 0, 1);
+    expect($M.allclose(mat2, $M.jsa2mat([0, 0, 0]))).toBeTruthy();
+
+  });
   it('mtimes', function () {
     var mata = $M.jsa2mat([[1, 2], [3, 4], [5, 6]]);
     var matb = $M.jsa2mat([[8, 7, 6], [5, 4, 3]]);

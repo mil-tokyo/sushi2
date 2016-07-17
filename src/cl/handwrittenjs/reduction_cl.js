@@ -57,7 +57,7 @@ var util_cl = require('./util_cl');
         return dst_onlyreshape;
       }
     }
-  
+
     //reduction actually needed
     var dst = new MatrixCL(dstsize, A._klass);
     var argmax = null;
@@ -189,42 +189,29 @@ var util_cl = require('./util_cl');
       return argmin_native(A, dummy, dim);
     }
   };
-  
-  var sum_native = $M.sum;
-  $M.sum = function (A) {
-    //TODO: compute in gpu
-    var a_cl = false;
-    if (A instanceof MatrixCL) {
-      A = $M.gather(A);
-      a_cl = true;
-    }
-    var args = [A];
-    for (var _i = 1; _i < arguments.length; _i++) {
+
+  var replace_sum = function (f_native) {
+    return function (A) {
+      //TODO: compute in gpu
+      var a_cl = false;
+      if (A instanceof MatrixCL) {
+        A = $M.gather(A);
+        a_cl = true;
+      }
+      var args = [A];
+      for (var _i = 1; _i < arguments.length; _i++) {
         args[_i] = arguments[_i];
+      }
+      var ret = f_native.apply(null, args);
+      if (a_cl) {
+        ret = $M.gpuArray(ret);
+      }
+      return ret;
     }
-    var ret = sum_native.apply(null, args);
-    if (a_cl) {
-      ret = $M.gpuArray(ret);
-    }
-    return ret;
   }
 
-  var mean_native = $M.mean;
-  $M.mean = function (A) {
-    //TODO: compute in gpu
-    var a_cl = false;
-    if (A instanceof MatrixCL) {
-      A = $M.gather(A);
-      a_cl = true;
-    }
-    var args = [A];
-    for (var _i = 1; _i < arguments.length; _i++) {
-        args[_i] = arguments[_i];
-    }
-    var ret = mean_native.apply(null, args);
-    if (a_cl) {
-      ret = $M.gpuArray(ret);
-    }
-    return ret;
-  }
+  $M.sum = replace_sum($M.sum);
+  $M.mean = replace_sum($M.mean);
+  $M.variance = replace_sum($M.variance);
+  $M.std = replace_sum($M.std);
 })();

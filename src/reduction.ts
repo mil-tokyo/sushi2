@@ -100,7 +100,7 @@ function make_reduction_along_axis(var_decl: string, var_update: string, result_
     "        //size 0 dimension is preserved",
     "        dstsize[dim - 1] = 1;",
     "    }",
-    "    if ((A._numel === 0) || (A._size[dim - 1] === 1)) {",
+    "    if (A._numel === 0) {",
     "        //only change shape",
     "        var dst_onlyreshape = A.copy();",
     "        dst_onlyreshape.reshape_inplace(dstsize);",
@@ -231,4 +231,36 @@ export function mean(A: Matrix, ...args: any[]): Matrix {
     }
   }
   return mean_along_axis(A, dim);
+}
+
+//w=0: normalize by N-1
+var variance_along_axis_w0 = make_reduction_along_axis('var normalsum = val; var sqsum = val * val;',
+'normalsum += val; sqsum += val * val;', 'dst_data[dst_idx] = (sqsum - normalsum * normalsum / reduction_count) / Math.max(reduction_count - 1, 1);', false);
+//w=1: normalize by N
+var variance_along_axis_w1 = make_reduction_along_axis('var normalsum = val; var sqsum = val * val;',
+'normalsum += val; sqsum += val * val;', 'dst_data[dst_idx] = (sqsum - normalsum * normalsum / reduction_count) / reduction_count;', false);
+export function variance(A: Matrix, w: number = 0, dim?: number): Matrix {
+  if (w == 0) {
+    return variance_along_axis_w0(A, dim);
+  } else if (w == 1) {
+    return variance_along_axis_w1(A, dim);
+  } else {
+    throw new Error('w must be 0 or 1');
+  }
+}
+
+//w=0: normalize by N-1
+var std_along_axis_w0 = make_reduction_along_axis('var normalsum = val; var sqsum = val * val;',
+'normalsum += val; sqsum += val * val;', 'dst_data[dst_idx] = Math.sqrt((sqsum - normalsum * normalsum / reduction_count) / Math.max(reduction_count - 1, 1));', false);
+//w=1: normalize by N
+var std_along_axis_w1 = make_reduction_along_axis('var normalsum = val; var sqsum = val * val;',
+'normalsum += val; sqsum += val * val;', 'dst_data[dst_idx] = Math.sqrt((sqsum - normalsum * normalsum / reduction_count) / reduction_count);', false);
+export function std(A: Matrix, w: number = 0, dim?: number): Matrix {
+  if (w == 0) {
+    return std_along_axis_w0(A, dim);
+  } else if (w == 1) {
+    return std_along_axis_w1(A, dim);
+  } else {
+    throw new Error('w must be 0 or 1');
+  }
 }
