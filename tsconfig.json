@@ -8,6 +8,7 @@
   "files": [
     "index.ts",
     "spec/sushi.spec.ts",
+    "spec/indexing.spec.ts",
     "src/cl/matrix_cl.ts"
   ],
   "exclude": [
