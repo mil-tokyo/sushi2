@@ -15,14 +15,19 @@ export type MatrixOrNumber = util.MatrixOrNumber;
 export type MatrixLike = Matrix | number | number[] | number[][];
 
 declare var require;
+var initcl_result: boolean = null;
 export function initcl(): boolean {
+  if (initcl_result != null) {
+    return initcl_result;
+  }
   try {
     var dummy: any = require('../src/cl/handwrittenjs/sushi_cl');
+    initcl_result = true;
   } catch (ex) {
     console.error(ex);
-    return false;
+    initcl_result = false;
   }
-  return true;
+  return initcl_result;
 }
 
 export function devicetype(A: Matrix): string {
