@@ -5,6 +5,7 @@ declare var process;
 declare var Buffer;
 var os = require('os');
 var fs = require('fs');
+var path = require('path');
 var child_process = require('child_process');
 var cl_enabled = Boolean(Number(process.env['TEST_CL']));
 console.log('OpenCL ' + cl_enabled);
@@ -14,7 +15,8 @@ if (cl_enabled) {
   MatrixCL = require('../src/cl/matrix_cl');
 }
 
-var names = ["get_colon", "set_colon", "set_scalar_colon", "get_colon_ex"];
+var case_names = fs.readdirSync('spec/fixture/indexing');
+case_names.sort();
 
 function load_npy(basedir, basename): $M.Matrix {
   var path = basedir + '/' + basename + '.npy';
@@ -42,8 +44,8 @@ function make_test(test_name: string) {
 }
 
 describe('indexing', () => {
-  for (var i = 0; i < names.length; i++) {
-    var test_name = names[i];
+  for (var i = 0; i < case_names.length; i++) {
+    var test_name = case_names[i];
     it(test_name, make_test(test_name));
   }
 });

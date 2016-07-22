@@ -8,6 +8,7 @@ import subprocess
 import tempfile
 import scipy.io
 import shutil
+from collections import defaultdict
 
 STR_SUSHI = False
 
@@ -68,6 +69,8 @@ def randint_noisy(low, high):
         else:
             return high
     else:
+        if low == high:
+            return low
         return np.random.randint(low, high)#[low, high)
 
 def generate_get_octave_script(x_shape, indexer):
@@ -92,6 +95,7 @@ def generate_set_octave_script(x_shape, indexer, set_scalar):
     commands = []
     commands.append("x = rand{};".format(tuple(x_shape)))#rand(2,3)
     commands.append("y = 0;")
+    commands.append("z = 0;")
     commands.append("indexing_error = 0;")
     commands.append("try")
     commands.append("t = x({});".format(",".join(map(str, indexer))))# get shape of indexed area
@@ -104,6 +108,9 @@ def generate_set_octave_script(x_shape, indexer, set_scalar):
     commands.append("catch")
     commands.append("indexing_error = 1;")
     commands.append("end")
+    commands.append("if ~isequal(size(x), size(z))")#size expansion is not supported in sushi
+    commands.append("indexing_error = 1;")
+    commands.append("end")
     commands.append("save('-mat', 'result.mat', 'x', 'y', 'z', 'indexing_error')")
     commands.append("")
     return "\n".join(commands)
@@ -113,7 +120,7 @@ def execute_octave(commands):
     script_path = tmpdir + "/script.m"
     with open(script_path, "w") as f:
         f.write(commands)
-    subprocess.check_call(["octave", script_path, "--no-gui"], cwd = tmpdir)
+    subprocess.check_call(["octave", "--no-gui", "--silent", script_path], cwd = tmpdir)
     result_mat = scipy.io.loadmat(tmpdir + "/result.mat")
     shutil.rmtree(tmpdir)
     return result_mat
@@ -123,7 +130,7 @@ def generate_get_expect_js(x_shape, indexer):
     STR_SUSHI = True
     commands = []
     indexer_str = ",".join(map(str, indexer))
-    commands.append("if (indexing_error.get() > 0) {{expect(() => x.get({0})).toThrow();}} else {{var t = x.get({0}); expect($M.isequal(t, y)).toBeTruthy();}}".format(indexer_str))
+    commands.append("if (indexing_error.get() > 0) {{expect(() => x.get({0})).toThrow();}} else {{var t = x.get({0}); if (typeof(t) === 'number') {{t = $M.jsa2mat([[t]]);}}; expect($M.isequal(t, y)).toBeTruthy();}}".format(indexer_str))
     return "\n".join(commands)
 
 def generate_set_expect_js(x_shape, indexer):
@@ -134,25 +141,18 @@ def generate_set_expect_js(x_shape, indexer):
     commands.append("if (indexing_error.get() > 0) {{expect(() => x.set({0}, y)).toThrow();}} else {{x.set({0}, y); expect($M.isequal(x, z)).toBeTruthy();}}".format(indexer_str))
     return "\n".join(commands)
 
+case_serial = defaultdict(int)
 def save_case(name, result_mat, expect_js):
-    output_dir = "fixture/indexing/" + name
+    output_dir = "fixture/indexing/{}_{:04d}".format(name, case_serial[name])
+    case_serial[name] += 1
     if os.path.exists(output_dir):
-        print("{} exists; passing")
+        print("{} exists; passing".format(output_dir))
         return
     os.mkdir(output_dir)
     for key in ["x", "y", "z", "indexing_error"]:
         np.save("{}/{}.npy".format(output_dir, key), result_mat[key])
     with open("{}/expect.js".format(output_dir), "w") as f:
         f.write(expect_js)
-
-
-def make_get_linear_index():
-    x_shape = (10, 20)
-    indexer = [3, Colon(10, None, 12)]
-    octave_commands = generate_get_octave_script(x_shape, indexer)
-    result_mat = execute_octave(octave_commands)
-    js_commands = generate_get_expect_js(x_shape, indexer)
-    save_case("colon", result_mat, js_commands)
 
 def make_case(name, x_shape, indexer, is_set, set_scalar):
     if is_set:
@@ -164,8 +164,26 @@ def make_case(name, x_shape, indexer, is_set, set_scalar):
     result_mat = execute_octave(octave_commands)
     save_case(name, result_mat, js_commands)
 
-make_case("get_colon", (10, 20), [3, Colon(10, None, 12)], False, False)
-make_case("set_colon", (10, 20), [3, Colon(10, None, 12)], True, False)
-make_case("set_scalar_colon", (10, 20), [3, Colon(10, None, 12)], True, True)
-make_case("get_colon_ex", (10, 20), [3, Colon(10, None, 25)], False, False)
+def make_case_3(name, x_shape, indexer):
+    make_case(name + "_get", x_shape, indexer, False, False)
+    make_case(name + "_set_matrix", x_shape, indexer, True, False)
+    make_case(name + "_set_scalar", x_shape, indexer, True, True)
 
+def case_nd_scalar(ndim):
+    shape = tuple(np.random.randint(1, 4, (ndim)))
+    index_len = np.random.randint(2, ndim + 1)
+    indexer = []
+    for i in range(index_len):
+        if i < index_len - 1:
+            indexer.append(randint_noisy(1, shape[i] + 1))
+        else:
+            indexer.append(randint_noisy(1, np.prod(shape[i:]) + 1))#last index is like linear index of remaining dims
+    if np.random.random() < 0.1:
+        indexer.append(np.random.randint(1, 3))#1 is ok, others raise error
+    make_case_3("nd_scalar", shape, indexer)
+
+def main():
+    for ndim in range(2, 6):
+        for i in range(10):
+            case_nd_scalar(ndim)
+main()
