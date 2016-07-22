@@ -9,6 +9,7 @@
     "index.ts",
     "spec/sushi.spec.ts",
     "spec/indexing.spec.ts",
+    "spec/cltest.spec.ts",
     "src/cl/matrix_cl.ts"
   ],
   "exclude": [

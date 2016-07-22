@@ -882,7 +882,7 @@ class Matrix {
   toString(): string {
     var s = '';
     var rows = this._size[0], cols = this._size[1];
-    var rawdata = this._alloccpu();
+    var rawdata = this.getdataref();
     for (var row = 0; row < rows; row++) {
       for (var col = 0; col < cols; col++) {
         s += rawdata[col * rows + row] + '\t';

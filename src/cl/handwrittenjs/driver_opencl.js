@@ -101,6 +101,10 @@
           case WebCL.type.LOCAL_MEMORY_SIZE:
             typestr = 'local';
             break;
+          case WebCL.type.VEC4:
+            console.log('int4');
+            typestr = 'int4';
+            break;
           default:
             throw new Error('Unsupported type');
         }
