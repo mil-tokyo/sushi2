@@ -276,7 +276,7 @@ describe('Sushi class', function () {
     expect(mat.get(2, 3)).toEqual(20);
     expect(mat.get(2, 3, 1)).toEqual(20);
     expect(mat.get(1 + 2 * 3 + 1)).toEqual(20);
-    expect(mat.get($M.end - 1, $M.end - 1)).toEqual(20);
+    expect(mat.get($M.end - 1, $M.end - 1, 1)).toEqual(20);
 
     //logical value
     //in typedarray, inputting false becomes 0, true becomes 1

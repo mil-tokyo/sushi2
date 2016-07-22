@@ -192,14 +192,36 @@ class Matrix {
     } else if (inds.length == 1) {
       return Matrix._isinteger(inds[0]) && ((inds[0] > 0 && inds[0] <= this._numel) || (inds[0] < 0 && (-inds[0]) <= this._numel));
     } else {
-      for (var dim = 0; dim < inds.length; dim++) {
-        var ind = inds[dim];
-        var dimsize = this._size[dim] || 1;
-        // if dimensions of inds is more than matrix dimensions, only 1 is ok for the extra dimension
-        if (Matrix._isinteger(ind) && ((ind > 0 && (ind <= dimsize) || (ind < 0 && -ind <= dimsize)))) {
-          //ok
-        } else {
-          return false;
+      if (inds.length < this._ndims) {
+        // last index last index is regarded as linear index of remaining dimensions
+        for (var dim = 0; dim < inds.length; dim++) {
+          var ind = inds[dim];
+          var dimsize: number;
+          if (dim == inds.length - 1) {
+            //last index
+            dimsize = 1;
+            for (var dimex = dim; dimex < this._ndims; dimex++) {
+              dimsize *= this._size[dimex];
+            }
+          } else {
+            dimsize = this._size[dim];
+          }
+          if (Matrix._isinteger(ind) && ((ind > 0 && (ind <= dimsize) || (ind < 0 && -ind <= dimsize)))) {
+            //ok
+          } else {
+            return false;
+          }
+        }
+      } else {
+        for (var dim = 0; dim < inds.length; dim++) {
+          var ind = inds[dim];
+          var dimsize = this._size[dim] || 1;
+          // if dimensions of inds is more than matrix dimensions, only 1 is ok for the extra dimension
+          if (Matrix._isinteger(ind) && ((ind > 0 && (ind <= dimsize) || (ind < 0 && -ind <= dimsize)))) {
+            //ok
+          } else {
+            return false;
+          }
         }
       }
     }
@@ -223,12 +245,33 @@ class Matrix {
       }
       idx = ind - 1;
     } else {
-      for (var dim = 0; dim < inds.length; dim++) {
-        var ind = inds[dim];
-        if (ind < 0) {
-          ind += (this._size[dim] || 1) + 1;
+      if (inds.length < this._ndims) {
+        // last index last index is regarded as linear index of remaining dimensions
+        for (var dim = 0; dim < inds.length; dim++) {
+          var ind = inds[dim];
+          if (ind < 0) {
+            var dimsize: number;
+            if (dim == inds.length - 1) {
+              //last index
+              dimsize = 1;
+              for (var dimex = dim; dimex < this._ndims; dimex++) {
+                dimsize *= this._size[dimex];
+              }
+            } else {
+              dimsize = this._size[dim];
+            }
+            ind += dimsize + 1;
+          }
+          idx += (ind - 1) * (this._strides[dim] || 0);//trailing 1 does not affect
         }
-        idx += (ind - 1) * (this._strides[dim] || 0);//trailing 1 does not affect
+      } else {
+        for (var dim = 0; dim < inds.length; dim++) {
+          var ind = inds[dim];
+          if (ind < 0) {
+            ind += (this._size[dim] || 1) + 1;
+          }
+          idx += (ind - 1) * (this._strides[dim] || 0);//trailing 1 does not affect
+        }
       }
     }
 
@@ -453,9 +496,23 @@ class Matrix {
       }
 
       //range check
-      var dim_size = this._size[dim] || 1;//exceed dimension must be [1,1,...]
+      var dimsize: number;
+      if (dim == inds.length - 1) {
+        // last index is regarded as linear index of remaining dimensions
+        dimsize = 1;
+        for (var dimex = dim; dimex < this._ndims; dimex++) {
+          dimsize *= this._size[dimex];
+        }
+      } else {
+        dimsize = this._size[dim] || 1;//exceed dimension must be [1,1,...]
+      }
       for (var i = 0; i < dimidx.length; i++) {
-        if ((dimidx[i] > dim_size) || (dimidx[i] < 1)) {
+        var dimval = dimidx[i];
+        if (dimval < 0) {//$M.end-foo
+          dimval += dimsize + 1;
+          dimidx[i] = dimval;
+        }
+        if ((dimval > dimsize) || (dimval < 1)) {
           throw new Error('Index exceeds matrix dimension');
         }
       }
@@ -605,7 +662,7 @@ class Matrix {
     } else if (singleind instanceof Matrix) {
       // value in matrix is used as linear index
       // used as flattened value array, regardless of shape
-      single_idx_array = singleind._data;
+      single_idx_array = singleind.getdataref();
     }
 
     var rawdata = this._alloccpu();
