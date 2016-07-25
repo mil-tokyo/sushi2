@@ -10,7 +10,6 @@ class mtimes extends BenchBase {
   setup() {
     var a = $M.gpuArray($M.rand(this.m, this.k));
     var b = $M.gpuArray($M.rand(this.k, this.n));
-    $M.mtimes(a, b);//compile kernel
     return [a, b];
   }
 

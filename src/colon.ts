@@ -73,6 +73,29 @@ class Colon {
 
     return jsa;
   }
+
+  toString(): string {
+    if (this.start == null) {
+      return ':';
+    } else {
+      if (this.step == null) {
+        return colonedge2str(this.start) + ':' + colonedge2str(this.stop);
+      } else {
+        return colonedge2str(this.start) + ':' + this.step + ':' + colonedge2str(this.stop);
+      }
+    }
+  }
+}
+
+function colonedge2str(val: number): string {
+  if (val >= 0) {
+    return '' + val;
+  } else {
+    if (val == 0) {
+      return 'end';
+    }
+    return 'end-' + (-1 - val);
+  }
 }
 
 export = Colon;
