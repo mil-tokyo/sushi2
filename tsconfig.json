@@ -10,7 +10,8 @@
     "spec/sushi.spec.ts",
     "spec/indexing.spec.ts",
     "spec/cltest.spec.ts",
-    "src/cl/matrix_cl.ts"
+    "src/cl/matrix_cl.ts",
+    "bench/index.ts"
   ],
   "exclude": [
     "node_modules"
