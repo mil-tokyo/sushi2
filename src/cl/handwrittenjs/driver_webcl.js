@@ -115,6 +115,9 @@
               case WebCL.type.FLOAT:
                 param = new Float32Array([param]);
                 break;
+              case WebCL.type.VEC4:
+                param = new Float32Array(param);
+                break;
               case WebCL.type.LOCAL_MEMORY_SIZE:
                 param = new Uint32Array([param]);
                 break;

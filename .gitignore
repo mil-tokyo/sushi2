@@ -8,3 +8,6 @@ node_modules
 !spec/fixture/indexing/*/*.js
 *.d.ts
 !src/cl/handwrittenjs/driver.d.ts
+!browser/*.js
+browser/milsushi2.js
+browser/milsushi2_cl.js
