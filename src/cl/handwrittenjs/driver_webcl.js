@@ -97,32 +97,66 @@
     $CL.device_max_work_group_size = $CL.selected_device.getInfo(WebCL.DEVICE_MAX_WORK_GROUP_SIZE);
 
     // initialize methods dependent on implementation
+    WebCL.type = {
+      CHAR: 0,
+      UCHAR: 1,
+      SHORT: 2,
+      USHORT: 3,
+      INT: 4,
+      UINT: 5,
+      LONG: 6,
+      ULONG: 7,
+      FLOAT: 8,
+      HALF: 9,
+      DOUBLE: 10,
+      QUAD: 11,
+      LONG_LONG: 12,
+      VEC2: 65536,
+      VEC3: 131072,
+      VEC4: 262144,
+      VEC8: 524288,
+      VEC16: 1048576,
+      LOCAL_MEMORY_SIZE: 255
+    };
+
     switch (env) {
       case 'ff':
         $CL.context = WebCL.createContext($CL.platform, device_type);
+        var table_primitive = {};
+        table_primitive[WebCL.type.CHAR] = Uint8Array;
+        table_primitive[WebCL.type.UCHAR] = Int8Array;
+        table_primitive[WebCL.type.SHORT] = Int16Array;
+        table_primitive[WebCL.type.USHORT] = Uint16Array;
+        table_primitive[WebCL.type.INT] = Int32Array;
+        table_primitive[WebCL.type.UINT] = Uint32Array;
+        table_primitive[WebCL.type.LONG] = Int32Array;//64bit variable is not supported
+        table_primitive[WebCL.type.ULONG] = Uint32Array;
+        table_primitive[WebCL.type.FLOAT] = Float32Array;
+        table_primitive[WebCL.type.HALF] = Float32Array;//16bit float is not supported
+        table_primitive[WebCL.type.DOUBLE] = Float64Array;
+        table_primitive[WebCL.type.QUAD] = Float32Array;//not supported
+        table_primitive[WebCL.type.LONG_LONG] = Float32Array;//not supported
+        var table_vec_len = {};
+        table_vec_len[0] = 1;
+        table_vec_len[WebCL.type.VEC2] = 2;
+        table_vec_len[WebCL.type.VEC3] = 3;
+        table_vec_len[WebCL.type.VEC4] = 4;
+        table_vec_len[WebCL.type.VEC8] = 8;
+        table_vec_len[WebCL.type.VEC16] = 16;
         $CL.kernelSetArg = function(kernel, idx, param, type) {
           if (type !== void 0) {
-            switch (type) {
-              case WebCL.type.UCHAR:
-                param = new Uint8Array([param]);
-                break;
-              case WebCL.type.UINT:
-                param = new Uint32Array([param]);
-                break;
-              case WebCL.type.INT:
-                param = new Int32Array([param]);
-                break;
-              case WebCL.type.FLOAT:
-                param = new Float32Array([param]);
-                break;
-              case WebCL.type.VEC4:
-                param = new Float32Array(param);
-                break;
-              case WebCL.type.LOCAL_MEMORY_SIZE:
-                param = new Uint32Array([param]);
-                break;
-              default:
-                throw new Error('Unsupported type');
+            if (type == WebCL.type.LOCAL_MEMORY_SIZE) {
+              param = new Uint32Array([param]);
+            } else {
+              var primitive = type & 0xFF;
+              var array_ctor = table_primitive[primitive];
+              var vec = type & 0x1F0000;
+              var vec_len = table_vec_len[vec];
+              if (vec_len > 1) {
+                param = new array_ctor(param);//param is array
+              } else {
+                param = new array_ctor([param]);//param is scalar value
+              }
             }
           }
           kernel.setArg(idx, param);
@@ -156,27 +190,6 @@
         };
         break;
     }
-    WebCL.type = {
-      CHAR: 0,
-      UCHAR: 1,
-      SHORT: 2,
-      USHORT: 3,
-      INT: 4,
-      UINT: 5,
-      LONG: 6,
-      ULONG: 7,
-      FLOAT: 8,
-      HALF: 9,
-      DOUBLE: 10,
-      QUAD: 11,
-      LONG_LONG: 12,
-      VEC2: 65536,
-      VEC3: 131072,
-      VEC4: 262144,
-      VEC8: 524288,
-      VEC16: 1048576,
-      LOCAL_MEMORY_SIZE: 255
-    };
 
     switch (env) {
       case 'ff':

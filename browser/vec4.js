@@ -17,7 +17,7 @@ function add_mat() {
 
 function vec_add() {
   var kernel = $M.CL.createKernel([
-      '__kernel void kernel_func(__global float *dst, float4 veca, float4 vecb) {',
+      '__kernel void kernel_func(__global float *dst, int4 veca, float4 vecb) {',
       'dst[0] = veca.x + vecb.x;',
       'dst[1] = veca.y + vecb.y * 2;',
       'dst[2] = veca.z + vecb.z * 3;',
@@ -28,8 +28,8 @@ function vec_add() {
   
     $M.CL.executeKernel(kernel,
     [{ access: $M.CL.WebCL.MEM_WRITE_ONLY, datum: dst },
-    { type: $M.CL.WebCL.type.VEC4, datum: [1,2,3,4] },
-    { type: $M.CL.WebCL.type.VEC4, datum: [0.1, 0.2, 0.3, 0.4] }],1);
+    { type: $M.CL.WebCL.type.VEC4 | $M.CL.WebCL.type.INT, datum: [-1,2,3,4] },
+    { type: $M.CL.WebCL.type.VEC4 | $M.CL.WebCL.type.FLOAT, datum: [0.1, 0.2, 0.3, 0.4] }],1);
     console.log(dst.toString());
 }
 
