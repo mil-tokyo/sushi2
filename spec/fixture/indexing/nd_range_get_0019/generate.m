@@ -1,0 +1,10 @@
+x = rand(8, 4, 4);
+y = 0;
+z = 0;
+indexing_error = 0;
+try
+y = x(8:end-4,end-4:-3:end-5);
+catch
+indexing_error = 1;
+end
+save('-mat', 'result.mat', 'x', 'y', 'z', 'indexing_error')

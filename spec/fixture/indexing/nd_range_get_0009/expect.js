@@ -1,0 +1,1 @@
+if (indexing_error.get() > 0) {expect(() => x.get($M.jsa2mat([2, 7, 4, 5, 4], false, 'int32'),$M.colon(3,6))).toThrow();} else {var t = x.get($M.jsa2mat([2, 7, 4, 5, 4], false, 'int32'),$M.colon(3,6)); if (typeof(t) === 'number') {t = $M.jsa2mat([[t]]);}; expect($M.isequal(t, y)).toBeTruthy();}

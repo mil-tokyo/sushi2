@@ -1,0 +1,1 @@
+if (indexing_error.get() > 0) {expect(() => x.set($M.jsa2mat([1, 4, 2, 2, 1], false, 'int32'),$M.jsa2mat([1, 2, 4, 5, 4], false, 'int32'), y)).toThrow();} else {x.set($M.jsa2mat([1, 4, 2, 2, 1], false, 'int32'),$M.jsa2mat([1, 2, 4, 5, 4], false, 'int32'), y); expect($M.isequal(x, z)).toBeTruthy();}

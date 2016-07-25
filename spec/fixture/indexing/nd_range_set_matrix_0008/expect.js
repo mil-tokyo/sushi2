@@ -1,0 +1,1 @@
+if (indexing_error.get() > 0) {expect(() => x.set($M.colon($M.end-3,-4,4),6,2, y)).toThrow();} else {x.set($M.colon($M.end-3,-4,4),6,2, y); expect($M.isequal(x, z)).toBeTruthy();}

@@ -424,6 +424,9 @@ class Matrix {
   get(...args: number[]): number;
   get(...args: any[]): Matrix;
   get(...args: any[]): any {
+    if (this._numel == 0) {
+      throw Error('Matrix with no element');
+    }
     if (args.length == 0) {
       // get scalar
       return this._alloccpu()[0];
@@ -432,15 +435,17 @@ class Matrix {
     if (all_number) {
       return this.get_scalar(args);
     } else {
-      if (args.length > 1) {
-        return this.get_matrix_nd(args);
-      } else {
-        if (args[0] instanceof Matrix && (<Matrix>args[0])._klass === 'logical') {
-          return this.get_matrix_logical(args[0]);
-        } else {
-          return this.get_matrix_single(args[0]);
-        }
-      }
+      return this.get_matrix_nd(args);
+
+      // if (args.length > 1) {
+      //   return this.get_matrix_nd(args);
+      // } else {
+      //   if (args[0] instanceof Matrix && (<Matrix>args[0])._klass === 'logical') {
+      //     return this.get_matrix_logical(args[0]);
+      //   } else {
+      //     return this.get_matrix_single(args[0]);
+      //   }
+      // }
     }
   }
 
@@ -475,7 +480,178 @@ class Matrix {
     return rawdata[arrayidx];
   }
 
+  private static _get_ind_iterator(ind: (number | Colon | Matrix), dim_size: number): { iter: (index: number) => number, length: number } {
+    // argument index is 0-origin
+    // return index within valid range
+    if (typeof (ind) === 'number') {
+      var ind_positive = <number>ind;
+      if (ind_positive < 0) {//end-xxx
+        ind_positive += dim_size + 1;
+      }
+      if (ind_positive <= 0 || ind_positive > dim_size) {
+        throw Error('Index exceeds matrix dimension');
+      }
+      return {
+        iter: function (index) {
+          return ind_positive;
+        }, length: 1
+      };
+    } else if (ind instanceof Colon) {
+      var start = ind.start;
+      var stop = ind.stop;
+      var step = ind.step;
+      if (ind.all) {
+        start = 1;
+        stop = dim_size;
+        step = 1;
+      }
+      if (start < 0) {
+        start += dim_size + 1;
+      }
+      if (stop < 0) {
+        stop += dim_size + 1;
+      }
+      var length: number = 0;
+      if ((step > 0 && stop >= start) || (step < 0 && stop <= start)) {
+        length = Math.floor((stop - start) / step) + 1;
+        // check if in valid range
+        var final_value = start + step * (length - 1);
+        if ((start <= 0 || start > dim_size) || (final_value <= 0 || final_value > dim_size)) {
+          throw Error('Index exceeds matrix dimension');
+        }
+      }
+      return {
+        iter: function (index) {
+          return start + step * index;
+        },
+        length: length
+      }
+    } else if (ind instanceof Matrix) {
+      var dataref = ind.getdataref();
+      // check if in valid range
+      for (var i = 0; i < dataref.length; i++) {
+        var element = dataref[i];
+        if (element <= 0 || element > dim_size) {
+          throw Error('Index exceeds matrix dimension');
+        }
+      }
+
+      return {
+        iter: function (index) {
+          return dataref[index];
+        },
+        length: dataref.length
+      }
+    }
+  }
+
   get_matrix_nd(inds: (number | Colon | Matrix)[]): Matrix {
+    var inds_ndim = inds.length;
+    // replace logical matrix with vector
+    for (var i = 0; i < inds_ndim; i++) {
+      var ind = inds[i];
+      if (ind instanceof Matrix) {
+        if (ind._klass == 'logical') {
+          inds[i] = ind._find();
+        }
+      }
+    }
+
+    var virtual_input_shape: number[] = [];
+    if (this._ndims <= inds_ndim) {
+      // pad with 1
+      virtual_input_shape = this._size.concat();
+      while (virtual_input_shape.length < inds_ndim) {
+        virtual_input_shape.push(1);
+      }
+    } else {
+      // last dimension is like linear index
+      let cur_prod = 1;
+      for (let dim = 0; dim < inds_ndim - 1; dim++) {
+        virtual_input_shape.push(this._size[dim]);
+        cur_prod *= this._size[dim];
+      }
+      virtual_input_shape.push(this._numel / cur_prod);
+    }
+    var virtual_input_stride: number[] = [];
+    var stride_tmp = 1;
+    for (var dim = 0; dim < inds_ndim; dim++) {
+      virtual_input_stride.push(stride_tmp);
+      stride_tmp *= virtual_input_shape[dim];
+    }
+
+    var ind_iters = [];
+    var dst_shape = [];
+    var dst_stride = [];//not use dst._strides because tailing 1 dimension is omitted
+    var dst_stride_tmp = 1;
+    for (var dim = 0; dim < inds_ndim; dim++) {
+      var iter_and_length = Matrix._get_ind_iterator(inds[dim], virtual_input_shape[dim]);
+      ind_iters.push(iter_and_length.iter);
+      dst_shape.push(iter_and_length.length);
+      dst_stride.push(dst_stride_tmp);
+      dst_stride_tmp *= iter_and_length.length;
+    }
+
+    var dst_reshape_shape = null;
+    if (inds_ndim == 1) {
+      // linear indexing case
+      dst_shape.push(1);//avoid error on new Matrix()
+      // if ind is logical matrix, regarded as vector in the following
+      // colon is row vector
+      // src and ind are both vectors => follows direction of src
+      // otherwise: follows ind's shape
+      var is_ind_vector = false;
+      var only_ind = inds[0];
+      if (only_ind instanceof Matrix) {
+        if (only_ind._ndims == 2 && (only_ind._size[0] == 1 || only_ind._size[1] == 1)) {
+          is_ind_vector = true;
+        }
+      } else if (only_ind instanceof Colon) {
+        is_ind_vector = true;
+      }
+      var is_src_vector = false;
+      if (this._ndims == 2 && (this._size[0] == 1 || this._size[1] == 1)) {
+        is_src_vector = true;
+      }
+
+      if (is_src_vector && is_ind_vector) {
+        // follow direction of src
+        if (this._size[0] == 1) {
+          // reshape to row vector
+          dst_reshape_shape = [1, dst_shape[0]];
+        }
+      } else {
+        // follow ind's shape
+        if (only_ind instanceof Matrix) {
+          dst_reshape_shape = only_ind._size;
+        } else if (only_ind instanceof Colon) {
+          // reshape to row vector
+          dst_reshape_shape = [1, dst_shape[0]];
+        }
+      }
+    }
+    var dst = new Matrix(dst_shape, this._klass);
+    var dst_data = dst._data;
+    var src_data = this._data;
+    var dst_numel = dst._numel;
+    for (var dst_idx = 0; dst_idx < dst_numel; dst_idx++) {
+      var input_linear_idx = 0;
+      for (var dim = 0; dim < inds_ndim; dim++) {
+        var dst_coord = Math.floor(dst_idx / dst_stride[dim]) % dst_shape[dim];
+        var src_coord = ind_iters[dim](dst_coord) - 1;
+        input_linear_idx += src_coord * virtual_input_stride[dim];
+      }
+      dst_data[dst_idx] = src_data[input_linear_idx];
+    }
+
+    if (dst_reshape_shape) {
+      dst.reshape_inplace(dst_reshape_shape);
+    }
+
+    return dst;
+  }
+
+  get_matrix_nd_old(inds: (number | Colon | Matrix)[]): Matrix {
     //multidim indexing
     //convert index of each dimension into array
     var eachdimidx: (number[] | AllowedTypedArray)[] = [];
@@ -990,6 +1166,34 @@ class Matrix {
     this._size = new_size;
     this._ndims = new_size.length;
     this._strides = strides;
+  }
+
+  _find(): Matrix {
+    // returns nonzero-element indices
+    // if this is vector, direction (row/col) is kept.
+    // otherwise, column vector is returned.
+    var output_length = 0;
+    var src_data = this.getdataref();
+    for (var i = 0; i < src_data.length; i++) {
+      if (src_data[i]) {
+        output_length++;
+      }
+    }
+
+    var dst = new Matrix([output_length, 1], 'int32');
+    var dst_idx = 0;
+    var dst_data = dst._data;
+    for (var i = 0; dst_idx < output_length; i++) {
+      if (src_data[i]) {
+        dst_data[dst_idx++] = i + 1;
+      }
+    }
+    if (this._size[1] == this._numel) {
+      // row vector
+      dst.reshape_inplace(this._size);
+    }
+
+    return dst;
   }
 }
 

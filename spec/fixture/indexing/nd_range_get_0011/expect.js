@@ -1,0 +1,1 @@
+if (indexing_error.get() > 0) {expect(() => x.get($M.colon($M.end-4,0,$M.end-4),2,$M.colon(3,$M.end-1))).toThrow();} else {var t = x.get($M.colon($M.end-4,0,$M.end-4),2,$M.colon(3,$M.end-1)); if (typeof(t) === 'number') {t = $M.jsa2mat([[t]]);}; expect($M.isequal(t, y)).toBeTruthy();}

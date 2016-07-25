@@ -15,9 +15,6 @@ class Colon {
     } else {
       if (stop != null) {
         // start:step:stop
-        if (stop_step == 0) {
-          throw new Error('Step cannot be zero');
-        }
         this.step = stop_step;
         this.stop = stop;
       } else {
@@ -53,10 +50,10 @@ class Colon {
       step = 1;
     }
     if (start < 0) {
-      start += size;
+      start += size + 1;
     }
     if (stop < 0) {
-      stop += size;
+      stop += size + 1;
     }
 
     var jsa: number[] = [];
@@ -64,12 +61,11 @@ class Colon {
       for (var i = start; i <= stop; i += step) {
         jsa.push(i);
       }
-    } else {
+    } else if (step < 0) {
       for (var i = start; i >= stop; i += step) {
         jsa.push(i);
       }
-
-    }
+    }//step == 0 means length 0
 
     return jsa;
   }
