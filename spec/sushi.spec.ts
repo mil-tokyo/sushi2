@@ -837,10 +837,10 @@ describe('Sushi class', function () {
       expect($M.mat2jsa($M.rdivide(matb, mata))).toEqual([[2, 4, 5]]);
       expect($M.mat2jsa($M.ldivide(mata, matb))).toEqual([[2, 4, 5]]);
       var pow_jsa = $M.mat2jsa($M.power(matb, mata));
-      //on gpu, [ [ 2.000000238418579, 64.00000762939453, 3375 ] ]
+      //on gpu, [ [ 2.000000238418579, 64.00000762939453, 3375.000244140625 ] ]
       expect(pow_jsa[0][0]).toBeCloseTo(2, 4);
       expect(pow_jsa[0][1]).toBeCloseTo(64, 4);
-      expect(pow_jsa[0][2]).toBeCloseTo(15 * 15 * 15, 4);
+      expect(pow_jsa[0][2]).toBeCloseTo(15 * 15 * 15, 3);
       expect($M.mat2jsa($M.plus(mata, 1))).toEqual([[2, 3, 4]]);
       expect($M.mat2jsa($M.plus(2, mata))).toEqual([[3, 4, 5]]);
       var matscalar = $M.gpuArray($M.jsa2mat([5]));
