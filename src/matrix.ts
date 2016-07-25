@@ -798,15 +798,16 @@ class Matrix {
     if (all_number) {
       this.set_scalar(val, args);
     } else {
-      if (args.length > 1) {
-        this.set_matrix_nd(val, args);
-      } else {
-        if (args[0] instanceof Matrix && (<Matrix>args[0])._klass === 'logical') {
-          this.set_matrix_logical(val, args[0]);
-        } else {
-          this.set_matrix_single(val, args[0]);
-        }
-      }
+      this.set_matrix_nd(val, args);
+      // if (args.length > 1) {
+      //   this.set_matrix_nd(val, args);
+      // } else {
+      //   if (args[0] instanceof Matrix && (<Matrix>args[0])._klass === 'logical') {
+      //     this.set_matrix_logical(val, args[0]);
+      //   } else {
+      //     this.set_matrix_single(val, args[0]);
+      //   }
+      // }
     }
   }
 
@@ -869,7 +870,105 @@ class Matrix {
     }
   }
 
+
   set_matrix_nd(val: number | Matrix, inds: (number | Colon | Matrix)[]): void {
+    var inds_ndim = inds.length;
+    // replace logical matrix with vector
+    for (var i = 0; i < inds_ndim; i++) {
+      var ind = inds[i];
+      if (ind instanceof Matrix) {
+        if (ind._klass == 'logical') {
+          inds[i] = ind._find();
+        }
+      }
+    }
+
+    var virtual_input_shape: number[] = [];
+    if (this._ndims <= inds_ndim) {
+      // pad with 1
+      virtual_input_shape = this._size.concat();
+      while (virtual_input_shape.length < inds_ndim) {
+        virtual_input_shape.push(1);
+      }
+    } else {
+      // last dimension is like linear index
+      let cur_prod = 1;
+      for (let dim = 0; dim < inds_ndim - 1; dim++) {
+        virtual_input_shape.push(this._size[dim]);
+        cur_prod *= this._size[dim];
+      }
+      virtual_input_shape.push(this._numel / cur_prod);
+    }
+    var virtual_input_stride: number[] = [];
+    var stride_tmp = 1;
+    for (var dim = 0; dim < inds_ndim; dim++) {
+      virtual_input_stride.push(stride_tmp);
+      stride_tmp *= virtual_input_shape[dim];
+    }
+
+    var ind_iters = [];
+    var dst_shape: number[] = [];
+    var dst_stride = [];//not use dst._strides because tailing 1 dimension is omitted
+    var dst_stride_tmp = 1;
+    for (var dim = 0; dim < inds_ndim; dim++) {
+      var iter_and_length = Matrix._get_ind_iterator(inds[dim], virtual_input_shape[dim]);
+      ind_iters.push(iter_and_length.iter);
+      dst_shape.push(iter_and_length.length);
+      dst_stride.push(dst_stride_tmp);
+      dst_stride_tmp *= iter_and_length.length;
+    }
+    var dst_numel = dst_stride_tmp;
+
+    var scalar_val: number = null;
+    if (typeof (val) === 'number') {
+      scalar_val = <number>val;
+    } else if (val instanceof Matrix) {
+      if (val._numel === 1) {
+        scalar_val = val.valueOf();
+      }
+    }
+
+    if (scalar_val == null) {
+      // set matrix
+      // shape check; dimensions excluding value 1 must match
+      var dst_shape_exclude_one = dst_shape.filter((v) => v != 1);
+      var val_shape_exclude_one = (<Matrix>val)._size.filter((v) => v != 1);
+      if (dst_shape_exclude_one.length != val_shape_exclude_one.length) {
+        throw Error('Shape mismatch');
+      }
+      if (!dst_shape_exclude_one.every((v, i) => v == val_shape_exclude_one[i])) {
+        throw Error('Shape mismatch');
+      }
+
+      var dst_data = (<Matrix>val)._data;
+      var src_data = this._data;
+      for (var dst_idx = 0; dst_idx < dst_numel; dst_idx++) {
+        var input_linear_idx = 0;
+        for (var dim = 0; dim < inds_ndim; dim++) {
+          var dst_coord = Math.floor(dst_idx / dst_stride[dim]) % dst_shape[dim];
+          var src_coord = ind_iters[dim](dst_coord) - 1;
+          input_linear_idx += src_coord * virtual_input_stride[dim];
+        }
+        src_data[input_linear_idx] = dst_data[dst_idx];
+      }
+
+    } else {
+      // set scalar
+      var src_data = this._data;
+      for (var dst_idx = 0; dst_idx < dst_numel; dst_idx++) {
+        var input_linear_idx = 0;
+        for (var dim = 0; dim < inds_ndim; dim++) {
+          var dst_coord = Math.floor(dst_idx / dst_stride[dim]) % dst_shape[dim];
+          var src_coord = ind_iters[dim](dst_coord) - 1;
+          input_linear_idx += src_coord * virtual_input_stride[dim];
+        }
+        src_data[input_linear_idx] = scalar_val;
+      }
+    }
+
+  }
+
+  set_matrix_nd_old(val: number | Matrix, inds: (number | Colon | Matrix)[]): void {
     //multidim indexing
     //convert index of each dimension into array
     var eachdimidx: (number[] | AllowedTypedArray)[] = [];
