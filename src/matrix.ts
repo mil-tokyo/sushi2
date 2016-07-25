@@ -531,14 +531,18 @@ class Matrix {
       // check if in valid range
       for (var i = 0; i < dataref.length; i++) {
         var element = dataref[i];
-        if (element <= 0 || element > dim_size) {
+        if (element == 0 || element > dim_size || element < -dim_size) {
           throw Error('Index exceeds matrix dimension');
         }
       }
 
       return {
         iter: function (index) {
-          return dataref[index];
+          var val = dataref[index];
+          if (val < 0) {
+            val += dim_size;
+          }
+          return val;
         },
         length: dataref.length
       }

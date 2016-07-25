@@ -70,7 +70,7 @@ class MatrixCL extends Matrix {
       this._clbuffer = null;
     }
   }
-  
+
   inspect(depth: number): string {
     var shape_str = this._size.join('x');
     if (this._numel <= 100) {
@@ -193,15 +193,15 @@ class MatrixCL extends Matrix {
     if (all_number) {
       return this.get_scalar(args);
     } else {
-      if (args.length > 1) {
+      // if (args.length > 1) {
         return this.get_matrix_nd(args);
-      } else {
-        if (args[0] instanceof Matrix && (<Matrix>args[0])._klass === 'logical') {
-          return this.get_matrix_logical(args[0]);
-        } else {
-          return this.get_matrix_single(args[0]);
-        }
-      }
+      // } else {
+      //   if (args[0] instanceof Matrix && (<Matrix>args[0])._klass === 'logical') {
+      //     return this.get_matrix_logical(args[0]);
+      //   } else {
+      //     return this.get_matrix_single(args[0]);
+      //   }
+      // }
     }
   }
 
@@ -213,7 +213,288 @@ class MatrixCL extends Matrix {
     return dst_typed_array[0];
   }
 
+  private static _get_ind_iterator_cl(ind: (number | Colon | Matrix), dim_size: number): { kernel_arg: { access?: any, datum: any, type?: any }, to_destruct: MatrixCL, length: number, typename: string } {
+    // return index within valid range
+    if (typeof (ind) === 'number') {
+      var ind_positive = <number>ind;
+      if (ind_positive < 0) {//end-xxx
+        ind_positive += dim_size + 1;
+      }
+      if (ind_positive <= 0 || ind_positive > dim_size) {
+        throw Error('Index exceeds matrix dimension');
+      }
+      return {
+        kernel_arg: { datum: ind_positive, type: webcltypes.int32 },
+        to_destruct: null, length: 1,
+        typename: 'int'
+      };
+    } else if (ind instanceof Colon) {
+      var start = ind.start;
+      var stop = ind.stop;
+      var step = ind.step;
+      if (ind.all) {
+        start = 1;
+        stop = dim_size;
+        step = 1;
+      }
+      if (start < 0) {
+        start += dim_size + 1;
+      }
+      if (stop < 0) {
+        stop += dim_size + 1;
+      }
+      var length: number = 0;
+      if ((step > 0 && stop >= start) || (step < 0 && stop <= start)) {
+        length = Math.floor((stop - start) / step) + 1;
+        // check if in valid range
+        var final_value = start + step * (length - 1);
+        if ((start <= 0 || start > dim_size) || (final_value <= 0 || final_value > dim_size)) {
+          throw Error('Index exceeds matrix dimension');
+        }
+      }
+      return {
+        kernel_arg: { datum: [start, step, stop, length], type: webcltypes.int32 | WebCL.type.VEC4 },
+        to_destruct: null,
+        length: length,
+        typename: 'int4'
+      }
+    } else if (ind instanceof Matrix) {
+      var to_destruct = null;
+      var ind_mat: MatrixCL;
+      if (ind instanceof MatrixCL) {
+        ind_mat = ind;
+      } else {
+        ind_mat = MatrixCL._fromnativemat(ind);
+        to_destruct = ind_mat;
+      }
+      // check if in valid range
+
+      var kernel_name = '_get_ind_iterator_cl_' + ind._klass;
+      var kernel = MatrixCL.kernel_cache[kernel_name];
+      if (!kernel) {
+        var kernel_str = [
+          '#define SRC_TYPE ' + ctypes[ind._klass],
+          '__kernel void kernel_func(__global int *dst, __global const SRC_TYPE *src, int dim_size, uint src_length) {',
+          '  uint i = get_global_id(0);',
+          '  if (i >= src_length) { return; }',
+          '  int src_val = (int)src[i];',
+          '  if (src_val == 0 || src_val > dim_size || src_val < -dim_size) {',
+          '    dst[0] = 1;',
+          '  }',
+          '}'
+        ].join('\n');
+        kernel = $CL.createKernel(kernel_str);
+        MatrixCL.kernel_cache[kernel_name] = kernel;
+      }
+      if (ind_mat._numel > 0) {
+        var validity_result = new MatrixCL([1, 1], 'int32');
+        validity_result._fill(0);
+        $CL.executeKernel(kernel, [
+          { access: WebCL.MEM_WRITE_ONLY, datum: validity_result },
+          { access: WebCL.MEM_READ_ONLY, datum: ind_mat },
+          { datum: dim_size, type: WebCL.type.INT },
+          { datum: ind_mat._numel, type: WebCL.type.UINT }
+        ], ind_mat._numel);
+        if (validity_result.getdataref()[0]) {
+          validity_result.destruct();
+          if (to_destruct) {
+            to_destruct.destruct();
+          }
+          throw Error('Index exceeds matrix dimension');
+        }
+        validity_result.destruct();
+      }
+
+      return {
+        kernel_arg: { datum: ind_mat, access: WebCL.MEM_READ_ONLY },
+        to_destruct: to_destruct,
+        length: ind_mat._numel,
+        typename: '__global ' + ctypes[ind_mat._klass] + ' *'
+      }
+    }
+  }
+
   get_matrix_nd(inds: (number | Colon | Matrix)[]): Matrix {
+    var inds_ndim = inds.length;
+    var destruct_targets: Matrix[] = [];
+    try {
+      // replace logical matrix with vector
+      for (var i = 0; i < inds_ndim; i++) {
+        var ind = inds[i];
+        if (ind instanceof Matrix) {
+          if (ind._klass == 'logical') {
+            var idxarray = ind._find();
+            inds[i] = idxarray
+            destruct_targets.push(idxarray);
+          }
+        }
+      }
+
+      var virtual_input_shape: number[] = [];
+      if (this._ndims <= inds_ndim) {
+        // pad with 1
+        virtual_input_shape = this._size.concat();
+        while (virtual_input_shape.length < inds_ndim) {
+          virtual_input_shape.push(1);
+        }
+      } else {
+        // last dimension is like linear index
+        let cur_prod = 1;
+        for (let dim = 0; dim < inds_ndim - 1; dim++) {
+          virtual_input_shape.push(this._size[dim]);
+          cur_prod *= this._size[dim];
+        }
+        virtual_input_shape.push(this._numel / cur_prod);
+      }
+      var virtual_input_stride: number[] = [];
+      var stride_tmp = 1;
+      for (var dim = 0; dim < inds_ndim; dim++) {
+        virtual_input_stride.push(stride_tmp);
+        stride_tmp *= virtual_input_shape[dim];
+      }
+
+      var kernel_args = [];
+      var kernel_type_names = [];
+      var dst_shape = [];
+      var dst_stride = [];//not use dst._strides because tailing 1 dimension is omitted
+      var dst_stride_tmp = 1;
+      for (var dim = 0; dim < inds_ndim; dim++) {
+        var iter_and_length = MatrixCL._get_ind_iterator_cl(inds[dim], virtual_input_shape[dim]);
+        if (iter_and_length.to_destruct) {
+          destruct_targets.push(iter_and_length.to_destruct);
+        }
+        kernel_args.push(iter_and_length.kernel_arg);
+        kernel_type_names.push(iter_and_length.typename);
+        dst_shape.push(iter_and_length.length);
+        dst_stride.push(dst_stride_tmp);
+        dst_stride_tmp *= iter_and_length.length;
+      }
+      var dst_numel = dst_stride_tmp;
+
+      var dst_reshape_shape = null;
+      if (inds_ndim == 1) {
+        // linear indexing case
+        dst_shape.push(1);//avoid error on new Matrix()
+        // if ind is logical matrix, regarded as vector in the following
+        // colon is row vector
+        // src and ind are both vectors => follows direction of src
+        // otherwise: follows ind's shape
+        var is_ind_vector = false;
+        var only_ind = inds[0];
+        if (only_ind instanceof Matrix) {
+          if (only_ind._ndims == 2 && (only_ind._size[0] == 1 || only_ind._size[1] == 1)) {
+            is_ind_vector = true;
+          }
+        } else if (only_ind instanceof Colon) {
+          is_ind_vector = true;
+        }
+        var is_src_vector = false;
+        if (this._ndims == 2 && (this._size[0] == 1 || this._size[1] == 1)) {
+          is_src_vector = true;
+        }
+
+        if (is_src_vector && is_ind_vector) {
+          // follow direction of src
+          if (this._size[0] == 1) {
+            // reshape to row vector
+            dst_reshape_shape = [1, dst_shape[0]];
+          }
+        } else {
+          // follow ind's shape
+          if (only_ind instanceof Matrix) {
+            dst_reshape_shape = only_ind._size;
+          } else if (only_ind instanceof Colon) {
+            // reshape to row vector
+            dst_reshape_shape = [1, dst_shape[0]];
+          }
+        }
+      }
+
+      var dst = new MatrixCL(dst_shape, this._klass);
+      var kernel_name = 'get_matrix_nd_' + this._klass + '_' + inds_ndim + '_' + kernel_type_names.join(',');
+      var kernel = MatrixCL.kernel_cache[kernel_name];
+      if (!kernel) {
+        var kernel_index_args_str = '';
+        for (var dim = 0; dim < inds_ndim; dim++) {
+          kernel_index_args_str += ',' + kernel_type_names[dim] + ' ind' + dim;//variable ind0, ind1, ...
+        }
+
+        var kernel_add_dim = '';
+        for (var dim = 0; dim < inds_ndim; dim++) {
+          kernel_add_dim += 'ADD_IND(' + dim + ');';
+        }
+
+        var kernel_get_ind_func = '';
+        for (var dim = 0; dim < inds_ndim; dim++) {
+          kernel_get_ind_func += 'int get_ind' + dim;
+          var kernel_type_name = kernel_type_names[dim];
+          switch (kernel_type_name) {
+            case 'int':
+              kernel_get_ind_func += '(int indexer, int offset, int dim_size) {return indexer;}';
+              break;
+            case 'int4':
+              kernel_get_ind_func += '(int4 indexer, int offset, int dim_size) {return indexer.x + indexer.y * offset;}';
+              break;
+            default:
+              kernel_get_ind_func += '(' + kernel_type_name + ' indexer, int offset, int dim_size) {int val = (int)indexer[offset]; if (val < 0) { return val + dim_size + 1; } else { return val; }}';
+              break;
+          }
+          kernel_get_ind_func += '\n';
+        }
+
+        var kernel_str = [
+          '#define DIMS ' + inds_ndim,
+          '#define SRC_DST_TYPE ' + ctypes[this._klass],
+          kernel_get_ind_func,
+          '#define ADD_IND(dim) {dst_coord = (i / dst_stride[dim]) % dst_shape[dim]; src_coord = (get_ind ## dim(ind ## dim, dst_coord, src_shape[dim])) - 1; src_linear_index += src_coord * src_stride[dim];}',
+          '__kernel void kernel_func(__global SRC_DST_TYPE *dst, __global const SRC_DST_TYPE *src, __global const int *size_strides, uint output_length',
+          kernel_index_args_str,
+          ') {',
+          '  uint i = get_global_id(0);',
+          '  if (i >= output_length) { return; }',
+          '  __global const int *src_stride = size_strides, *src_shape = size_strides + DIMS * 1, *dst_stride = size_strides + DIMS * 2, *dst_shape = size_strides + DIMS * 3;',
+          '  int dst_coord, src_coord;',
+          '  int src_linear_index = 0;',
+          kernel_add_dim,
+          '  dst[i] = src[src_linear_index];',
+          '}'
+        ].join('\n');
+        kernel = $CL.createKernel(kernel_str);
+
+        MatrixCL.kernel_cache[kernel_name] = kernel;
+      }
+
+      if (dst_numel > 0) {
+        var size_strides = [];//src_stride/src_shape/dst_stride/dst_shape; dst_shape is last because [1] may be added above
+        size_strides.push(...virtual_input_stride);
+        size_strides.push(...virtual_input_shape);
+        size_strides.push(...dst_stride);
+        size_strides.push(...dst_shape);
+
+        var size_strides_mat = MatrixCL._fromtypedarray(new Int32Array(size_strides), 'int32');
+        destruct_targets.push(size_strides_mat);
+
+        kernel_args.unshift({ access: WebCL.MEM_WRITE_ONLY, datum: dst },
+          { access: WebCL.MEM_READ_ONLY, datum: this },
+          { access: WebCL.MEM_READ_ONLY, datum: size_strides_mat },
+          { datum: dst_numel, type: WebCL.type.UINT });
+        $CL.executeKernel(kernel, kernel_args, dst_numel);
+
+      }
+
+      if (dst_reshape_shape) {
+        dst.reshape_inplace(dst_reshape_shape);
+      }
+
+      return dst;
+    } finally {
+      for (var i = 0; i < destruct_targets.length; i++) {
+        destruct_targets[i].destruct();
+      }
+    }
+  }
+
+  get_matrix_nd_old(inds: (number | Colon | Matrix)[]): Matrix {
     //multidim indexing
     //convert index of each dimension into array
     var dims = inds.length;
@@ -922,6 +1203,88 @@ class MatrixCL extends Matrix {
       }
     }
   }
+
+  _find(): MatrixCL {
+    //not paralleled; very slow
+
+    //first, count output size
+    var count_mat = new MatrixCL([1, 2], 'int32');
+    var kernel_name = 'matrix_find_count_' + this._klass;
+    var kernel = MatrixCL.kernel_cache[kernel_name];
+    if (!kernel) {
+      kernel = $CL.createKernel([
+        '#define SRC_TYPE ' + ctypes[this._klass],
+        '__kernel void kernel_func(__global int *count, __global SRC_TYPE *logical_index, uint numel) {',
+        '  int ctr = 0;',
+        '  int max_i = -1;',
+        '  if (get_global_id(0) > 0) {return;}',
+        '  for (uint i = 0; i < numel; i++) {',
+        '    SRC_TYPE val = logical_index[i];',
+        '    if (val) {',
+        '      ctr++;',
+        '      max_i = i;',
+        '    }',
+        '  }',
+        '  count[0] = ctr;',
+        '  count[1] = max_i;',
+        '}'
+      ].join('\n'));
+      MatrixCL.kernel_cache[kernel_name] = kernel;
+    }
+
+    var count_array = new Int32Array(2);//default value 0
+    if (this._numel > 0) {
+      $CL.executeKernel(kernel, [
+        { access: WebCL.MEM_WRITE_ONLY, datum: count_mat },
+        { access: WebCL.MEM_READ_ONLY, datum: this },
+        { datum: this._numel, type: WebCL.type.UINT }
+      ], 1);
+      count_mat.read(count_array);
+    }
+
+    var output_length = count_array[0];
+    var max_i = count_array[1];
+
+    //second, write indices
+    var output = new MatrixCL([output_length, 1], 'int32');
+    var kernel_name = 'matrix_find_write_' + this._klass;
+    var kernel = MatrixCL.kernel_cache[kernel_name];
+    if (!kernel) {
+      kernel = $CL.createKernel([
+        '#define SRC_TYPE ' + ctypes[this._klass],
+        '__kernel void kernel_func(__global int *dst, __global SRC_DST_TYPE *src, uint output_length) {',
+        '  uint i = get_global_id(0);',
+        '  if (i > 0) { return; }',
+        '  int out_idx = 0;',
+        '  int in_idx = 0;',
+        '  while (out_idx < output_length) {',
+        '    if (src[in_idx]) {',
+        '      dst[out_idx++] = in_idx + 1;',
+        '    }',
+        '    in_idx++;',
+        '  }',
+        '}'
+      ].join('\n'));
+      MatrixCL.kernel_cache[kernel_name] = kernel;
+    }
+
+    if (output_length > 0) {
+      $CL.executeKernel(kernel, [
+        { access: WebCL.MEM_WRITE_ONLY, datum: output },
+        { access: WebCL.MEM_READ_ONLY, datum: this },
+        { datum: output_length, type: WebCL.type.UINT }
+      ], 1);
+    }
+    if (this._size[1] == this._numel) {
+      // row vector
+      output.reshape_inplace(this._size);
+    }
+
+    count_mat.destruct();
+
+    return output;
+  }
+
 }
 
 export = MatrixCL;
