@@ -65,7 +65,7 @@
       device_type = WebCL.DEVICE_TYPE_CPU;
       $CL.devices = WebCL.getDeviceIDs($CL.platform, device_type);;
     }
-    
+
     // device selector (experimental)
     var device_index = 0;
     // Explicit setting by environment variable
@@ -80,40 +80,6 @@
     $CL.device_max_work_group_size = WebCL.getDeviceInfo($CL.selected_device, WebCL.DEVICE_MAX_WORK_GROUP_SIZE);
 
     // initialize methods dependent on implementation
-    $CL.context = WebCL.createContext([WebCL.CONTEXT_PLATFORM, $CL.platform, 0], [$CL.selected_device]);
-    $CL.kernelSetArg = function (kernel, idx, param, type) {
-      var typestr = '';
-      if (type !== void 0) {
-        switch (type) {
-          //TODO
-          case WebCL.type.UCHAR:
-            typestr = 'uchar';
-            break;
-          case WebCL.type.UINT:
-            typestr = 'uint';
-            break;
-          case WebCL.type.INT:
-            typestr = 'int';
-            break;
-          case WebCL.type.FLOAT:
-            typestr = 'float';
-            break;
-          case WebCL.type.LOCAL_MEMORY_SIZE:
-            typestr = 'local';
-            break;
-          case WebCL.type.VEC4:
-            console.log('int4');
-            typestr = 'int4';
-            break;
-          default:
-            throw new Error('Unsupported type');
-        }
-      } else {
-        //buffer
-        typestr = 'cl_mem';
-      }
-      WebCL.setKernelArg(kernel, idx, typestr, param);
-    };
     WebCL.type = {
       CHAR: 0,
       UCHAR: 1,
@@ -134,6 +100,48 @@
       VEC8: 524288,
       VEC16: 1048576,
       LOCAL_MEMORY_SIZE: 255
+    };
+    var table_primitive = {};
+    table_primitive[WebCL.type.CHAR] = 'char';
+    table_primitive[WebCL.type.UCHAR] = 'uchar';
+    table_primitive[WebCL.type.SHORT] = 'short';
+    table_primitive[WebCL.type.USHORT] = 'ushort';
+    table_primitive[WebCL.type.INT] = 'int';
+    table_primitive[WebCL.type.UINT] = 'uint';
+    table_primitive[WebCL.type.LONG] = 'long';//64bit variable is not supported
+    table_primitive[WebCL.type.ULONG] = 'ulong';
+    table_primitive[WebCL.type.FLOAT] = 'float';
+    table_primitive[WebCL.type.HALF] = 'half';//16bit float is not supported
+    table_primitive[WebCL.type.DOUBLE] = 'double';
+    table_primitive[WebCL.type.QUAD] = 'quad';//not supported
+    table_primitive[WebCL.type.LONG_LONG] = 'long long';//not supported
+    var table_vec_len = {};
+    table_vec_len[0] = 1;
+    table_vec_len[WebCL.type.VEC2] = 2;
+    table_vec_len[WebCL.type.VEC3] = 3;
+    table_vec_len[WebCL.type.VEC4] = 4;
+    table_vec_len[WebCL.type.VEC8] = 8;
+    table_vec_len[WebCL.type.VEC16] = 16;
+    $CL.context = WebCL.createContext([WebCL.CONTEXT_PLATFORM, $CL.platform, 0], [$CL.selected_device]);
+    $CL.kernelSetArg = function (kernel, idx, param, type) {
+      var typestr = '';
+      if (type !== void 0) {
+        if (type == WebCL.type.LOCAL_MEMORY_SIZE) {
+          typestr = 'local';
+        } else {
+          var primitive = type & 0xFF;
+          typestr = table_primitive[primitive];
+          var vec = type & 0x1F0000;
+          var vec_len = table_vec_len[vec];
+          if (vec_len > 1) {
+            typestr += vec_len;
+          }
+        }
+      } else {
+        //buffer
+        typestr = 'cl_mem';
+      }
+      WebCL.setKernelArg(kernel, idx, typestr, param);
     };
 
     if (WebCL.createCommandQueueWithProperties !== undefined) {

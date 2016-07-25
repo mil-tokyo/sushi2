@@ -27,7 +27,7 @@ describe('cl', () => {
     m.disp();
     $M.CL.executeKernel(kernel,
     [{ access: WebCL.MEM_WRITE_ONLY, datum: m },
-    { type: WebCL.type.VEC4, datum: [1,2,3,4] }],1);
+    { type: WebCL.type.VEC4 | WebCL.type.INT, datum: [1,-2,3,4] }],1);
     m.disp();
   });
 });
