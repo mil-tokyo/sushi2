@@ -231,6 +231,9 @@ var util_cl = require('./util_cl');
       { datum: reduction_count, type: WebCL.type.INT }
     ], dst._numel);
 
+    output_strides_mat.destruct();
+    input_strides_mat.destruct();
+
     return dst;
   };
 
