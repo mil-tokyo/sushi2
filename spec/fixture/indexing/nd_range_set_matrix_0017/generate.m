@@ -1,12 +1,12 @@
-x = rand(7, 1, 1);
+x = rand(3, 8, 1);
 y = 0;
 z = 0;
 indexing_error = 0;
 try
-t = x([4 4 4 5 3],1:1);
+t = x(end+0:-3:end-2,end-2:end-5,[1]);
 y = rand(size(t));
 z = x;
-z([4 4 4 5 3],1:1) = y;
+z(end+0:-3:end-2,end-2:end-5,[1]) = y;
 catch
 indexing_error = 1;
 end

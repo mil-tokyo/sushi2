@@ -1,12 +1,12 @@
-x = rand(6, 6);
+x = rand(7, 9);
 y = 0;
 z = 0;
 indexing_error = 0;
 try
-t = x(5,[5 1 1 4 2]);
+t = x(3,8);
 y = rand(size(t));
 z = x;
-z(5,[5 1 1 4 2]) = y;
+z(3,8) = y;
 catch
 indexing_error = 1;
 end

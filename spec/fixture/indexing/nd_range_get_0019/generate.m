@@ -1,9 +1,9 @@
-x = rand(8, 4, 4);
+x = rand(5, 3, 5);
 y = 0;
 z = 0;
 indexing_error = 0;
 try
-y = x(8:end-4,end-4:-3:end-5);
+y = x(1,end+0:end+0,[3 4 1 5 2]);
 catch
 indexing_error = 1;
 end

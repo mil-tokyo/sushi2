@@ -5,6 +5,7 @@
 import sys,os
 import math
 import numpy as np
+import random
 import subprocess
 import tempfile
 import scipy.io
@@ -90,6 +91,17 @@ def randint_noisy(low, high):
         if low == high:
             return low
         return np.random.randint(low, high)#[low, high)
+
+def randint_noisy_list(low, high, count):
+    # without duplication to avoid undefined result about setting to multiple values into same destination
+    l = random.sample(range(low, high), count)
+    if np.random.random() < 0.01:
+        # generate out of range
+        if np.random.random() < 0.5:
+            l[np.random.randint(count)] = low - 1
+        else:
+            l[np.random.randint(count)] = high
+    return l
 
 def generate_get_octave_script(x_shape, indexer):
     global STR_SUSHI
@@ -216,13 +228,13 @@ def case_nd_range(ndim):
         indtype = np.random.random()
         if indtype < 0.3:
             #scalar
-            ind = randint_noisy(1, dim_size)
+            ind = randint_noisy(1, dim_size + 1)
         elif indtype < 0.6:
             #Colon
             ind = make_random_colon(dim_size)
         else:
             #vector
-            ind = Matrix(np.array([randint_noisy(1, dim_size) for j in range(5)], dtype = np.int32))
+            ind = Matrix(np.array(randint_noisy_list(1, dim_size + 1, min(5, dim_size)), dtype = np.int32))
         indexer.append(ind)
 
     if np.random.random() < 0.1:

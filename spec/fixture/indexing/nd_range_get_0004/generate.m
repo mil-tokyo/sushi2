@@ -1,9 +1,9 @@
-x = rand(4, 8);
+x = rand(3, 3);
 y = 0;
 z = 0;
 indexing_error = 0;
 try
-y = x(3,[7 5 2 1 5],2);
+y = x(3,[1 3 2]);
 catch
 indexing_error = 1;
 end

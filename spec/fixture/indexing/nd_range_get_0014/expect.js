@@ -1,1 +1,1 @@
-if (indexing_error.get() > 0) {expect(() => x.get($M.colon(4,0,2),5,1)).toThrow();} else {var t = x.get($M.colon(4,0,2),5,1); if (typeof(t) === 'number') {t = $M.jsa2mat([[t]]);}; expect($M.isequal(t, y)).toBeTruthy();}
+if (indexing_error.get() > 0) {expect(() => x.get($M.colon($M.end-1,2,$M.end-4),3,$M.colon($M.end-5,$M.end-5),1)).toThrow();} else {var t = x.get($M.colon($M.end-1,2,$M.end-4),3,$M.colon($M.end-5,$M.end-5),1); if (typeof(t) === 'number') {t = $M.jsa2mat([[t]]);}; expect($M.isequal(t, y)).toBeTruthy();}

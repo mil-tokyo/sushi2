@@ -1,9 +1,9 @@
-x = rand(5, 3);
+x = rand(5, 2);
 y = 0;
 z = 0;
 indexing_error = 0;
 try
-y = x(end-2:4,end+0:-1:end+0);
+y = x(0,2);
 catch
 indexing_error = 1;
 end

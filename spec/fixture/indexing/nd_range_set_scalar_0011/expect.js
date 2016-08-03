@@ -1,1 +1,1 @@
-if (indexing_error.get() > 0) {expect(() => x.set($M.colon($M.end-4,0,$M.end-4),2,$M.colon(3,$M.end-1), y)).toThrow();} else {x.set($M.colon($M.end-4,0,$M.end-4),2,$M.colon(3,$M.end-1), y); expect($M.isequal(x, z)).toBeTruthy();}
+if (indexing_error.get() > 0) {expect(() => x.set($M.colon($M.end-2,0,$M.end+0),$M.jsa2mat([7, 3, 2, 8, 16], false, 'int32'), y)).toThrow();} else {x.set($M.colon($M.end-2,0,$M.end+0),$M.jsa2mat([7, 3, 2, 8, 16], false, 'int32'), y); expect($M.isequal(x, z)).toBeTruthy();}

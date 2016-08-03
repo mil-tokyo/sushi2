@@ -1,1 +1,1 @@
-if (indexing_error.get() > 0) {expect(() => x.set(5,$M.jsa2mat([5, 1, 1, 4, 2], false, 'int32'), y)).toThrow();} else {x.set(5,$M.jsa2mat([5, 1, 1, 4, 2], false, 'int32'), y); expect($M.isequal(x, z)).toBeTruthy();}
+if (indexing_error.get() > 0) {expect(() => x.set(3,8, y)).toThrow();} else {x.set(3,8, y); expect($M.isequal(x, z)).toBeTruthy();}
