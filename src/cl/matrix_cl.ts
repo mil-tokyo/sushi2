@@ -877,7 +877,7 @@ class MatrixCL extends Matrix {
     if (!kernel) {
       kernel = $CL.createKernel([
         '#define SRC_TYPE ' + ctypes[this._klass],
-        '__kernel void kernel_func(__global int *dst, __global SRC_DST_TYPE *src, uint output_length) {',
+        '__kernel void kernel_func(__global int *dst, __global SRC_TYPE *src, uint output_length) {',
         '  uint i = get_global_id(0);',
         '  if (i > 0) { return; }',
         '  int out_idx = 0;',
