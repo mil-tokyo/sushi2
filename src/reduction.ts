@@ -143,6 +143,71 @@ function make_reduction_along_axis(var_decl: string, var_update: string, result_
   return f;
 }
 
+function make_reduction_along_axis_stat(var_decl: string, var_update: string, result_assign: string) {
+  var f: any;
+  eval([
+    "f = function(A, dim) {",
+    "    if (dim == null) {",
+    "        //select first non-1 axis",
+    "        dim = A._numel;",
+    "        for (var i = 0; i < A._size.length; i++) {",
+    "            var dimsize = A._size[i];",
+    "            if (dimsize !== 1) {",
+    "                dim = i + 1;",
+    "                break;",
+    "            }",
+    "        }",
+    "    }",
+    "    if (dim > A._ndims) {",
+    "        //max along axis with size 1",
+    "    }",
+    "    var dstsize = A._size.slice();",
+    "    if (dstsize[dim - 1] !== 0) {",
+    "        //size 0 dimension is preserved",
+    "        dstsize[dim - 1] = 1;",
+    "    }",
+    "    if (A._numel === 0) {",
+    "        //only change shape",
+    "        var dst_onlyreshape = A.copy();",
+    "        dst_onlyreshape.reshape_inplace(dstsize);",
+    "        return dst_onlyreshape;",
+    "    }",
+    "    //reduction actually needed",
+    "    var dst = new Matrix(dstsize, 'single');",
+    "    var input_strides = A._strides;",
+    "    var output_strides = dst._strides.slice();",
+    "    while (output_strides.length <= input_strides.length) {",
+    "        output_strides.push(dst._numel);",
+    "    }",
+    "    var reduction_step = input_strides[dim - 1];",
+    "    var reduction_count = A._size[dim - 1];",
+    "    var a_data = A._data;",
+    "    var dst_data = dst._data;",
+    "    var dims = A._ndims;",
+    "    for (var dst_idx = 0, dst_numel = dst._numel; dst_idx < dst_numel; dst_idx++) {",
+    "        var src_idx = 0;",
+    "        for (var d = 0; d < dims; d++) {",
+    "            src_idx += Math.floor(dst_idx % output_strides[d + 1] / output_strides[d]) * input_strides[d];",
+    "        }",
+    "        var val = a_data[src_idx];",
+    //"        var curret = val;",
+    var_decl,
+    "        for (var red = 1; red < reduction_count; red++) {",
+    "            src_idx += reduction_step;",
+    "            val = a_data[src_idx];",
+    //"            if (val > curret) {",
+    //"                curret = val;",
+    //"            }",
+    var_update,
+    "        }",
+    //"        dst_data[dst_idx] = curret;",
+    result_assign,
+    "    }",
+    "return dst;",
+    "}", ].join('\n'));
+  return f;
+}
+
 var max_along_axis = make_reduction_along_axis('var curret = val;',
   'if(val>curret){curret=val;}',
   'dst_data[dst_idx]=curret;', false);
@@ -187,8 +252,8 @@ export function argmin(A: MatrixOrNumber, dummy?: any, dim?: number): { M: Matri
   return argmin_along_axis(util.as_mat(A), dim);
 }
 
-var sum_along_axis = make_reduction_along_axis('var curret = val;',
-'curret += val;', 'dst_data[dst_idx] = curret;', false);
+var sum_along_axis = make_reduction_along_axis_stat('var curret = val;',
+'curret += val;', 'dst_data[dst_idx] = curret;');
 export function sum(A: Matrix): Matrix;
 export function sum(A: Matrix, dim: number, outtype?: string): Matrix;
 export function sum(A: Matrix, outtype?: string): Matrix;
@@ -210,8 +275,8 @@ export function sum(A: Matrix, ...args: any[]): Matrix {
   return sum_along_axis(A, dim);
 }
 
-var mean_along_axis = make_reduction_along_axis('var curret = val;',
-'curret += val;', 'dst_data[dst_idx] = curret / reduction_count;', false);
+var mean_along_axis = make_reduction_along_axis_stat('var curret = val;',
+'curret += val;', 'dst_data[dst_idx] = curret / reduction_count;');
 export function mean(A: Matrix): Matrix;
 export function mean(A: Matrix, dim: number, outtype?: string): Matrix;
 export function mean(A: Matrix, outtype?: string): Matrix;
@@ -234,11 +299,11 @@ export function mean(A: Matrix, ...args: any[]): Matrix {
 }
 
 //w=0: normalize by N-1
-var variance_along_axis_w0 = make_reduction_along_axis('var normalsum = val; var sqsum = val * val;',
-'normalsum += val; sqsum += val * val;', 'dst_data[dst_idx] = (sqsum - normalsum * normalsum / reduction_count) / Math.max(reduction_count - 1, 1);', false);
+var variance_along_axis_w0 = make_reduction_along_axis_stat('var normalsum = val; var sqsum = val * val;',
+'normalsum += val; sqsum += val * val;', 'dst_data[dst_idx] = (sqsum - normalsum * normalsum / reduction_count) / Math.max(reduction_count - 1, 1);');
 //w=1: normalize by N
-var variance_along_axis_w1 = make_reduction_along_axis('var normalsum = val; var sqsum = val * val;',
-'normalsum += val; sqsum += val * val;', 'dst_data[dst_idx] = (sqsum - normalsum * normalsum / reduction_count) / reduction_count;', false);
+var variance_along_axis_w1 = make_reduction_along_axis_stat('var normalsum = val; var sqsum = val * val;',
+'normalsum += val; sqsum += val * val;', 'dst_data[dst_idx] = (sqsum - normalsum * normalsum / reduction_count) / reduction_count;');
 export function variance(A: Matrix, w: number = 0, dim?: number): Matrix {
   if (w == 0) {
     return variance_along_axis_w0(A, dim);
@@ -250,11 +315,11 @@ export function variance(A: Matrix, w: number = 0, dim?: number): Matrix {
 }
 
 //w=0: normalize by N-1
-var std_along_axis_w0 = make_reduction_along_axis('var normalsum = val; var sqsum = val * val;',
-'normalsum += val; sqsum += val * val;', 'dst_data[dst_idx] = Math.sqrt((sqsum - normalsum * normalsum / reduction_count) / Math.max(reduction_count - 1, 1));', false);
+var std_along_axis_w0 = make_reduction_along_axis_stat('var normalsum = val; var sqsum = val * val;',
+'normalsum += val; sqsum += val * val;', 'dst_data[dst_idx] = Math.sqrt((sqsum - normalsum * normalsum / reduction_count) / Math.max(reduction_count - 1, 1));');
 //w=1: normalize by N
-var std_along_axis_w1 = make_reduction_along_axis('var normalsum = val; var sqsum = val * val;',
-'normalsum += val; sqsum += val * val;', 'dst_data[dst_idx] = Math.sqrt((sqsum - normalsum * normalsum / reduction_count) / reduction_count);', false);
+var std_along_axis_w1 = make_reduction_along_axis_stat('var normalsum = val; var sqsum = val * val;',
+'normalsum += val; sqsum += val * val;', 'dst_data[dst_idx] = Math.sqrt((sqsum - normalsum * normalsum / reduction_count) / reduction_count);');
 export function std(A: Matrix, w: number = 0, dim?: number): Matrix {
   if (w == 0) {
     return std_along_axis_w0(A, dim);

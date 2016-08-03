@@ -1358,6 +1358,14 @@ describe('Sushi class', function () {
     expect($M.sizejsa(mat2)).toEqual([1, 3]);
     expect($M.mat2jsa(mat2)).toEqual([[1, 2, 3]]);
 
+    //output klass is always single
+    mat = $M.jsa2mat([[1, 2, 3], [40, 60, 80]], false, 'int32');
+    mat2 = $M.sum(mat);
+    expect($M.klass(mat2)).toEqual('single');
+    expect($M.mat2jsa(mat2)).toEqual([[41, 62, 83]]);
+    mat2 = $M.mean(mat);
+    expect($M.klass(mat2)).toEqual('single');
+    expect($M.mat2jsa(mat2)).toEqual([[20.5, 31.0, 41.5]]);
   });
 
   it('sum_mean_gpu', function () {
@@ -1394,6 +1402,14 @@ describe('Sushi class', function () {
     expect($M.sizejsa(mat2)).toEqual([1, 3]);
     expect($M.mat2jsa(mat2)).toEqual([[1, 2, 3]]);
 
+    //output klass is always single
+    mat = $M.jsa2mat([[1, 2, 3], [40, 60, 80]], false, 'int32');
+    mat2 = $M.sum(mat);
+    expect($M.klass(mat2)).toEqual('single');
+    expect($M.mat2jsa(mat2)).toEqual([[41, 62, 83]]);
+    mat2 = $M.mean(mat);
+    expect($M.klass(mat2)).toEqual('single');
+    expect($M.mat2jsa(mat2)).toEqual([[20.5, 31.0, 41.5]]);
   });
 
   it('var_std', function () {

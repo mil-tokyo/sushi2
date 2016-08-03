@@ -141,6 +141,99 @@ var util_cl = require('./util_cl');
     }
   };
 
+  var stat_reduction_along_axis_cl = function (A, dim, name, init_accum, update_accum, assign_result) {
+    // for statistics methods, output is single klass
+    if (dim == null) {
+      //select first non-1 axis
+      dim = A._numel;
+      for (var i = 0; i < A._size.length; i++) {
+        var dimsize = A._size[i];
+        if (dimsize !== 1) {
+          dim = i + 1;
+          break;
+        }
+      }
+    }
+
+    var virtual_input_shape = A._size.concat();
+    while (dim > virtual_input_shape.length) {
+      // A._size = [10, 20], dim = 4 => virtual_input_shape = [10, 20, 1, 1]
+      virtual_input_shape.push(1);
+    }
+    var dstsize = virtual_input_shape.concat();
+    if (dstsize[dim - 1] !== 0) {
+      //size 0 dimension is preserved
+      dstsize[dim - 1] = 1;
+    }
+
+    //reduction actually needed
+    var dst = new MatrixCL(dstsize, 'single');
+    if (A._numel == 0) {
+      return dst;//empty
+    }
+    var dims = virtual_input_shape.length;
+    var input_strides = [];
+    var tmp = 1;
+    for (var i = 0; i < dims; i++) {
+      input_strides.push(tmp);
+      tmp *= virtual_input_shape[i];
+    }
+    var output_strides = [];
+    tmp = 1;
+    for (var i = 0; i < dims; i++) {
+      output_strides.push(tmp);
+      tmp *= dstsize[i];
+    }
+    output_strides.push(tmp);//excess 1 dimension required
+
+    var output_strides_mat = MatrixCL._fromtypedarray(new Int32Array(output_strides), 'int32');
+    var input_strides_mat = MatrixCL._fromtypedarray(new Int32Array(input_strides), 'int32');
+
+    var reduction_step = input_strides[dim - 1];
+    var reduction_count = virtual_input_shape[dim - 1];
+
+    var kernel_name = 'stat_reduction_cl_' + name + '_' + (A._klass) + '_' + dims;
+    var kernel = MatrixCL.kernel_cache[kernel_name];
+    if (!kernel) {
+      kernel = $CL.createKernel([
+        '#define SRC_TYPE ' + ctypes[A._klass],
+        '#define DST_TYPE float',
+        '#define DIMS ' + dims,
+        '__kernel void kernel_func(__global DST_TYPE *dst, __global const SRC_TYPE *src,',
+        ' uint length,',
+        '__global const int *output_strides, __global const int *input_strides, int reduction_step, int reduction_count) {',
+        '  int i = (int)get_global_id(0);',
+        '  if (i >= length) { return; }',
+        '  int src_idx = 0;',
+        '  for (int d = 0; d < DIMS; d++) {',
+        '    src_idx += i % output_strides[d+1] / output_strides[d] * input_strides[d];',
+        '  }',
+        '  DST_TYPE val = src[src_idx];',
+        init_accum,//'  DST_TYPE accum = val;',
+        '  for (int red = 1; red < reduction_count; red++) {',
+        '    src_idx += reduction_step;',
+        '    val = (DST_TYPE)src[src_idx];',
+        update_accum,
+        '  }',
+        assign_result,//'  dst[i] = accum;',
+        '}'
+      ].join('\n'));
+      MatrixCL.kernel_cache[kernel_name] = kernel;
+    }
+
+    $CL.executeKernel(kernel, [
+      { access: WebCL.MEM_WRITE_ONLY, datum: dst },
+      { access: WebCL.MEM_READ_ONLY, datum: A },
+      { datum: dst._numel, type: WebCL.type.INT },
+      { access: WebCL.MEM_READ_ONLY, datum: output_strides_mat },
+      { access: WebCL.MEM_READ_ONLY, datum: input_strides_mat },
+      { datum: reduction_step, type: WebCL.type.INT },
+      { datum: reduction_count, type: WebCL.type.INT }
+    ], dst._numel);
+
+    return dst;
+  };
+
   var max_native = $M.max;
   $M.max = function (A, B, dim) {
     return $M.autodestruct(function () {
@@ -190,28 +283,59 @@ var util_cl = require('./util_cl');
     }
   };
 
-  var replace_sum = function (f_native) {
-    return function (A) {
-      //TODO: compute in gpu
-      var a_cl = false;
+  var replace_sum = function (f_native, name, init_accum, update_accum, assign_result) {
+    return function (A) {//(A: Matrix, dim: number, outtype?: string)
       if (A instanceof MatrixCL) {
-        A = $M.gather(A);
-        a_cl = true;
+        var args = [];
+        for (var _i = 1; _i < arguments.length; _i++) {
+          args[_i] = arguments[_i];
+        }
+        var dim = undefined;
+        var outtype = undefined;
+        for (var i = 1; i < arguments.length; i++) {
+          var arg = arguments[i];
+          if (typeof (arg) === 'string') {
+            if (arg != 'native') {
+              throw new Error('Outtype other than native is currently not supported');
+            }
+          } else if (typeof (arg) === 'number') {
+            dim = arg;
+          } else {
+            throw new Error('Unknown argument ' + arg);
+          }
+        }
+        return stat_reduction_along_axis_cl(A, dim, name,
+          init_accum, update_accum, assign_result);
+      } else {
+        //use native
+        return f_native.apply(null, arguments);
       }
-      var args = [A];
-      for (var _i = 1; _i < arguments.length; _i++) {
-        args[_i] = arguments[_i];
-      }
-      var ret = f_native.apply(null, args);
-      if (a_cl) {
-        ret = $M.gpuArray(ret);
-      }
-      return ret;
-    }
+    };
   }
 
-  $M.sum = replace_sum($M.sum);
-  $M.mean = replace_sum($M.mean);
-  $M.variance = replace_sum($M.variance);
-  $M.std = replace_sum($M.std);
+  $M.sum = replace_sum($M.sum, 'sum', 'DST_TYPE accum = val;', 'accum += val;', 'dst[i] = accum;');
+  $M.mean = replace_sum($M.mean, 'mean', 'DST_TYPE accum = val;', 'accum += val;', 'dst[i] = accum / reduction_count;');
+
+  var replace_variance = function (f_native, name, do_sqrt) {
+    return function (A, w, dim) {//(A: Matrix, w: number = 0, dim?: number)
+      if (A instanceof MatrixCL) {
+        var assign_result;
+        if (w == null || w == 0) {
+          assign_result = 'dst[i] = ' + do_sqrt + '((sqsum - normalsum * normalsum / reduction_count) / (reduction_count > 1 ? reduction_count - 1 : 1));';
+        } else if (w == 1) {
+          assign_result = 'dst[i] = ' + do_sqrt + '((sqsum - normalsum * normalsum / reduction_count) / reduction_count);';
+        } else {
+          throw new Error('w must be 0 or 1');
+        }
+        return stat_reduction_along_axis_cl(A, dim, name + w,
+          'DST_TYPE normalsum = (DST_TYPE)val; DST_TYPE sqsum = (DST_TYPE)val * (DST_TYPE)val;', 'normalsum += val; sqsum += (DST_TYPE)val * (DST_TYPE)val;', assign_result);
+      } else {
+        //use native
+        return f_native.apply(null, arguments);
+      }
+    };
+  }
+
+  $M.variance = replace_variance($M.variance, 'variance', '');
+  $M.std = replace_variance($M.std, 'std', 'sqrt');
 })();
