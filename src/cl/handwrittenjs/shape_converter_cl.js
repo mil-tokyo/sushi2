@@ -89,7 +89,7 @@ var util_cl = require('./util_cl');
     while (_rs.length < A._ndims) {
       _rs.push(1);
     }
-  
+
     // remove tailing 1
     while ((_rs.length > A._ndims) && (_rs[_rs.length - 1] == 1)) {
       _rs.pop();
@@ -97,8 +97,8 @@ var util_cl = require('./util_cl');
 
     var newdims = _rs.length;
     var newsize = [];
-    var input_strides = new Int32Array(newdims+1);
-    var output_strides = new Int32Array(newdims+1);
+    var input_strides = new Int32Array(newdims + 1);
+    var output_strides = new Int32Array(newdims + 1);
     var tmp_in_stride = 1;
     var tmp_out_stride = 1;
     var n_copy = 1;
@@ -178,6 +178,96 @@ var util_cl = require('./util_cl');
       return repmat_cl.apply(null, arguments);
     } else {
       return repmat_native.apply(null, arguments);
+    }
+  };
+
+  var permute_native = $M.permute;
+  var permute_cl = function (A, order) {
+    var src_size = A._size.concat();
+    var numel = A._numel;
+    if (order.length < src_size.length) {
+      throw Error('order must include at least input dimension');
+    }
+    var ndim = order.length;
+    var src_strides = A._strides.concat();
+    while (src_size.length < ndim) {
+      //append dimension of 1
+      src_size.push(1);
+      src_strides.push(numel);
+    }
+    var dst_size = [];
+    for (var d = 0; d < ndim; d++) {
+      var element = order[d] - 1;//order start from 1
+      dst_size.push(src_size[element]);
+    }
+
+    var dst = new MatrixCL(dst_size, A._klass);
+    var dst_strides = dst._strides.concat();
+    while (dst_strides.length < ndim) {
+      // occur when last dimensions are 1
+      dst_strides.push(numel);
+    }
+    var dst_strides_perm = [];
+    order.forEach((o, i) => dst_strides_perm[o - 1] = dst_strides[i]);
+    var perm_stride = MatrixCL._fromtypedarray(new Int32Array(src_strides.concat(src_size, dst_strides_perm)), 'int32');
+
+    var kernel_name = 'permute_cl_' + A._klass + '_' + ndim;
+    var kernel = MatrixCL.kernel_cache[kernel_name];
+    if (!kernel) {
+      kernel = $CL.createKernel([
+        '#define SRC_DST_TYPE ' + ctypes[A._klass],
+        '#define DIMS ' + ndim,
+        '__kernel void kernel_func(__global SRC_DST_TYPE *dst, __global const SRC_DST_TYPE *src,',
+        '__global const int *perm_stride, uint length)',
+        '{',
+        'uint i = get_global_id(0);',
+        'if (i >= length) {return;}',
+        '__global int *src_strides = perm_stride;',
+        '__global int *src_size = perm_stride + DIMS;',
+        '__global int *dst_strides_perm = perm_stride + DIMS * 2;',
+        'uint dst_idx = 0;',
+        'for (int dim = 0; dim < DIMS; dim++) {',
+        '  dst_idx += i / src_strides[dim] % src_size[dim] * dst_strides_perm[dim];',
+        '}',
+        'dst[dst_idx] = src[i];',
+        '}'
+      ].join('\n'));
+      MatrixCL.kernel_cache[kernel_name] = kernel;
+    }
+
+    if (dst._numel > 0) {
+      $CL.executeKernel(kernel, [
+        { access: WebCL.MEM_WRITE_ONLY, datum: dst },
+        { access: WebCL.MEM_READ_ONLY, datum: A },
+        { access: WebCL.MEM_READ_ONLY, datum: perm_stride },
+        { datum: dst._numel, type: WebCL.type.UINT }
+      ], dst._numel);
+    }
+
+    perm_stride.destruct();
+
+    return dst;
+  };
+
+  $M.permute = function (A, order) {
+    if (A instanceof MatrixCL) {
+      return permute_cl(A, order);
+    } else {
+      return permute_native(A, order);
+    }
+  };
+
+  var ipermute_native = $M.ipermute;
+  $M.ipermute = function (A, order) {
+    if (A instanceof MatrixCL) {
+      // reverse order
+      var rev_order = order.concat();//have same elements
+      for (var d = 0; d < order.length; d++) {
+        rev_order[order[d] - 1] = d + 1;
+      }
+      return permute_cl(A, rev_order);
+    } else {
+      return ipermute_native(A, order);
     }
   };
 })();
