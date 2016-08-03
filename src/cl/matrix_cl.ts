@@ -1038,14 +1038,17 @@ class MatrixCL extends Matrix {
           kernel_get_ind_func += '\n';
         }
 
+        var cast_str;
         var kernel_str = [
           '#define DIMS ' + inds_ndim,
-          '#define SRC_DST_TYPE ' + ctypes[this._klass],
+          '#define SRC_TYPE ' + ctypes[this._klass],
+          '#define DST_TYPE ' + ctypes[val_is_matrix ? (<Matrix>val)._klass : this._klass],
+          '#define TYPE_CAST(x) ' + MatrixCL.get_cast_str(this._klass, val_is_matrix ? (<Matrix>val)._klass : this._klass),
           kernel_get_ind_func,
           '#define ADD_IND(dim) {dst_coord = (i / dst_stride[dim]) % dst_shape[dim]; src_coord = (get_ind ## dim(ind ## dim, dst_coord, src_shape[dim])) - 1; src_linear_index += src_coord * src_stride[dim];}',
           '__kernel void kernel_func(',
-          val_is_matrix ? '__global const SRC_DST_TYPE *dst' : 'SRC_DST_TYPE dst',
-          ', __global SRC_DST_TYPE *src, __global const int *size_strides, uint output_length',
+          val_is_matrix ? '__global const DST_TYPE *dst' : 'DST_TYPE dst',
+          ', __global SRC_TYPE *src, __global const int *size_strides, uint output_length',
           kernel_index_args_str,
           ') {',
           '  uint i = get_global_id(0);',
@@ -1054,7 +1057,7 @@ class MatrixCL extends Matrix {
           '  int dst_coord, src_coord;',
           '  int src_linear_index = 0;',
           kernel_add_dim,
-          val_is_matrix ? '  src[src_linear_index] = dst[i];' : '  src[src_linear_index] = dst;',
+          val_is_matrix ? '  src[src_linear_index] = TYPE_CAST(dst[i]);' : '  src[src_linear_index] = TYPE_CAST(dst);',
           '}'
         ].join('\n');
         kernel = $CL.createKernel(kernel_str);
