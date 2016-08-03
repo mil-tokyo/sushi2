@@ -944,7 +944,7 @@ class Matrix {
         throw Error('Shape mismatch');
       }
 
-      var dst_data = (<Matrix>val)._data;
+      var dst_data = (<Matrix>val).getdataref();
       var src_data = this._data;
       for (var dst_idx = 0; dst_idx < dst_numel; dst_idx++) {
         var input_linear_idx = 0;
