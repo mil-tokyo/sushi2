@@ -34,7 +34,7 @@ function max_along_axis_old(A: Matrix, dim?: number): Matrix {
     dst_onlyreshape.reshape_inplace(dstsize);
     return dst_onlyreshape;
   }
-  
+
   //reduction actually needed
   var dst = new Matrix(dstsize, A._klass);
   var input_strides = A._strides;
@@ -108,7 +108,7 @@ function make_reduction_along_axis(var_decl: string, var_update: string, result_
     "    }",
     "    //reduction actually needed",
     "    var dst = new Matrix(dstsize, A._klass);",
-    out_argmax ? "var amax = new Matrix(dstsize, 'int32'); var amax_data = amax._data;": "",
+    out_argmax ? "var amax = new Matrix(dstsize, 'int32'); var amax_data = amax._data;" : "",
     "    var input_strides = A._strides;",
     "    var output_strides = dst._strides.slice();",
     "    while (output_strides.length <= input_strides.length) {",
@@ -138,8 +138,8 @@ function make_reduction_along_axis(var_decl: string, var_update: string, result_
     //"        dst_data[dst_idx] = curret;",
     result_assign,
     "    }",
-    out_argmax ? "return {M:dst,I:amax};": "return dst;",
-    "}", ].join('\n'));
+    out_argmax ? "return {M:dst,I:amax};" : "return dst;",
+    "}",].join('\n'));
   return f;
 }
 
@@ -204,7 +204,7 @@ function make_reduction_along_axis_stat(var_decl: string, var_update: string, re
     result_assign,
     "    }",
     "return dst;",
-    "}", ].join('\n'));
+    "}",].join('\n'));
   return f;
 }
 
@@ -252,58 +252,57 @@ export function argmin(A: MatrixOrNumber, dummy?: any, dim?: number): { M: Matri
   return argmin_along_axis(util.as_mat(A), dim);
 }
 
+function sum_mean(A: Matrix, args: any[], f: (A: Matrix, dim: number) => Matrix): Matrix {
+  var dim = undefined;
+  var outtype = undefined;
+  while (args.length > 0) {
+    var arg = args.pop();
+    if (typeof (arg) === 'string') {
+      if (arg != 'native') {
+        throw new Error('Outtype other than native is currently not supported');
+      }
+    } else if (typeof (arg) === 'number') {
+      dim = arg;
+    } else {
+      throw new Error('Unknown argument ' + arg);
+    }
+  }
+  return f(A, dim);
+}
+
 var sum_along_axis = make_reduction_along_axis_stat('var curret = val;',
-'curret += val;', 'dst_data[dst_idx] = curret;');
+  'curret += val;', 'dst_data[dst_idx] = curret;');
 export function sum(A: Matrix): Matrix;
 export function sum(A: Matrix, dim: number, outtype?: string): Matrix;
 export function sum(A: Matrix, outtype?: string): Matrix;
 export function sum(A: Matrix, ...args: any[]): Matrix {
-  var dim = undefined;
-  var outtype = undefined;
-  while (args.length > 0) {
-    var arg = args.pop();
-    if (typeof(arg) === 'string') {
-      if (arg != 'native') {
-        throw new Error('Outtype other than native is currently not supported');
-      }
-    } else if (typeof(arg) === 'number') {
-      dim = arg;
-    } else {
-      throw new Error('Unknown argument ' + arg);
-    }
-  }
-  return sum_along_axis(A, dim);
+  return sum_mean(A, args, sum_along_axis);
 }
 
 var mean_along_axis = make_reduction_along_axis_stat('var curret = val;',
-'curret += val;', 'dst_data[dst_idx] = curret / reduction_count;');
+  'curret += val;', 'dst_data[dst_idx] = curret / reduction_count;');
 export function mean(A: Matrix): Matrix;
 export function mean(A: Matrix, dim: number, outtype?: string): Matrix;
 export function mean(A: Matrix, outtype?: string): Matrix;
 export function mean(A: Matrix, ...args: any[]): Matrix {
-  var dim = undefined;
-  var outtype = undefined;
-  while (args.length > 0) {
-    var arg = args.pop();
-    if (typeof(arg) === 'string') {
-      if (arg != 'native') {
-        throw new Error('Outtype other than native is currently not supported');
-      }
-    } else if (typeof(arg) === 'number') {
-      dim = arg;
-    } else {
-      throw new Error('Unknown argument ' + arg);
-    }
-  }
-  return mean_along_axis(A, dim);
+  return sum_mean(A, args, mean_along_axis);
+}
+
+var prod_along_axis = make_reduction_along_axis_stat('var curret = val;',
+  'curret *= val;', 'dst_data[dst_idx] = curret;');
+export function prod(A: Matrix): Matrix;
+export function prod(A: Matrix, dim: number, outtype?: string): Matrix;
+export function prod(A: Matrix, outtype?: string): Matrix;
+export function prod(A: Matrix, ...args: any[]): Matrix {
+  return sum_mean(A, args, prod_along_axis);
 }
 
 //w=0: normalize by N-1
 var variance_along_axis_w0 = make_reduction_along_axis_stat('var normalsum = val; var sqsum = val * val;',
-'normalsum += val; sqsum += val * val;', 'dst_data[dst_idx] = (sqsum - normalsum * normalsum / reduction_count) / Math.max(reduction_count - 1, 1);');
+  'normalsum += val; sqsum += val * val;', 'dst_data[dst_idx] = (sqsum - normalsum * normalsum / reduction_count) / Math.max(reduction_count - 1, 1);');
 //w=1: normalize by N
 var variance_along_axis_w1 = make_reduction_along_axis_stat('var normalsum = val; var sqsum = val * val;',
-'normalsum += val; sqsum += val * val;', 'dst_data[dst_idx] = (sqsum - normalsum * normalsum / reduction_count) / reduction_count;');
+  'normalsum += val; sqsum += val * val;', 'dst_data[dst_idx] = (sqsum - normalsum * normalsum / reduction_count) / reduction_count;');
 export function variance(A: Matrix, w: number = 0, dim?: number): Matrix {
   if (w == 0) {
     return variance_along_axis_w0(A, dim);
@@ -316,10 +315,10 @@ export function variance(A: Matrix, w: number = 0, dim?: number): Matrix {
 
 //w=0: normalize by N-1
 var std_along_axis_w0 = make_reduction_along_axis_stat('var normalsum = val; var sqsum = val * val;',
-'normalsum += val; sqsum += val * val;', 'dst_data[dst_idx] = Math.sqrt((sqsum - normalsum * normalsum / reduction_count) / Math.max(reduction_count - 1, 1));');
+  'normalsum += val; sqsum += val * val;', 'dst_data[dst_idx] = Math.sqrt((sqsum - normalsum * normalsum / reduction_count) / Math.max(reduction_count - 1, 1));');
 //w=1: normalize by N
 var std_along_axis_w1 = make_reduction_along_axis_stat('var normalsum = val; var sqsum = val * val;',
-'normalsum += val; sqsum += val * val;', 'dst_data[dst_idx] = Math.sqrt((sqsum - normalsum * normalsum / reduction_count) / reduction_count);');
+  'normalsum += val; sqsum += val * val;', 'dst_data[dst_idx] = Math.sqrt((sqsum - normalsum * normalsum / reduction_count) / reduction_count);');
 export function std(A: Matrix, w: number = 0, dim?: number): Matrix {
   if (w == 0) {
     return std_along_axis_w0(A, dim);

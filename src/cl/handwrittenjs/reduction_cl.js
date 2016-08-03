@@ -315,6 +315,7 @@ var util_cl = require('./util_cl');
 
   $M.sum = replace_sum($M.sum, 'sum', 'DST_TYPE accum = val;', 'accum += val;', 'dst[i] = accum;');
   $M.mean = replace_sum($M.mean, 'mean', 'DST_TYPE accum = val;', 'accum += val;', 'dst[i] = accum / reduction_count;');
+  $M.prod = replace_sum($M.prod, 'prod', 'DST_TYPE accum = val;', 'accum *= val;', 'dst[i] = accum;');
 
   var replace_variance = function (f_native, name, do_sqrt) {
     return function (A, w, dim) {//(A: Matrix, w: number = 0, dim?: number)

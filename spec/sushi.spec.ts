@@ -1324,7 +1324,7 @@ describe('Sushi class', function () {
     }
   });
 
-  it('sum_mean', function () {
+  it('sum_mean_prod', function () {
     var mat = $M.jsa2mat([[1, 2, 3], [41, 52, 63]]);
     var mat2 = $M.sum(mat);
     expect($M.sizejsa(mat2)).toEqual([1, 3]);
@@ -1332,18 +1332,27 @@ describe('Sushi class', function () {
     mat2 = $M.mean(mat);
     expect($M.sizejsa(mat2)).toEqual([1, 3]);
     expect($M.mat2jsa(mat2)).toEqual([[21, 27, 33]]);
+    mat2 = $M.prod(mat);
+    expect($M.sizejsa(mat2)).toEqual([1, 3]);
+    expect($M.mat2jsa(mat2)).toEqual([[41, 104, 189]]);
     mat2 = $M.sum(mat, 1);
     expect($M.sizejsa(mat2)).toEqual([1, 3]);
     expect($M.mat2jsa(mat2)).toEqual([[42, 54, 66]]);
     mat2 = $M.mean(mat, 1);
     expect($M.sizejsa(mat2)).toEqual([1, 3]);
     expect($M.mat2jsa(mat2)).toEqual([[21, 27, 33]]);
+    mat2 = $M.prod(mat, 1);
+    expect($M.sizejsa(mat2)).toEqual([1, 3]);
+    expect($M.mat2jsa(mat2)).toEqual([[41, 104, 189]]);
     mat2 = $M.sum(mat, 2);
     expect($M.sizejsa(mat2)).toEqual([2, 1]);
     expect($M.mat2jsa(mat2)).toEqual([[6], [156]]);
     mat2 = $M.mean(mat, 2);
     expect($M.sizejsa(mat2)).toEqual([2, 1]);
     expect($M.mat2jsa(mat2)).toEqual([[2], [52]]);
+    mat2 = $M.prod(mat, 2);
+    expect($M.sizejsa(mat2)).toEqual([2, 1]);
+    expect($M.mat2jsa(mat2)).toEqual([[6], [134316]]);
     mat = $M.jsa2mat([[1, 2, 3]]);
     mat2 = $M.sum(mat);
     expect($M.sizejsa(mat2)).toEqual([1, 1]);
@@ -1351,10 +1360,16 @@ describe('Sushi class', function () {
     mat2 = $M.mean(mat);
     expect($M.sizejsa(mat2)).toEqual([1, 1]);
     expect($M.mat2jsa(mat2)).toEqual([[2]]);
+    mat2 = $M.prod(mat);
+    expect($M.sizejsa(mat2)).toEqual([1, 1]);
+    expect($M.mat2jsa(mat2)).toEqual([[6]]);
     mat2 = $M.sum(mat, 1);
     expect($M.sizejsa(mat2)).toEqual([1, 3]);
     expect($M.mat2jsa(mat2)).toEqual([[1, 2, 3]]);
     mat2 = $M.mean(mat, 1);
+    expect($M.sizejsa(mat2)).toEqual([1, 3]);
+    expect($M.mat2jsa(mat2)).toEqual([[1, 2, 3]]);
+    mat2 = $M.prod(mat, 1);
     expect($M.sizejsa(mat2)).toEqual([1, 3]);
     expect($M.mat2jsa(mat2)).toEqual([[1, 2, 3]]);
 
@@ -1366,9 +1381,12 @@ describe('Sushi class', function () {
     mat2 = $M.mean(mat);
     expect($M.klass(mat2)).toEqual('single');
     expect($M.mat2jsa(mat2)).toEqual([[20.5, 31.0, 41.5]]);
+    mat2 = $M.prod(mat);
+    expect($M.klass(mat2)).toEqual('single');
+    expect($M.mat2jsa(mat2)).toEqual([[40, 120, 240]]);
   });
 
-  it('sum_mean_gpu', function () {
+  it('sum_mean_prod_gpu', function () {
     var mat = $M.gpuArray($M.jsa2mat([[1, 2, 3], [41, 52, 63]]));
     var mat2 = $M.sum(mat);
     expect($M.sizejsa(mat2)).toEqual([1, 3]);
@@ -1376,29 +1394,44 @@ describe('Sushi class', function () {
     mat2 = $M.mean(mat);
     expect($M.sizejsa(mat2)).toEqual([1, 3]);
     expect($M.mat2jsa(mat2)).toEqual([[21, 27, 33]]);
+    mat2 = $M.prod(mat);
+    expect($M.sizejsa(mat2)).toEqual([1, 3]);
+    expect($M.mat2jsa(mat2)).toEqual([[41, 104, 189]]);
     mat2 = $M.sum(mat, 1);
     expect($M.sizejsa(mat2)).toEqual([1, 3]);
     expect($M.mat2jsa(mat2)).toEqual([[42, 54, 66]]);
     mat2 = $M.mean(mat, 1);
     expect($M.sizejsa(mat2)).toEqual([1, 3]);
     expect($M.mat2jsa(mat2)).toEqual([[21, 27, 33]]);
+    mat2 = $M.prod(mat, 1);
+    expect($M.sizejsa(mat2)).toEqual([1, 3]);
+    expect($M.mat2jsa(mat2)).toEqual([[41, 104, 189]]);
     mat2 = $M.sum(mat, 2);
     expect($M.sizejsa(mat2)).toEqual([2, 1]);
     expect($M.mat2jsa(mat2)).toEqual([[6], [156]]);
     mat2 = $M.mean(mat, 2);
     expect($M.sizejsa(mat2)).toEqual([2, 1]);
     expect($M.mat2jsa(mat2)).toEqual([[2], [52]]);
-    mat = $M.gpuArray($M.jsa2mat([[1, 2, 3]]));
+    mat2 = $M.prod(mat, 2);
+    expect($M.sizejsa(mat2)).toEqual([2, 1]);
+    expect($M.mat2jsa(mat2)).toEqual([[6], [134316]]);
+    mat = $M.jsa2mat([[1, 2, 3]]);
     mat2 = $M.sum(mat);
     expect($M.sizejsa(mat2)).toEqual([1, 1]);
     expect($M.mat2jsa(mat2)).toEqual([[6]]);
     mat2 = $M.mean(mat);
     expect($M.sizejsa(mat2)).toEqual([1, 1]);
     expect($M.mat2jsa(mat2)).toEqual([[2]]);
+    mat2 = $M.prod(mat);
+    expect($M.sizejsa(mat2)).toEqual([1, 1]);
+    expect($M.mat2jsa(mat2)).toEqual([[6]]);
     mat2 = $M.sum(mat, 1);
     expect($M.sizejsa(mat2)).toEqual([1, 3]);
     expect($M.mat2jsa(mat2)).toEqual([[1, 2, 3]]);
     mat2 = $M.mean(mat, 1);
+    expect($M.sizejsa(mat2)).toEqual([1, 3]);
+    expect($M.mat2jsa(mat2)).toEqual([[1, 2, 3]]);
+    mat2 = $M.prod(mat, 1);
     expect($M.sizejsa(mat2)).toEqual([1, 3]);
     expect($M.mat2jsa(mat2)).toEqual([[1, 2, 3]]);
 
@@ -1410,6 +1443,9 @@ describe('Sushi class', function () {
     mat2 = $M.mean(mat);
     expect($M.klass(mat2)).toEqual('single');
     expect($M.mat2jsa(mat2)).toEqual([[20.5, 31.0, 41.5]]);
+    mat2 = $M.prod(mat);
+    expect($M.klass(mat2)).toEqual('single');
+    expect($M.mat2jsa(mat2)).toEqual([[40, 120, 240]]);
   });
 
   it('var_std', function () {

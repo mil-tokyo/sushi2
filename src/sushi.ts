@@ -271,6 +271,7 @@ export var argmax = reduction.argmax;
 export var argmin = reduction.argmin;
 export var sum = reduction.sum;
 export var mean = reduction.mean;
+export var prod = reduction.prod;
 export var std = reduction.std;
 export var variance = reduction.variance;
 
