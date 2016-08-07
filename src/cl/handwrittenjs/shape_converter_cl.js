@@ -25,7 +25,51 @@ var util_cl = require('./util_cl');
     var dst_cols = A._size[0], dst_rows = A._size[1];
     var dst = new MatrixCL([dst_rows, dst_cols], A._klass);
 
-    if (dst_cols % 16 == 0 && dst_rows % 16 == 0) {
+    
+    if (dst_cols % 64 == 0 && dst_rows % 64 == 0) {
+      var kernel_name = 'transpose_cl_' + A._klass + '_64';
+      var kernel = MatrixCL.kernel_cache[kernel_name];
+      var tile_size = 64;
+      var block_size = 16;
+      if (!kernel) {
+        kernel = $CL.createKernel([
+          '#define SRC_DST_TYPE ' + ctypes[A._klass],
+          '#define TILE_SIZE ' + tile_size,
+          '#define BLOCK_SIZE ' + block_size,
+          '__kernel void kernel_func(__global SRC_DST_TYPE *dst, __global SRC_DST_TYPE *src,',
+          'uint dst_rows, uint dst_cols)',
+          '{',
+          'uint r0 = get_group_id(0);',
+          'uint r1 = get_group_id(1);',
+          //'uint l0 = get_local_id(0);',
+          'uint l1 = get_local_id(1);',
+          '__local SRC_DST_TYPE block_cache[BLOCK_SIZE * BLOCK_SIZE];',
+          'for (int tile_x = 0; tile_x < (TILE_SIZE / BLOCK_SIZE); tile_x++) {',
+          'for (int tile_y = 0; tile_y < (TILE_SIZE / BLOCK_SIZE); tile_y++) {',
+          'for (int i = 0; i < BLOCK_SIZE; i++) {',
+          'block_cache[l1 + i * BLOCK_SIZE] = src[(r0 * TILE_SIZE + tile_x * BLOCK_SIZE + l1)+(r1 * TILE_SIZE + tile_y * BLOCK_SIZE + i)*dst_cols];',
+          '}',
+          'barrier(CLK_LOCAL_MEM_FENCE);',
+          'for (int i = 0; i < BLOCK_SIZE; i++) {',
+          'dst[(r1 * TILE_SIZE + tile_y * BLOCK_SIZE + l1) + (r0 * TILE_SIZE + tile_x * BLOCK_SIZE + i) * dst_rows] = block_cache[i + l1 * BLOCK_SIZE];',
+          '}',
+          'barrier(CLK_LOCAL_MEM_FENCE);',
+          '}',
+          '}',
+          '}'
+        ].join('\n'));
+        MatrixCL.kernel_cache[kernel_name] = kernel;
+      }
+
+      if (dst._numel > 0) {
+        $CL.executeKernel(kernel, [
+          { access: WebCL.MEM_WRITE_ONLY, datum: dst },
+          { access: WebCL.MEM_READ_ONLY, datum: A },
+          { datum: dst_rows, type: WebCL.type.UINT },
+          { datum: dst_cols, type: WebCL.type.UINT }
+        ], [dst_cols / tile_size, dst_rows / (tile_size / block_size)], [1, block_size]);
+      }
+    } else if (dst_cols % 16 == 0 && dst_rows % 16 == 0) {
       var kernel_name = 'transpose_cl_' + A._klass + '_16';
       var kernel = MatrixCL.kernel_cache[kernel_name];
       var block_size = 16;
