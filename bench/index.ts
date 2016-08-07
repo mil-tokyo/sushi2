@@ -17,6 +17,7 @@ if (cl_enabled) {
 import BenchBase = require('./bench_base');
 import mtimes = require('./mtimes');
 import slice = require('./slice');
+import transpose = require('./transpose');
 
 function time(f: BenchBase, n_run: number = 3): number {
   var elapsed = 0;
@@ -52,6 +53,7 @@ function time(f: BenchBase, n_run: number = 3): number {
 function main() {
   time(new mtimes(2000, 2000, 2000));
   time(new slice('get', [10000, 100, 20], [$M.colon(), $M.colon(1, $M.end-1), $M.jsa2mat([1,3,5], false, 'int32')]));
+  time(new transpose(9216, 4096));
 }
 
 main();
