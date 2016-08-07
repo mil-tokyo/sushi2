@@ -25,31 +25,66 @@ var util_cl = require('./util_cl');
     var dst_cols = A._size[0], dst_rows = A._size[1];
     var dst = new MatrixCL([dst_rows, dst_cols], A._klass);
 
-    var kernel_name = 'transpose_cl_' + A._klass;
-    var kernel = MatrixCL.kernel_cache[kernel_name];
-    if (!kernel) {
-      kernel = $CL.createKernel([
-        '#define SRC_DST_TYPE ' + ctypes[A._klass],
-        '__kernel void kernel_func(__global SRC_DST_TYPE *dst, __global SRC_DST_TYPE *src,',
-        'uint dst_rows, uint dst_cols, uint length)',
-        '{',
-        'uint i = get_global_id(0);',
-        'if (i >= length) {return;}',
-        'uint dst_row = i % dst_rows, dst_col = i / dst_rows;',
-        'dst[i] = src[dst_row * dst_cols + dst_col];',
-        '}'
-      ].join('\n'));
-      MatrixCL.kernel_cache[kernel_name] = kernel;
-    }
+    if (dst_cols % 16 == 0 && dst_rows % 16 == 0) {
+      var kernel_name = 'transpose_cl_' + A._klass + '_16';
+      var kernel = MatrixCL.kernel_cache[kernel_name];
+      var block_size = 16;
+      if (!kernel) {
+        kernel = $CL.createKernel([
+          '#define SRC_DST_TYPE ' + ctypes[A._klass],
+          '#define BLOCK_SIZE ' + block_size,
+          '__kernel void kernel_func(__global SRC_DST_TYPE *dst, __global SRC_DST_TYPE *src,',
+          'uint dst_rows, uint dst_cols)',
+          '{',
+          'uint g0 = get_global_id(0);',
+          'uint g1 = get_global_id(1);',
+          'uint l0 = get_local_id(0);',
+          'uint l1 = get_local_id(1);',
+          '__local SRC_DST_TYPE block_cache[BLOCK_SIZE * BLOCK_SIZE];',
+          'block_cache[l1 + l0 * BLOCK_SIZE] = src[(g0-l0+l1)+(g1-l1+l0)*dst_cols];',
+          'barrier(CLK_LOCAL_MEM_FENCE);',
+          'dst[g1+g0*dst_rows] = block_cache[l0 + l1 * BLOCK_SIZE];',
+          '}'
+        ].join('\n'));
+        MatrixCL.kernel_cache[kernel_name] = kernel;
+      }
 
-    if (dst._numel > 0) {
-      $CL.executeKernel(kernel, [
-        { access: WebCL.MEM_WRITE_ONLY, datum: dst },
-        { access: WebCL.MEM_READ_ONLY, datum: A },
-        { datum: dst_rows, type: WebCL.type.UINT },
-        { datum: dst_cols, type: WebCL.type.UINT },
-        { datum: dst._numel, type: WebCL.type.UINT }
-      ], dst._numel);
+      if (dst._numel > 0) {
+        $CL.executeKernel(kernel, [
+          { access: WebCL.MEM_WRITE_ONLY, datum: dst },
+          { access: WebCL.MEM_READ_ONLY, datum: A },
+          { datum: dst_rows, type: WebCL.type.UINT },
+          { datum: dst_cols, type: WebCL.type.UINT }
+        ], [dst_cols, dst_rows], [block_size, block_size]);
+      }
+    } else {
+      var kernel_name = 'transpose_cl_' + A._klass;
+      var kernel = MatrixCL.kernel_cache[kernel_name];
+      if (!kernel) {
+        kernel = $CL.createKernel([
+          '#define SRC_DST_TYPE ' + ctypes[A._klass],
+          '__kernel void kernel_func(__global SRC_DST_TYPE *dst, __global SRC_DST_TYPE *src,',
+          'uint dst_rows, uint dst_cols, uint length)',
+          '{',
+          'uint i = get_global_id(0);',
+          'if (i >= length) {return;}',
+          'uint dst_row = i % dst_rows, dst_col = i / dst_rows;',
+          'dst[i] = src[dst_row * dst_cols + dst_col];',
+          '}'
+        ].join('\n'));
+        MatrixCL.kernel_cache[kernel_name] = kernel;
+      }
+
+      if (dst._numel > 0) {
+        $CL.executeKernel(kernel, [
+          { access: WebCL.MEM_WRITE_ONLY, datum: dst },
+          { access: WebCL.MEM_READ_ONLY, datum: A },
+          { datum: dst_rows, type: WebCL.type.UINT },
+          { datum: dst_cols, type: WebCL.type.UINT },
+          { datum: dst._numel, type: WebCL.type.UINT }
+        ], dst._numel);
+      }
+
     }
 
     return dst;
