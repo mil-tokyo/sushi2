@@ -36,14 +36,18 @@ var util_cl = require('./util_cl');
           '__kernel void kernel_func(__global SRC_DST_TYPE *dst, __global SRC_DST_TYPE *src,',
           'uint dst_rows, uint dst_cols)',
           '{',
-          'uint g0 = get_global_id(0);',
-          'uint g1 = get_global_id(1);',
-          'uint l0 = get_local_id(0);',
+          'uint r0 = get_group_id(0);',
+          'uint r1 = get_group_id(1);',
+          //'uint l0 = get_local_id(0);',
           'uint l1 = get_local_id(1);',
           '__local SRC_DST_TYPE block_cache[BLOCK_SIZE * BLOCK_SIZE];',
-          'block_cache[l1 + l0 * BLOCK_SIZE] = src[(g0-l0+l1)+(g1-l1+l0)*dst_cols];',
+          'for (int i = 0; i < BLOCK_SIZE; i++) {',
+          'block_cache[l1 + i * BLOCK_SIZE] = src[(r0 * BLOCK_SIZE + l1)+(r1 * BLOCK_SIZE + i)*dst_cols];',
+          '}',
           'barrier(CLK_LOCAL_MEM_FENCE);',
-          'dst[g1+g0*dst_rows] = block_cache[l0 + l1 * BLOCK_SIZE];',
+          'for (int i = 0; i < BLOCK_SIZE; i++) {',
+          'dst[(r1 * BLOCK_SIZE + l1) + (r0 * BLOCK_SIZE + i) * dst_rows] = block_cache[i + l1 * BLOCK_SIZE];',
+          '}',
           '}'
         ].join('\n'));
         MatrixCL.kernel_cache[kernel_name] = kernel;
@@ -55,7 +59,7 @@ var util_cl = require('./util_cl');
           { access: WebCL.MEM_READ_ONLY, datum: A },
           { datum: dst_rows, type: WebCL.type.UINT },
           { datum: dst_cols, type: WebCL.type.UINT }
-        ], [dst_cols, dst_rows], [block_size, block_size]);
+        ], [dst_cols / block_size, dst_rows], [1, block_size]);
       }
     } else {
       var kernel_name = 'transpose_cl_' + A._klass;
