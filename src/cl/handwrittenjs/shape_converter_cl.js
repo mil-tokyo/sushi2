@@ -324,7 +324,7 @@ var util_cl = require('./util_cl');
         { access: WebCL.MEM_READ_ONLY, datum: A },
         { access: WebCL.MEM_READ_ONLY, datum: perm_stride },
         { datum: dst._numel, type: WebCL.type.UINT }
-      ], dst._numel);
+      ], dst._numel, 256);
     }
 
     perm_stride.destruct();
