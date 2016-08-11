@@ -249,21 +249,23 @@
         }
       }
 
+      // scalar to array
+      if (parallelization != null && parallelization.length === void 0) {
+        parallelization = [parallelization];
+      }
+      if (localWS != null && localWS.length === void 0) {
+        localWS = [localWS];
+      }
+
       var globalWS;
-      if (localWS == void 0) {
-        if (parallelization.length === undefined) {
-          //1-d parallelization
-          localWS = [64];
-          globalWS = [Math.ceil(parallelization / localWS[0]) * localWS[0]];
-        } else {
-          //n-d parallelization
-          var localWS_each = [64, 8, 4][parallelization.length];
-          localWS = [];
-          globalWS = [];
-          for (var i = 0; i < parallelization.length; i++) {
-            localWS.push(localWS_each);
-            globalWS.push(Math.ceil(parallelization[i] / localWS_each) * localWS_each);
-          }
+      if (localWS == null) {
+        //n-d parallelization
+        var localWS_each = [64, 64, 8, 4][parallelization.length];
+        localWS = [];
+        globalWS = [];
+        for (var i = 0; i < parallelization.length; i++) {
+          localWS.push(localWS_each);
+          globalWS.push(Math.ceil(parallelization[i] / localWS_each) * localWS_each);
         }
       } else {
         globalWS = [];
