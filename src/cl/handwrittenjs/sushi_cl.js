@@ -14,6 +14,7 @@ module.exports = $M;
 
   var Matrix = require('../../matrix');
   var MatrixCL = require('../matrix_cl');
+  $M.CL.MatrixCL = MatrixCL;
   var WebCL = $M.CL.WebCL;
 
   $M.gpuArray = function (A) {

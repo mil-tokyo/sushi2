@@ -180,6 +180,8 @@
     }
   };
 
+  $M.CL.sgemm = sgemm;
+
   var mtimes_native = $M.mtimes;
   var mtimes_cl = function (A, B) {
     if (A._ndims != 2 || B._ndims != 2) {
