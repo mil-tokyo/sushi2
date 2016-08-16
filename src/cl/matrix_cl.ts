@@ -106,7 +106,7 @@ class MatrixCL extends Matrix {
       dst = new this._data_ctor(length);
     }
 
-    var range_view = new this._data_ctor(dst.buffer, 0, length);
+    var range_view = new this._data_ctor(dst.buffer, dst.byteOffset, length);
     this.read(range_view, src_offset * this._data_ctor.BYTES_PER_ELEMENT);
 
     return dst;
