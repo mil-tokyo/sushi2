@@ -19,6 +19,7 @@ import mtimes = require('./mtimes');
 import slice = require('./slice');
 import transpose = require('./transpose');
 import permute = require('./permute');
+import mtimes_trans = require('./mtimes_trans');
 
 function time(f: BenchBase, n_run: number = 3): number {
   var elapsed = 0;
@@ -58,6 +59,22 @@ function main() {
   time(new transpose(9216, 4096));
   time(new permute([55, 55, 96, 128], [1, 2, 4, 3]));
   time(new permute([55, 55, 96, 128], [4, 1, 2, 3]));
+  mtimes_trans_alexnet();
+}
+
+function mtimes_trans_alexnet() {
+  var combination = function (name, m, n, k) {
+    console.log(name);
+    time(new mtimes_trans(m, n, k, false, false));//fwd
+    time(new mtimes_trans(m, k, n, false, true));//back
+    time(new mtimes_trans(k, n, m, true, false));//update
+  }
+
+  combination('conv1', 387200, 96, 363);
+  combination('conv2', 93312, 256, 1200);//group
+  combination('conv3', 93312, 384, 2304);
+  combination('conv4', 21632, 384, 1728);//group
+  combination('conv5', 21632, 256, 1728);//group
 }
 
 main();
