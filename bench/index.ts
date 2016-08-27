@@ -20,6 +20,7 @@ import slice = require('./slice');
 import transpose = require('./transpose');
 import permute = require('./permute');
 import mtimes_trans = require('./mtimes_trans');
+import destruct = require('./destruct');
 
 function time(f: BenchBase, n_run: number = 3): number {
   var elapsed = 0;
@@ -59,6 +60,7 @@ function main() {
   time(new transpose(9216, 4096));
   time(new permute([55, 55, 96, 128], [1, 2, 4, 3]));
   time(new permute([55, 55, 96, 128], [4, 1, 2, 3]));
+  time(new destruct(1024*1024*10));
   mtimes_trans_alexnet();
 }
 
