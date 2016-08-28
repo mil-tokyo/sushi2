@@ -21,6 +21,7 @@ import transpose = require('./transpose');
 import permute = require('./permute');
 import mtimes_trans = require('./mtimes_trans');
 import destruct = require('./destruct');
+import mtimes_largek = require('./mtimes_largek');
 
 function time(f: BenchBase, n_run: number = 3): number {
   var elapsed = 0;
@@ -55,6 +56,8 @@ function time(f: BenchBase, n_run: number = 3): number {
 
 function main() {
   time(new mtimes(2000, 2000, 2000));
+  time(new mtimes_trans(27, 64, 1605632, true, false));
+  time(new mtimes_largek(27, 64, 1605632));
   time(new mtimes(55*55*1, 96, 11*11*3));
   time(new slice('get', [10000, 100, 20], [$M.colon(), $M.colon(1, $M.end-1), $M.jsa2mat([1,3,5], false, 'int32')]));
   time(new transpose(9216, 4096));
