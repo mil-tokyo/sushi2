@@ -163,7 +163,7 @@ export function npysave(A: Matrix): ArrayBuffer {
   var header_str = "{'descr': '"+endian_char + save_klass_map[klass] + 
   "', 'fortran_order': True, 'shape': (" + A._size.join(', ') + "), }";
   //pad header_str to be (multiple of 16) - (magic 10 + last \n)
-  var pad_len = (header_str.length + 5) % 16;
+  var pad_len = 16 - (header_str.length + 11) % 16;
   header_str += '                '.substr(0, pad_len) + '\n';
   var header_len = header_str.length;
   var header_total_len = header_len + 10;//header with magic number
