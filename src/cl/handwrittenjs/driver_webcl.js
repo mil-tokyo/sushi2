@@ -39,34 +39,26 @@
     // decide platform to use
     var platform_list = WebCL.getPlatforms();
     var platform_index = 0;
-    if (false) {
-/*    if ('OPENCL_PLATFORM_INDEX' in process.env) {
-      platform_index = Number(process.env['OPENCL_PLATFORM_INDEX']);
-      if (platform_index >= platform_list.length) {
-        throw new Error('Invalid platform index ' + platform_index);
-      }*/
-    } else {
-      //select by name
-      var platform_priority = ['CUDA', 'AMD', 'Apple', 'OpenCL'];
-      var priority = platform_priority.length + 1;
-      var includeIndexOf = function (array, search) {
-        for (var i = 0; i < array.length; i++) {
-          if (search.indexOf(array[i]) !== -1) {
-            return i;
-          }
+    //select by name
+    var platform_priority = ['CUDA', 'AMD', 'Apple', 'OpenCL'];
+    var priority = platform_priority.length + 1;
+    var includeIndexOf = function (array, search) {
+      for (var i = 0; i < array.length; i++) {
+        if (search.indexOf(array[i]) !== -1) {
+          return i;
         }
-        return array.length;
-      };
-      for (var i = 0; i < platform_list.length; i++) {
-        var platform_tmp = platform_list[i];
-        var platform_info_tmp = platform_tmp.getInfo(WebCL.PLATFORM_NAME);
-        var priority_tmp = includeIndexOf(platform_priority, platform_info_tmp);
-        if (priority_tmp < priority) {
-          priority = priority_tmp;
-          platform_index = i;
-          $CL.platform = platform_tmp;
-          $CL.platform_info = platform_info_tmp;
-        }
+      }
+      return array.length;
+    };
+    for (var i = 0; i < platform_list.length; i++) {
+      var platform_tmp = platform_list[i];
+      var platform_info_tmp = platform_tmp.getInfo(WebCL.PLATFORM_NAME);
+      var priority_tmp = includeIndexOf(platform_priority, platform_info_tmp);
+      if (priority_tmp < priority) {
+        priority = priority_tmp;
+        platform_index = i;
+        $CL.platform = platform_tmp;
+        $CL.platform_info = platform_info_tmp;
       }
     }
     $CL.platform = platform_list[platform_index];
@@ -82,16 +74,26 @@
       device_type = WebCL.DEVICE_TYPE_CPU;
       $CL.devices = $CL.platform.getDevices(device_type);;
     }
-    
+
     // device selector (experimental)
     var device_index = 0;
-    // Explicit setting by environment variable
-/*    if ('OPENCL_DEVICE_INDEX' in process.env) {
-      device_index = Number(process.env['OPENCL_DEVICE_INDEX']);
-      if (device_index >= $CL.devices.length) {
-        throw new Error('Invalid device index ' + device_index);
+    // selection by url (xxx?device_index=X)
+    var url_vars = function () {
+      var vars = {};
+      var param = location.search.substring(1).split('&');
+      for (var i = 0; i < param.length; i++) {
+        var keySearch = param[i].search(/=/);
+        var key = '';
+        if (keySearch != -1) key = param[i].slice(0, keySearch);
+        var val = param[i].slice(param[i].indexOf('=', 0) + 1);
+        if (key != '') vars[key] = decodeURI(val);
       }
-    }*/
+      return vars;
+    } ();
+    device_index =
+      url_vars.device_index ?
+        Math.min(url_vars.device_index, $CL.devices.length - 1) :
+        0;
     $CL.selected_device = $CL.devices[device_index];
     $CL.device_info = $CL.selected_device.getInfo(WebCL.DEVICE_NAME);
     $CL.device_max_work_group_size = $CL.selected_device.getInfo(WebCL.DEVICE_MAX_WORK_GROUP_SIZE);
@@ -143,7 +145,7 @@
         table_vec_len[WebCL.type.VEC4] = 4;
         table_vec_len[WebCL.type.VEC8] = 8;
         table_vec_len[WebCL.type.VEC16] = 16;
-        $CL.kernelSetArg = function(kernel, idx, param, type) {
+        $CL.kernelSetArg = function (kernel, idx, param, type) {
           if (type !== void 0) {
             if (type == WebCL.type.LOCAL_MEMORY_SIZE) {
               param = new Uint32Array([param]);
@@ -163,14 +165,14 @@
         };
         break;
       case 'chromium':
-      //TODO
-          var properties = new WebCLContextProperties();
-          properties.platform = $CL.platform;
-          properties.deviceType = device_type;
-          properties.devices = $CL.devices;
-          properties.shareGroup = 1;
-          $CL.context = WebCL.createContext(properties);
-          $CL.kernelSetArg = function(kernel, idx, param, type) {
+        //TODO
+        var properties = new WebCLContextProperties();
+        properties.platform = $CL.platform;
+        properties.deviceType = device_type;
+        properties.devices = $CL.devices;
+        properties.shareGroup = 1;
+        $CL.context = WebCL.createContext(properties);
+        $CL.kernelSetArg = function (kernel, idx, param, type) {
           if (type !== void 0) {
             switch (type) {
               case WebCL.type.UINT:
@@ -277,17 +279,17 @@
       switch (env) {
         case 'ff':
           $CL.queue.enqueueNDRangeKernel(kernel,
-                                     globalWS.length,
-                                     null,
-                                     globalWS,
-                                     localWS);
+            globalWS.length,
+            null,
+            globalWS,
+            localWS);
           break;
         case 'chromium':
           globalWS = new Int32Array(globalWS);
           $CL.queue.enqueueNDRangeKernel(kernel,
-                                     null,
-                                     globalWS,
-                                     localWS);
+            null,
+            globalWS,
+            localWS);
           $CL.queue.finish();
           break;
       }
@@ -313,13 +315,13 @@
 
     switch (env) {
       case 'ff':
-        $CL.releaseBuffer = function(buffer) {
+        $CL.releaseBuffer = function (buffer) {
           buffer.release();
           $CL.buffers--;
         };
         break;
       case 'chromium':
-        $CL.releaseBuffer = function(buffer) {
+        $CL.releaseBuffer = function (buffer) {
           buffer.releaseCL();
           $CL.buffers--;
         };
