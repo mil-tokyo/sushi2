@@ -233,11 +233,21 @@
 
     $CL.writeBuffer = function (buffer, typed_array, offset) {
       if (offset === void 0) { offset = 0; }
-      $CL.queue.enqueueWriteBuffer(buffer,
-        true,//blocking write
-        offset,
-        typed_array.byteLength,
-        typed_array);
+      if (typed_array.byteOffset === 0) {
+        $CL.queue.enqueueWriteBuffer(buffer,
+          true,//blocking write
+          offset,
+          typed_array.byteLength,
+          typed_array);
+      } else {
+        //workaround for firefox
+        var tmpbuf = new typed_array.constructor(typed_array);
+        $CL.queue.enqueueWriteBuffer(buffer,
+          true,//blocking write
+          offset,
+          tmpbuf.byteLength,
+          tmpbuf);
+      }
     };
 
     $CL.executeKernel = function (kernel, params, parallelization, localWS) {
@@ -306,11 +316,22 @@
 
     $CL.readBuffer = function (buffer, typed_array, offset) {
       if (offset === void 0) { offset = 0; }
-      $CL.queue.enqueueReadBuffer(buffer,
-        true,//blocks until the reading completes
-        offset,
-        typed_array.byteLength,
-        typed_array);
+      if (typed_array.byteOffset === 0) {
+        $CL.queue.enqueueReadBuffer(buffer,
+          true,//blocks until the reading completes
+          offset,
+          typed_array.byteLength,
+          typed_array);
+      } else {
+        //workaround of bug in firefox webcl that byteOffset is ignored
+        var tmpbuf = new typed_array.constructor(typed_array.length);
+        $CL.queue.enqueueReadBuffer(buffer,
+          true,//blocks until the reading completes
+          offset,
+          tmpbuf.byteLength,
+          tmpbuf);
+        typed_array.set(tmpbuf);
+      }
     }
 
     switch (env) {
