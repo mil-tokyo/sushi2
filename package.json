@@ -4,6 +4,7 @@
   "description": "The Fastest Matrix Library for JavaScript http://mil-tokyo.github.io/miljs.html",
   "main": "index.js",
   "scripts": {
+    "install": "tsc",
     "test": "jasmine-node spec",
     "browserify": "./do_browserify.sh"
   },
@@ -21,6 +22,7 @@
   },
   "homepage": "https://github.com/mil-tokyo/sushi2",
   "dependencies": {
+    "typescript": ">=2.0.0",
     "definitely-typed-jasmine": "^1.0.0"
   },
   "devDependencies": {
