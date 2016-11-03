@@ -1,3 +1,4 @@
+// (c) 2016 Machine Intelligence Laboratory (The University of Tokyo), MIT License.
 // read/write numpy format matrix file
 
 import Matrix = require('../matrix');

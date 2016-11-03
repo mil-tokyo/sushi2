@@ -1,3 +1,4 @@
+// (c) 2016 Machine Intelligence Laboratory (The University of Tokyo), MIT License.
 export import Matrix = require('./matrix');
 export import Colon = require('./colon');
 export import colon = require('./colonwrap');

@@ -1,3 +1,4 @@
+// (c) 2016 Machine Intelligence Laboratory (The University of Tokyo), MIT License.
 // colon object
 // $M.colon(1,3,10) or $M.colon.fromstring('1:3:10');
 

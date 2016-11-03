@@ -1,4 +1,5 @@
 'use strict';
+// (c) 2016 Machine Intelligence Laboratory (The University of Tokyo), MIT License.
 // overwrites binary arithmetic functions
 
 var $M = require('../../sushi');
