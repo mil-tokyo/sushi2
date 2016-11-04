@@ -1,0 +1,4 @@
+Authors of sushi2
+
+Masatoshi Hidaka <hidaka@mi.t.u-tokyo.ac.jp>
+Ken Miura <miura@mi.t.u-tokyo.ac.jp>
