@@ -10,5 +10,5 @@ theme: minima
 
 # Build settings
 markdown: kramdown
-keep_files: ["api"]
+keep_files: ["api", ".nojekyll"]
 exclude: ["Gemfile", "Gemfile.lock"]
