@@ -241,16 +241,114 @@ function _singlemat2number(A: MatrixOrNumber): MatrixOrNumber {
 
 
 //equality http://jp.mathworks.com/help/matlab/relational-operators.html
-export var eq = func_generator.make_compare_func_all('Number(%a == %b)');
-export var ge = func_generator.make_compare_func_all('Number(%a >= %b)');
-export var gt = func_generator.make_compare_func_all('Number(%a > %b)');
-export var le = func_generator.make_compare_func_all('Number(%a <= %b)');
-export var lt = func_generator.make_compare_func_all('Number(%a < %b)');
-export var ne = func_generator.make_compare_func_all('Number(%a != %b)');
-export var isequal = func_generator.isequal;
-export var isequaln = func_generator.isequaln;
-export var isclose = func_generator.isclose;
-export var allclose = func_generator.allclose;
+/**
+ * Compares elements of two matrices. One of the input can be scalar number.
+ *
+ * @param A Input matrix.
+ * @param B Input matrix.
+ * @return logical matrix. 1 if A(i) == B(i).
+ */
+export var eq = function (A: MatrixOrNumber, B: MatrixOrNumber): Matrix {
+  throw new Error();
+};
+eq = func_generator.make_compare_func_all('Number(%a == %b)');
+/**
+ * Compares elements of two matrices. One of the input can be scalar number.
+ *
+ * @param A Input matrix.
+ * @param B Input matrix.
+ * @return logical matrix. 1 if A(i) >= B(i).
+ */
+export var ge = function (A: MatrixOrNumber, B: MatrixOrNumber): Matrix {
+  throw new Error();
+};
+ge = func_generator.make_compare_func_all('Number(%a >= %b)');
+/**
+ * Compares elements of two matrices. One of the input can be scalar number.
+ *
+ * @param A Input matrix.
+ * @param B Input matrix.
+ * @return logical matrix. 1 if A(i) > B(i).
+ */
+export var gt = function (A: MatrixOrNumber, B: MatrixOrNumber): Matrix {
+  throw new Error();
+};
+gt = func_generator.make_compare_func_all('Number(%a > %b)');
+/**
+ * Compares elements of two matrices. One of the input can be scalar number.
+ *
+ * @param A Input matrix.
+ * @param B Input matrix.
+ * @return logical matrix. 1 if A(i) <= B(i).
+ */
+export var le = function (A: MatrixOrNumber, B: MatrixOrNumber): Matrix {
+  throw new Error();
+};
+le = func_generator.make_compare_func_all('Number(%a <= %b)');
+/**
+ * Compares elements of two matrices. One of the input can be scalar number.
+ *
+ * @param A Input matrix.
+ * @param B Input matrix.
+ * @return logical matrix. 1 if A(i) < B(i).
+ */
+export var lt = function (A: MatrixOrNumber, B: MatrixOrNumber): Matrix {
+  throw new Error();
+};
+lt = func_generator.make_compare_func_all('Number(%a < %b)');
+/**
+ * Compares elements of two matrices. One of the input can be scalar number.
+ *
+ * @param A Input matrix.
+ * @param B Input matrix.
+ * @return logical matrix. 1 if A(i) != B(i).
+ */
+export var ne = function (A: MatrixOrNumber, B: MatrixOrNumber): Matrix {
+  throw new Error();
+};
+ne = func_generator.make_compare_func_all('Number(%a != %b)');
+/**
+ * Checks if all matrices are equal. Assumes NaN is not equal to NaN.
+ *
+ * @param As Input matrices.
+ * @return true if all matrices are the same regarding both size and value of elements.
+ */
+export var isequal = function (...As: Matrix[]): boolean {
+  throw new Error();
+};
+isequal = func_generator.isequal;
+/**
+ * Checks if all matrices are equal. Assumes NaN is equal to NaN.
+ *
+ * @param As Input matrices.
+ * @return true if all matrices are the same regarding both size and value of elements.
+ */
+export var isequaln = function (...As: Matrix[]): boolean {
+  throw new Error();
+};
+isequaln = func_generator.isequaln;
+/**
+ * Compares if elements of two matrices are close. One of the input can be scalar number.
+ *
+ * @param A Input matrix.
+ * @param B Input matrix.
+ * @return logical matrix. 1 if abs(A(i) - B(i)) <= atol + rtol * abs(B(i)).
+ */
+export var isclose = function (A: MatrixOrNumber, B: MatrixOrNumber, rtol: number = 1e-5, atol: number = 1e-8, equal_nan: boolean = false): Matrix {
+  throw new Error();
+};
+isclose = func_generator.isclose;
+/**
+ * Compares if all the elements of two matrices are close. One of the input can be scalar number. See also [[isclose]]
+ *
+ * @param A Input matrix.
+ * @param B Input matrix.
+ * @return true if all elements of isclose(A, B) are 1.
+ */
+export var allclose = function (A: MatrixOrNumber, B: MatrixOrNumber, rtol?: number, atol?: number, equal_nan?: boolean): boolean {
+  throw new Error();
+};
+allclose = func_generator.allclose;
 
 export var plus = func_generator.make_binary_arith_func_all('%a + %b');
 export var minus = func_generator.make_binary_arith_func_all('%a - %b');
