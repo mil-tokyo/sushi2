@@ -11,3 +11,4 @@ theme: minima
 # Build settings
 markdown: kramdown
 keep_files: ["api"]
+exclude: ["Gemfile", "Gemfile.lock"]
