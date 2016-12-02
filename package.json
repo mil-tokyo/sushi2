@@ -7,7 +7,7 @@
     "install": "tsc",
     "test": "jasmine-node spec",
     "browserify": "./do_browserify.sh",
-    "typedoc": "typedoc . --out ./docs/api/ --target ES5 --module commonjs --mode modules --name Sushi2 --includes apidoc --readme apidoc/index.md"
+    "typedoc": "typedoc . --out ./docs/_site/api/ --target ES5 --module commonjs --mode modules --name Sushi2 --includes apidoc --readme apidoc/index.md"
   },
   "repository": {
     "type": "git",
