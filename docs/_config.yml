@@ -1,0 +1,11 @@
+# Site settings
+title: Sushi2 documantation
+email: miljs@mi.t.u-tokyo.ac.jp
+description: > # this means to ignore newlines until "baseurl:"
+  Sushi2 is a matrix library for JavaScript.
+baseurl: "" # the subpath of your site, e.g. /blog/
+url: "https://mil-tokyo.github.com/sushi2/" # the base hostname & protocol for your site
+github_username:  mil-tokyo
+
+# Build settings
+markdown: kramdown
