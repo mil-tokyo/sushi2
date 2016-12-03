@@ -1,4 +1,5 @@
-
+/// <reference path="../node_modules/@types/jasmine/index.d.ts" />
+// reference only needed for typedoc
 import $M = require('../src/sushi');
 
 declare var require;
