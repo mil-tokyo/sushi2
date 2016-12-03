@@ -1,4 +1,4 @@
-/// <reference path="../node_modules/definitely-typed-jasmine/jasmine.d.ts" />
+
 import $M = require('../src/sushi');
 
 declare var require;

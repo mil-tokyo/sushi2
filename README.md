@@ -9,10 +9,21 @@ To gain best performance, [WebCL](https://en.wikipedia.org/wiki/WebCL) technolog
 [Documents (work in progress)](https://mil-tokyo.github.io/sushi2/)
 
 # Build for use in node.js
-Since this project is written in TypeScript, transpiling to JavaScript is necessary. `npm install` does it automatically.
+Since this project is written in TypeScript, transpiling to JavaScript is necessary.
+
+Package from npm repository contains transplied JavaScript, so simply installing them is enough.
 
 ```bash
 npm install milsushi2
+```
+
+If you intend to modify code, download and build. 
+
+```bash
+git clone https://github.com/mil-tokyo/sushi2
+cd sushi2
+npm install
+npm build
 ```
 
 Sushi2 depends on [node-opencl](https://github.com/mikeseven/node-opencl) for GPU computing which allows dramatically faster computation.
@@ -33,6 +44,7 @@ To make single JavaScript file for web browsers, type the following commands:
 git clone https://github.com/mil-tokyo/sushi2
 cd sushi2
 npm install
+npm build
 npm run browserify
 ```
 
