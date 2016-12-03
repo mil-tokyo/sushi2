@@ -9,10 +9,10 @@ To gain best performance, [WebCL](https://en.wikipedia.org/wiki/WebCL) technolog
 [Documents (work in progress)](https://mil-tokyo.github.io/sushi2/)
 
 # Build for use in node.js
-Since this project is written in TypeScript, transpiling to JavaScript is necessary.
+Since this project is written in TypeScript, transpiling to JavaScript is necessary. `npm install` does it automatically.
 
 ```bash
-npm install https://github.com/mil-tokyo/sushi2
+npm install milsushi2
 ```
 
 Sushi2 depends on [node-opencl](https://github.com/mikeseven/node-opencl) for GPU computing which allows dramatically faster computation.
@@ -21,10 +21,12 @@ This dependency is optional, so even the installation of node-opencl fails, Sush
 In my environment (Ubuntu 14.04 + NVIDIA CUDA 7.5), installation with node-opencl requires additional environment variables.
 
 ```bash
-CPLUS_INCLUDE_PATH=/usr/local/cuda/include LIBRARY_PATH=/usr/local/cuda/lib64 npm install https://github.com/mil-tokyo/sushi2
+CPLUS_INCLUDE_PATH=/usr/local/cuda/include LIBRARY_PATH=/usr/local/cuda/lib64 npm install milsushi2
 ```
 
 # Build for use in web browser
+For simply using the library, download the js file from [releases page](https://github.com/mil-tokyo/sushi2/releases).
+
 To make single JavaScript file for web browsers, type the following commands:
 
 ```bash
