@@ -23,7 +23,7 @@ If you intend to modify code, download and build.
 git clone https://github.com/mil-tokyo/sushi2
 cd sushi2
 npm install
-npm build
+npm run build
 ```
 
 Sushi2 depends on [node-opencl](https://github.com/mikeseven/node-opencl) for GPU computing which allows dramatically faster computation.
@@ -44,7 +44,7 @@ To make single JavaScript file for web browsers, type the following commands:
 git clone https://github.com/mil-tokyo/sushi2
 cd sushi2
 npm install
-npm build
+npm run build
 npm run browserify
 ```
 
