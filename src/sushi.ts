@@ -1,4 +1,5 @@
 // (c) 2016 Machine Intelligence Laboratory (The University of Tokyo), MIT License.
+import polyfill = require('./polyfill');
 export import Matrix = require('./matrix');
 export import Colon = require('./colon');
 export import colon = require('./colonwrap');
@@ -10,6 +11,8 @@ import mul = require('./mul');
 import npy = require('./io/npy');
 //export import MatrixCL = require('./cl/matrix_cl');
 export var CL: any = null;// for webcl
+
+polyfill.polyfill();
 
 export var end = -1;
 export type MatrixOrNumber = util.MatrixOrNumber;
