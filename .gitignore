@@ -12,3 +12,5 @@ node_modules
 browser/milsushi2.js
 browser/milsushi2_cl.js
 /docs_raw/jekyll/.sass-cache/
+!/docs_raw/jekyll/js/*.js
+!/docs/js/*.js

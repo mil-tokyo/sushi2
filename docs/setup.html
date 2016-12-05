@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width initial-scale=1" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+    <title>Sushi2 documantation</title>
+    <meta name="description" content="Sushi2 is a matrix library for JavaScript.
+">
+
+    <link rel="stylesheet" href="/sushi2/css/main.css">
+    <link rel="canonical" href="https://mil-tokyo.github.com/sushi2/setup.html">
+</head>
+
+
+  <body>
+
+    <header class="site-header">
+
+  <div class="wrapper">
+
+    <a class="site-title" href="/sushi2/">Sushi2 documantation</a>
+
+    <nav class="site-nav">
+      <a href="#" class="menu-icon">
+        <svg viewBox="0 0 18 15">
+          <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+          <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+          <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+        </svg>
+      </a>
+
+      <div class="trigger">
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+      </div>
+    </nav>
+
+  </div>
+
+</header>
+
+
+    <div class="page-content">
+      <div class="wrapper">
+        <h1 id="setup-of-sushi2-and-introduction-of-basic-usage">Setup of Sushi2 and introduction of basic usage</h1>
+
+<p>Sushi2 is a matrix library for JavaScript.
+It works with modern web browsers and node.js server-side JavaScript environment.
+By using <a href="https://en.wikipedia.org/wiki/WebCL">WebCL</a> technology, the wrapper of OpenCL,
+matrix operations are significantly accelerated with the power of GPU.
+Even there are no WebCL support, most function of Sushi2 works.</p>
+
+<!--- setup instruction is almost same as README.md -->
+
+<h2 id="setup-for-nodejs">Setup for node.js</h2>
+<p>A npm package is provided, so installing it may be convenient.</p>
+
+<pre><code class="language-bash">npm install milsushi2
+</code></pre>
+
+<p>Sushi2 depends on <a href="https://github.com/mikeseven/node-opencl">node-opencl</a> for GPU computing which allows dramatically faster computation.
+This dependency is optional, so even the installation of node-opencl fails, Sushi2 can work without it.</p>
+
+<p>In my environment (Ubuntu 14.04 + NVIDIA CUDA 7.5), installation with node-opencl requires additional environment variables.</p>
+
+<pre><code class="language-bash">CPLUS_INCLUDE_PATH=/usr/local/cuda/include LIBRARY_PATH=/usr/local/cuda/lib64 npm install milsushi2
+</code></pre>
+
+<pre><code class="language-bash">$ node
+&gt; var $M=require('milsushi2');
+undefined
+&gt; $M.initcl();//OpenCL initialization, true if succeeds
+true
+&gt; var x = $M.jsa2mat([[1,2],[3,4]]);
+undefined
+&gt; var y = $M.jsa2mat([[0.1,0.5],[0.7,0.0]]);
+undefined
+&gt; $M.plus(x, y);
+Matrix 2x2 single
+1.100000023841858       2.5
+3.700000047683716       4
+</code></pre>
+
+<h2 id="setup-for-web-browsers">Setup for web browsers</h2>
+<p>Loading <code>milsushi2.js</code> (without WebCL support) or <code>milsushi2_cl.js</code> (WebCL support version) from html page is needed.
+Download the js file from <a href="https://github.com/mil-tokyo/sushi2/releases">releases page</a>.</p>
+
+<p>Unfortunately, currently a plugin is needed to enable WebCL. We tested on <a href="https://github.com/toaarnio/webcl-firefox">webcl-firefox</a> plugin with <a href="https://ftp.mozilla.org/pub/firefox/releases/32.0/">Firefox 32</a>.
+Compiled version of webcl-firefox plugin for Linux is <a href="https://drive.google.com/file/d/0BxKvBdxU_LchMWVVUWFGVS1NcE0/view?usp=sharing">here</a> (Ubuntu 14.04 + CUDA 7.5, commit d87447f, License: MPL 2.0).</p>
+
+<p>If WebCL is enabled, <code>$M.initcl()</code> should return true.</p>
+
+<p><a href="debugconsole.html">Sample page</a> is plain page with only <code>milsushi2_cl.js</code> is loaded.</p>
+
+<h2 id="basic-usage-of-sushi2">Basic usage of Sushi2</h2>
+<p>The function set of Sushi2 is designed to be similar to MATLAB / Octave for making new users understand how to use easily.</p>
+
+<p>In the documantation, we call <code>milsushi2</code> object as <code>$M</code>.
+<code>$M</code> can be obtained by <code>var $M=require('milsushi2');</code>(in node.js), <code>var $M=milsushi2;</code>(in web browsers).</p>
+
+<p>Functions for generating and operating matrices are placed under <code>$M</code> object.
+Matrix object belongs to <code>$M.Matrix</code> class.</p>
+
+<p>A matrix has at least 2 dimensions, and may have more than 2 dimensions.
+The numeric type of elements in a matrix is 32-bit floating point number (noted as ‘single’) by default.
+32-bit signed integer (‘int32’), 8-bit unsigned integer (‘uint8’), boolean value (‘logical’) are also supported.
+The numeric type is noted as <code>klass</code> in the arguments in functions.</p>
+
+<p>Common functions for generating a matrix:</p>
+
+<ul>
+  <li><code>$M.zeros(dim1, dim2)</code> generates matrix with size (dim1, dim2).</li>
+  <li><code>$M.jsa2mat(array)</code> generates matrix from JavaScript array (e.g. <code>[[1,2],[3,4]]</code>).</li>
+</ul>
+
+<p>Common functions for operating a matrix:</p>
+
+<ul>
+  <li><code>$M.plus(A, B)</code> adds two matrices and returns new matrix contains the result.</li>
+  <li><code>$M.size(A, dim)</code> returns the dimension size of the matrix (scalar number).</li>
+  <li><code>$M.mat2jsa(A)</code> returns nested JavaScript array which represents the elements of the matrix.</li>
+</ul>
+
+<p>Since JavaScript does not support operator overload, the expression <code>A+B</code> is invalid.
+<code>$M.plus(A, B)</code> does the computation instead.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>MATLAB expression</th>
+      <th>Sushi2 expression</th>
+      <th>Comment</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>A+B</td>
+      <td>$M.plus(A, B)</td>
+      <td>Element-wise addition</td>
+    </tr>
+    <tr>
+      <td>A-B</td>
+      <td>$M.minus(A, B)</td>
+      <td>Element-wise subtraction</td>
+    </tr>
+    <tr>
+      <td>A.*B</td>
+      <td>$M.times(A, B)</td>
+      <td>Element-wise multiplication</td>
+    </tr>
+    <tr>
+      <td>A./B</td>
+      <td>$M.rdivide(A, B)</td>
+      <td>Element-wise division</td>
+    </tr>
+    <tr>
+      <td>A*B</td>
+      <td>$M.mtimes(A, B)</td>
+      <td>Matrix product</td>
+    </tr>
+    <tr>
+      <td>-A</td>
+      <td>$M.uminus(A)</td>
+      <td>Inversion of sign</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Most functions returns newly generated matrix instance and do not modify input matrices.</p>
+
+<p>Get an element or subset from a matrix:</p>
+
+<p><code>A.get(idx1, idx2)</code>, where <code>A</code> is a matrix and <code>idx1, idx2</code> are scalar number, the expression returns the scalar number corresponding <code>A(idx1, idx2)</code>.
+<code>idx*</code> can be colon object, which can be constructed by <code>$M.colon(start, stop)</code> function. A colon object represents a range.
+By using colon object, a subset of a matrix is returned instead of scalar number.</p>
+
+<p>Examples:</p>
+
+<pre><code class="language-javascript">var A = $M.jsa2mat([[1,2,3],
+                    [4,5,6],
+                    [7,8,9]]);
+A.get(2, 1);//4
+A.get(2, $M.colon());//Matrix of [[4,5,6]]
+A.get($M.colon(2, 3), 3);//Matrix of [[6],[9]]
+</code></pre>
+
+<p>Set an element of a matrix:</p>
+
+<p><code>A.set(idx1, idx2, val)</code>, where <code>A</code> is a matrix and <code>idx1, idx2, val</code> are scalar number, the expression sets the value of <code>A(idx1, idx2)</code> as <code>val</code>.
+Similar to <code>get</code> operation, <code>idx*</code> can be colon object and <code>val</code> can be either scalar number and matrix.</p>
+
+<p>Examples:</p>
+
+<pre><code class="language-javascript">var A = $M.jsa2mat([[1,2,3],
+                    [4,5,6],
+                    [7,8,9]]);
+A.set(2, 1, 40);
+// A: [[1,2,3],[40,5,6],[7,8,9]]
+A.set(2, $M.colon(), $M.jsa2mat([[14, 15, 16]]));
+// A: [[1,2,3],[14,15,16],[7,8,9]]
+A.set($M.colon(2, 3), 3, 99);//Setting scalar number to multiple elements
+// A: [[1,2,3],[14,15,99],[7,8,99]]
+</code></pre>
+
+<p>The way of specifying element(s) of a matrix is called indexing, and Sushi2 allows most operations supported by <a href="http://www.mathworks.com/help/matlab/math/matrix-indexing.html">MATLAB</a>, except for expanding the size of matrix.</p>
+
+      </div>
+    </div>
+
+    <footer class="site-footer">
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">Sushi2 documantation</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col  footer-col-1">
+        <ul class="contact-list">
+          <li>Sushi2 documantation</li>
+          <li><a href="mailto:miljs@mi.t.u-tokyo.ac.jp">miljs@mi.t.u-tokyo.ac.jp</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-col  footer-col-2">
+        <ul class="social-media-list">
+          
+          <li>
+            <a href="https://github.com/mil-tokyo">
+              <span class="icon  icon--github">
+                <svg viewBox="0 0 16 16">
+                  <path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/>
+                </svg>
+              </span>
+
+              <span class="username">mil-tokyo</span>
+            </a>
+          </li>
+          
+
+          
+        </ul>
+      </div>
+
+      <div class="footer-col  footer-col-3">
+        <p class="text">Sushi2 is a matrix library for JavaScript.
+</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+
+
+  </body>
+
+</html>
