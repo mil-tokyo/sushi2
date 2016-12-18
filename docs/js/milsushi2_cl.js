@@ -2136,7 +2136,11 @@ var util_cl = require('./util_cl');
       dst_strides.push(numel);
     }
     var dst_strides_perm = [];
-    order.forEach((o, i) => dst_strides_perm[o - 1] = dst_strides[i]);
+    for (var i = 0; i < order.length; i++) {
+      var o = order[i];
+      dst_strides_perm[o - 1] = dst_strides[i];
+    }
+    //order.forEach((o, i) => dst_strides_perm[o - 1] = dst_strides[i]);//ES6
     var perm_stride = MatrixCL._fromtypedarray(new Int32Array(src_strides.concat(src_size, dst_strides_perm)), 'int32');
 
     var kernel_name = 'permute_cl_' + A._klass + '_' + ndim;
