@@ -12,12 +12,13 @@
 
   function getEnvironment() {
     // check environment
+    var env;
     if (typeof window !== 'undefined' && window.webcl !== void 0) {
-      var env = 'ff';
+      env = 'ff';
     } else if (typeof WebCL === 'function') {
-      var env = 'chromium';
+      env = 'chromium';
     } else {
-      var env = void 0;
+      throw new Error('WebCL object not found. WebCL may be not supported on this browser.');
     }
     return env;
   }
