@@ -3,7 +3,7 @@
 <head>
 	<meta charset="utf-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
-	<title>&quot;src/mul&quot; | Sushi2</title>
+	<title>&quot;src/polyfill&quot; | Sushi2</title>
 	<meta name="description" content="">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<link rel="stylesheet" href="../assets/css/main.css">
@@ -56,10 +56,10 @@
 					<a href="../globals.html">Globals</a>
 				</li>
 				<li>
-					<a href="_src_mul_.html">&quot;src/mul&quot;</a>
+					<a href="_src_polyfill_.html">&quot;src/polyfill&quot;</a>
 				</li>
 			</ul>
-			<h1>External module &quot;src/mul&quot;</h1>
+			<h1>External module &quot;src/polyfill&quot;</h1>
 		</div>
 	</div>
 </header>
@@ -73,7 +73,9 @@
 						<section class="tsd-index-section tsd-is-external">
 							<h3>Functions</h3>
 							<ul class="tsd-index-list">
-								<li class="tsd-kind-function tsd-parent-kind-external-module tsd-is-external"><a href="_src_mul_.html#mtimes" class="tsd-kind-icon">mtimes</a></li>
+								<li class="tsd-kind-function tsd-parent-kind-external-module tsd-is-external"><a href="_src_polyfill_.html#polyfill" class="tsd-kind-icon">polyfill</a></li>
+								<li class="tsd-kind-function tsd-parent-kind-external-module tsd-is-external tsd-is-not-exported"><a href="_src_polyfill_.html#typedarray_fill" class="tsd-kind-icon">typedarray_<wbr>fill</a></li>
+								<li class="tsd-kind-function tsd-parent-kind-external-module tsd-is-external tsd-is-not-exported"><a href="_src_polyfill_.html#typedarray_fill_all" class="tsd-kind-icon">typedarray_<wbr>fill_<wbr>all</a></li>
 							</ul>
 						</section>
 					</div>
@@ -82,28 +84,59 @@
 			<section class="tsd-panel-group tsd-member-group tsd-is-external">
 				<h2>Functions</h2>
 				<section class="tsd-panel tsd-member tsd-kind-function tsd-parent-kind-external-module tsd-is-external">
-					<a name="mtimes" class="tsd-anchor"></a>
-					<h3>mtimes</h3>
+					<a name="polyfill" class="tsd-anchor"></a>
+					<h3>polyfill</h3>
 					<ul class="tsd-signatures tsd-kind-function tsd-parent-kind-external-module tsd-is-external">
-						<li class="tsd-signature tsd-kind-icon">mtimes<span class="tsd-signature-symbol">(</span>A<span class="tsd-signature-symbol">: </span><a href="../classes/_src_matrix_.matrix.html" class="tsd-signature-type">Matrix</a>, B<span class="tsd-signature-symbol">: </span><a href="../classes/_src_matrix_.matrix.html" class="tsd-signature-type">Matrix</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="../classes/_src_matrix_.matrix.html" class="tsd-signature-type">Matrix</a></li>
+						<li class="tsd-signature tsd-kind-icon">polyfill<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
 					</ul>
 					<ul class="tsd-descriptions">
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/mil-tokyo/sushi2_private/blob/4fafeb5/src/mul.ts#L5">src/mul.ts:5</a></li>
+									<li>Defined in <a href="https://github.com/mil-tokyo/sushi2_private/blob/4fafeb5/src/polyfill.ts#L3">src/polyfill.ts:3</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-function tsd-parent-kind-external-module tsd-is-external tsd-is-not-exported">
+					<a name="typedarray_fill" class="tsd-anchor"></a>
+					<h3>typedarray_<wbr>fill</h3>
+					<ul class="tsd-signatures tsd-kind-function tsd-parent-kind-external-module tsd-is-external tsd-is-not-exported">
+						<li class="tsd-signature tsd-kind-icon">typedarray_<wbr>fill<span class="tsd-signature-symbol">(</span>type<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/mil-tokyo/sushi2_private/blob/4fafeb5/src/polyfill.ts#L19">src/polyfill.ts:19</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
 							<ul class="tsd-parameters">
 								<li>
-									<h5>A: <a href="../classes/_src_matrix_.matrix.html" class="tsd-signature-type">Matrix</a></h5>
-								</li>
-								<li>
-									<h5>B: <a href="../classes/_src_matrix_.matrix.html" class="tsd-signature-type">Matrix</a></h5>
+									<h5>type: <span class="tsd-signature-type">any</span></h5>
 								</li>
 							</ul>
-							<h4 class="tsd-returns-title">Returns <a href="../classes/_src_matrix_.matrix.html" class="tsd-signature-type">Matrix</a></h4>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-function tsd-parent-kind-external-module tsd-is-external tsd-is-not-exported">
+					<a name="typedarray_fill_all" class="tsd-anchor"></a>
+					<h3>typedarray_<wbr>fill_<wbr>all</h3>
+					<ul class="tsd-signatures tsd-kind-function tsd-parent-kind-external-module tsd-is-external tsd-is-not-exported">
+						<li class="tsd-signature tsd-kind-icon">typedarray_<wbr>fill_<wbr>all<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/mil-tokyo/sushi2_private/blob/4fafeb5/src/polyfill.ts#L7">src/polyfill.ts:7</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
 						</li>
 					</ul>
 				</section>
@@ -116,14 +149,20 @@
 						<a href="../globals.html"><em>Globals</em></a>
 					</li>
 					<li class="current tsd-kind-external-module tsd-is-external">
-						<a href="_src_mul_.html">"src/mul"</a>
+						<a href="_src_polyfill_.html">"src/polyfill"</a>
 					</li>
 				</ul>
 			</nav>
 			<nav class="tsd-navigation secondary menu-sticky">
 				<ul class="before-current">
 					<li class=" tsd-kind-function tsd-parent-kind-external-module tsd-is-external">
-						<a href="_src_mul_.html#mtimes" class="tsd-kind-icon">mtimes</a>
+						<a href="_src_polyfill_.html#polyfill" class="tsd-kind-icon">polyfill</a>
+					</li>
+					<li class=" tsd-kind-function tsd-parent-kind-external-module tsd-is-external tsd-is-not-exported">
+						<a href="_src_polyfill_.html#typedarray_fill" class="tsd-kind-icon">typedarray_<wbr>fill</a>
+					</li>
+					<li class=" tsd-kind-function tsd-parent-kind-external-module tsd-is-external tsd-is-not-exported">
+						<a href="_src_polyfill_.html#typedarray_fill_all" class="tsd-kind-icon">typedarray_<wbr>fill_<wbr>all</a>
 					</li>
 				</ul>
 			</nav>
