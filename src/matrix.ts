@@ -294,7 +294,7 @@ class Matrix {
   }
 
   static sizejsa(X: Matrix): number[] {
-    return X._size;
+    return X._size.slice();//array is mutable, so returns copy
   }
 
   static jsa2mat(ary: any, one_d_column: boolean = false, klass: string = 'single'): Matrix {
