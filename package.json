@@ -1,6 +1,6 @@
 {
   "name": "milsushi2",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "The Fastest Matrix Library for JavaScript http://mil-tokyo.github.io/miljs.html",
   "main": "index.js",
   "scripts": {
