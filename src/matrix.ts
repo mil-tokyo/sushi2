@@ -313,25 +313,36 @@ class Matrix {
       mat = new Matrix([0, 0], klass);
     } else {
       //n-d matrix
+      //array[z2][z1][y][x]=mat(y,x,z1,z2)
       //get shape
-      var size: number[] = [];
+      var arysize: number[] = [];
       var cur_ary: any[] = ary;
       var numel = 1;
       while (cur_ary.length !== void 0) {
-        size.push(cur_ary.length);
+        arysize.push(cur_ary.length);
         numel *= cur_ary.length;
         cur_ary = cur_ary[0];
       }
-      var ndims = size.length;
-      var cstride = [];
-      var fstride = [];
-      var last_cstride = 1;
-      var last_fstride = 1;
-      for (var dim = 0; dim < size.length; dim++) {
-        cstride.unshift(last_cstride);
-        fstride.push(last_fstride);
-        last_cstride *= size[size.length - 1 - dim];
-        last_fstride *= size[dim];
+      // here, arysize = [z2, z1, y, x]
+      var ndims = arysize.length;
+      var size: number[] = arysize.slice();
+      size.reverse();//[x,y,z1,z2]
+      if (size.length >= 2) {
+        var swap = size[1];
+        size[1] = size[0];
+        size[0] = swap;
+      }//[y,x,z1,z2]
+      var cstride: number[];
+      if (size.length >= 2) {
+        // cstride: [z1*y*x, y*x, 1, y]
+        cstride = [1, size[0]];
+        var last_cstride = size[0];
+        for (var dim = 2; dim < ndims; dim++) {
+          last_cstride *= size[dim - 1];
+          cstride.unshift(last_cstride);
+        }
+      } else {
+        cstride = [1];
       }
 
       //flatten data
@@ -340,21 +351,21 @@ class Matrix {
       var flat_i = 0;
 
       var n = function (a, dim, fidx_ofs) {
-        if (a.length != size[dim]) {
+        if (a.length != arysize[dim]) {
           throw Error('Inconsistent size of n-d array');
         }
         if (dim == ndims - 1) {
           // a contains numbers
-          for (var i = 0; i < size[dim]; i++) {
+          for (var i = 0; i < arysize[dim]; i++) {
             var val = a[i];
-            var fidx = fidx_ofs + Math.floor(flat_i / cstride[dim]) % size[dim] * fstride[dim];
+            var fidx = fidx_ofs + i * cstride[dim];
             data[fidx] = val;
             flat_i++;
           }
 
         } else {
-          for (var i = 0; i < size[dim]; i++) {
-            n(a[i], dim + 1, fidx_ofs + Math.floor(flat_i / cstride[dim]) % size[dim] * fstride[dim]);
+          for (var i = 0; i < arysize[dim]; i++) {
+            n(a[i], dim + 1, fidx_ofs + i * cstride[dim]);
           }
         }
       }
@@ -388,30 +399,38 @@ class Matrix {
       var ndims = this._ndims;
       var data = this.getdataref();
 
-      var cstride = [];
-      var fstride = [];
-      var last_cstride = 1;
-      var last_fstride = 1;
-      for (var dim = 0; dim < ndims; dim++) {
-        cstride.unshift(last_cstride);
-        fstride.push(last_fstride);
-        last_cstride *= size[ndims - 1 - dim];
-        last_fstride *= size[dim];
+      //array[z2][z1][y][x]=mat(y,x,z1,z2)
+      var cstride: number[];
+      if (size.length >= 2) {
+        // cstride: [z1*y*x, y*x, 1, y]
+        cstride = [1, size[0]];
+        var last_cstride = size[0];
+        for (var dim = 2; dim < ndims; dim++) {
+          last_cstride *= size[dim - 1];
+          cstride.unshift(last_cstride);
+        }
+      } else {
+        cstride = [1];
       }
+      var arysize: number[] = size.slice();
+      arysize.reverse();//[z2,z1,x,y]
+      var swap = arysize[arysize.length - 1];
+      arysize[arysize.length - 1] = arysize[arysize.length - 2];
+      arysize[arysize.length - 2] = swap;//[z2,z1,y,x]
 
       var flat_i = 0;//c-order
       var n = function (a, dim, fidx_ofs) {
         if (dim == ndims - 1) {
-          for (var i = 0; i < size[dim]; i++) {
-            var fidx = fidx_ofs + Math.floor(flat_i / cstride[dim]) % size[dim] * fstride[dim];
+          for (var i = 0; i < arysize[dim]; i++) {
+            var fidx = fidx_ofs + i * cstride[dim];
             a.push(data[fidx]);
             flat_i++;
           }
         } else {
-          for (var i = 0; i < size[dim]; i++) {
+          for (var i = 0; i < arysize[dim]; i++) {
             var newa = [];
             a.push(newa);
-            n(newa, dim + 1, fidx_ofs + Math.floor(flat_i / cstride[dim]) % size[dim] * fstride[dim]);
+            n(newa, dim + 1, fidx_ofs + i * cstride[dim]);
           }
         }
       }

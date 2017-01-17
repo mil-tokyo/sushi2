@@ -367,14 +367,56 @@ describe('Sushi class', function () {
     expect($M.mat2jsa(mat2)).toEqual([[1, 10, 20], [4, 30, 40], [7, 8, 9]]);
 
     //TODO: n-d matrix
-    mat = $M.jsa2mat([[[10, 20, 30],
+    var ndarray: any[] = [
+      [[10, 20, 30],
       [40, 50, 60]],
+
       [[70, 80, 90],
-        [100, 110, 120]]]);
-    mat2 = mat.get($M.colon(1, 2), $M.colon(1, 1), $M.colon(2, 3));
-    expect($M.mat2jsa(mat2)).toEqual([[[20, 30]], [[80, 90]]]);
-    mat2 = mat.get($M.colon(1, 2), $M.colon(1, 1), $M.colon(2, 3), $M.colon());//excess dimension is allowed
-    expect($M.mat2jsa(mat2)).toEqual([[[20, 30]], [[80, 90]]]);
+      [100, 110, 120]]
+    ];
+    mat = $M.jsa2mat(ndarray);//2x3x2
+    expect($M.sizejsa(mat)).toEqual([2, 3, 2]);
+    expect($M.mat2jsa(mat)).toEqual([[[10, 20, 30],
+    [40, 50, 60]],
+    [[70, 80, 90],
+    [100, 110, 120]]]);
+    expect(mat.get(1, 3, 2)).toEqual(90);
+    mat2 = mat.get($M.colon(), $M.colon(2, 3), 2);
+    expect($M.mat2jsa(mat2)).toEqual([[80, 90], [110, 120]]);
+    mat2 = mat.get($M.colon(1, 2), $M.colon(2, 2), $M.colon(1, 2), $M.colon());//excess dimension is allowed
+    expect($M.mat2jsa(mat2)).toEqual([[[20], [50]], [[80], [110]]]);
+
+    ndarray = [
+      [
+        [[10, 20, 30],
+        [40, 50, 60]],
+
+        [[70, 80, 90],
+        [100, 110, 120]]
+      ],
+      [
+        [[210, 220, 230],
+        [240, 250, 260]],
+
+        [[270, 280, 290],
+        [300, 310, 320]]
+      ]
+    ];
+    mat = $M.jsa2mat(ndarray);//2x3x2x2
+
+    expect($M.mat2jsa(mat)).toEqual(ndarray);
+    expect(mat.get(2, 3, 1, 2)).toEqual(ndarray[2 - 1][1 - 1][2 - 1][3 - 1]);
+
+    mat2 = mat.get($M.colon(), $M.colon(), $M.colon(1, 2), 2);
+    expect($M.mat2jsa(mat2)).toEqual(
+      [
+        [[210, 220, 230],
+        [240, 250, 260]],
+
+        [[270, 280, 290],
+        [300, 310, 320]]
+      ]
+    );
   });
 
   it('size and related', function () {
@@ -453,25 +495,25 @@ describe('Sushi class', function () {
     expect(mat.get(1, 2)).toEqual(20);
     expect(mat.get(1, 3)).toEqual(30);
 
-    ary = [[[10, 20, 30], [40, 50, 60]], [[70, 80, 90], [100, 110, 120]]];
-    mat = $M.jsa2mat(ary);
-    expect(mat._size).toEqual([2, 2, 3]);
+    ary = [[[10, 20, 30], [40, 50, 60]], [[70, 80, 90], [100, 110, 120]]];//(z,y,x)=(2,2,3)
+    mat = $M.jsa2mat(ary);//(y,x,z)
+    expect(mat._size).toEqual([2, 3, 2]);
     expect(mat.get(1, 1, 1)).toEqual(ary[0][0][0]);
-    expect(mat.get(2, 1, 2)).toEqual(ary[1][0][1]);
+    expect(mat.get(2, 1, 2)).toEqual(ary[1][1][0]);
 
-    ary = [[[[10, 20, 30], [40, 50, 60]], [[70, 80, 90], [100, 110, 120]]]];
-    mat = $M.jsa2mat(ary);
-    expect(mat._size).toEqual([1, 2, 2, 3]);
+    ary = [[[[10, 20, 30], [40, 50, 60]], [[70, 80, 90], [100, 110, 120]]]];//(z2,z1,y,x)=(1,2,2,3)
+    mat = $M.jsa2mat(ary);//(y,x,z1,z2)=(2,3,2,1)
+    expect(mat._size).toEqual([2, 3, 2]);
     expect(mat.get(1, 1, 1, 1)).toEqual(ary[0][0][0][0]);
-    expect(mat.get(1, 2, 1, 2)).toEqual(ary[0][1][0][1]);
+    expect(mat.get(1, 2, 2, 1)).toEqual(ary[0][1][0][1]);
 
     ary = [[[10, 20, 30], [40, 50, 60]], [[70, 80, 90], [100, 110]]];
     expect(() => $M.jsa2mat(ary)).toThrow();
 
     ary = [[[10], [40]], [[70], [100]]];//[2][2][1]
     mat = $M.jsa2mat(ary);
-    expect(mat._size).toEqual([2, 2]);
-    expect(mat.get(2, 1)).toEqual(ary[1][0][0]);
+    expect(mat._size).toEqual([2, 1, 2]);
+    expect(mat.get(1, 1, 2)).toEqual(ary[1][0][0]);
 
     mat = $M.jsa2mat(<any>10);
     expect(mat._size).toEqual([1, 1]);
@@ -527,17 +569,19 @@ describe('Sushi class', function () {
     mat = $M.zeros(0, 2);
     expect($M.mat2jsa(mat)).toEqual([]);//limitation of representation ability
 
-    mat = $M.rand(2, 3, 4);
-    var jsa = $M.mat2jsa(mat);
-    expect(jsa.length).toEqual(2);
-    expect(jsa[0].length).toEqual(3);
-    expect(jsa[0][0].length).toEqual(4);
+    mat = $M.rand(2, 3, 4);//(y,x,z)=(2,3,4)
+    var jsa = $M.mat2jsa(mat);//(z,y,x)=(4,2,3)
+    expect(jsa.length).toEqual(4);
+    expect(jsa[0].length).toEqual(2);
+    expect(jsa[0][0].length).toEqual(3);
     expect(jsa[0][0][0]).toEqual(mat.get(1, 1, 1));
-    expect(jsa[1][0][1]).toEqual(mat.get(2, 1, 2));
-    expect(jsa[1][2][3]).toEqual(mat.get(2, 3, 4));
+    expect(jsa[1][0][1]).toEqual(mat.get(1, 2, 2));
+    expect(jsa[3][1][2]).toEqual(mat.get(2, 3, 4));
 
     mat = $M.zeros(2, 3, 0);
-    expect($M.mat2jsa(mat)).toEqual([[[], [], []], [[], [], []]]);
+    expect($M.mat2jsa(mat)).toEqual([]);
+    mat = $M.zeros(1, 0, 2);
+    expect($M.mat2jsa(mat)).toEqual([[[]], [[]]]);
   });
 
   it('comparison', function () {
@@ -1601,7 +1645,12 @@ describe('Sushi class', function () {
     var math = $M.horzcat(mat1, mat2);
     expect($M.mat2jsa(math)).toEqual(([[1, 2, 5, 6], [3, 4, 7, 8]]));
     var mat3 = $M.cat(3, mat1, mat2);
-    expect($M.mat2jsa(mat3)).toEqual(([[[1, 5], [2, 6]], [[3, 7], [4, 8]]]));
+    expect($M.mat2jsa(mat3)).toEqual((
+      [
+        [[1, 2], [3, 4]],
+        [[5, 6], [7, 8]]
+      ]
+    ));
   });
 
   it('permute', function () {
@@ -1713,14 +1762,22 @@ describe('npy io', function () {
 
     mat = $M.npyread(new Uint8Array(fs.readFileSync('spec/fixture/npy/int32_2x3x4_forder.npy')));
     expect($M.sizejsa(mat)).toEqual([2, 3, 4]);
-    expect($M.mat2jsa(mat.get(1, $M.colon(), $M.colon()))).toEqual([[[0, 1, 2, 3], [4, 5, 6, 7], [8, 9, 10, 11]]]);
-    expect($M.mat2jsa(mat.get(2, $M.colon(), $M.colon()))).toEqual([[[12, 13, 14, 15], [16, 17, 18, 19], [20, 21, 22, 23]]]);
+    var mat2 = mat.get(1, $M.colon(), $M.colon());
+    mat2.squeeze_inplace();
+    expect($M.mat2jsa(mat2)).toEqual([[0, 1, 2, 3], [4, 5, 6, 7], [8, 9, 10, 11]]);
+    mat2 = mat.get(2, $M.colon(), $M.colon());
+    mat2.squeeze_inplace();
+    expect($M.mat2jsa(mat2)).toEqual([[12, 13, 14, 15], [16, 17, 18, 19], [20, 21, 22, 23]]);
     expect($M.klass(mat)).toEqual('int32');
 
     mat = $M.npyread(new Uint8Array(fs.readFileSync('spec/fixture/npy/int32_2x3x4_corder.npy')));
     expect($M.sizejsa(mat)).toEqual([2, 3, 4]);
-    expect($M.mat2jsa(mat.get(1, $M.colon(), $M.colon()))).toEqual([[[0, 1, 2, 3], [4, 5, 6, 7], [8, 9, 10, 11]]]);
-    expect($M.mat2jsa(mat.get(2, $M.colon(), $M.colon()))).toEqual([[[12, 13, 14, 15], [16, 17, 18, 19], [20, 21, 22, 23]]]);
+    var mat2 = mat.get(1, $M.colon(), $M.colon());
+    mat2.squeeze_inplace();
+    expect($M.mat2jsa(mat2)).toEqual([[0, 1, 2, 3], [4, 5, 6, 7], [8, 9, 10, 11]]);
+    mat2 = mat.get(2, $M.colon(), $M.colon());
+    mat2.squeeze_inplace();
+    expect($M.mat2jsa(mat2)).toEqual([[12, 13, 14, 15], [16, 17, 18, 19], [20, 21, 22, 23]]);
     expect($M.klass(mat)).toEqual('int32');
 
     mat = $M.npyread(new Uint8Array(fs.readFileSync('spec/fixture/npy/float32_1x2.npy')));
